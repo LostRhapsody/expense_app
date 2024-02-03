@@ -65,7 +65,7 @@ const links = [
       <NuxtPage />
 
       <template #footer>
-        <Placeholder class="h-8" />
+        <h2>Made with 💖</h2>
       </template>
     </UCard>
   </UContainer>
