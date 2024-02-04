@@ -9,7 +9,9 @@ export default defineNuxtConfig({
     GITHUB_ID:process.env.GITHUB_ID,
     GITHUB_SECRET:process.env.GITHUB_SECRET,
     GOOGLE_ID:process.env.GITHUB_ID,
-    GOOGLE_SECRET:process.env.GITHUB_SECRET
+    GOOGLE_SECRET:process.env.GITHUB_SECRET,
+    AUTH_SECRET:process.env.AUTH_SECRET,
+    AUTH_ORIGIN:process.env.AUTH_ORIGIN
     }
   },
   devtools: { enabled: true },
@@ -17,11 +19,13 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@sidebase/nuxt-auth',
   ],
-  // auth: {
-  //   provider: {
-  //       type: 'authjs'
-  //   }
-  // },
+  auth: {    
+    isEnabled: true,
+    provider: {
+        type: 'authjs',
+        defaultProvider: 'auth0',
+    },    
+  },
   ui: {
     global: true,
     icons: ['heroicons']
