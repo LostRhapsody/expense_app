@@ -1,28 +1,36 @@
 <script setup lang="ts">
+
 const count = ref(0);
 const showAlert = ref(false);
 const onPlaying = ref(false);
 const showList = ref(false);
 const userArray = ref([]);
 const total = ref(0);
-const showConfirmDelete = ref(false);
+const showExplanation = ref(false);
 
-const { status, data, signIn, signOut   } = useAuth()
+// Grab the date
+const date = new Date()
+const day = date.getDate()
+const month = date.getMonth() + 1
+const year = date.getFullYear()
+const currentDate = `${day}-${month}-${year}`
 
-const loggedIn = computed(() => status.value === 'authenticated')
+const { status, data, signIn, signOut } = useAuth();
+
+const loggedIn = computed(() => status.value === "authenticated");
 
 /**
  * Stores the current counter in a key-value pair
  * @param key the key used to store this value
  */
 async function storeCounter(key: string) {
+  console.log(userArray.value)
   await $fetch("/api/setItem/", {
     method: "post",
     body: {
       key: key,
       value: {
         list: userArray.value,
-        id: 1,
       },
     },
   });
@@ -42,7 +50,7 @@ function updateTotal() {
  * Get's the key-value pair containing the
  * array of the user's expenses, updates total
  */
-async function getUserRecords(key: string) {  
+async function getUserRecords(key: string) {
   const itemData = await $fetch("/api/getItem/", {
     method: "post",
     body: { key: key },
@@ -61,11 +69,12 @@ function updateUserArray(mode: string) {
     userArray.value.push({
       count: count.value,
       id: userArray.value.length + 1,
+      date: currentDate
     });
     resetCounter();
   }
   updateTotal();
-  if(loggedIn.value){
+  if (loggedIn.value) {
     storeCounter(data.value?.user.email);
   }
 }
@@ -85,13 +94,15 @@ function deleteItem(index: number) {
  */
 function increment() {
   const audio = document.getElementById("clicker");
-
-  if (audio === null) return;
-  if (!audio.paused) return;
+  const audio2 = document.getElementById("clicker");
+  if (audio === null || audio2 === null) return;
+  if (!audio.paused && !audio2.paused) return;
 
   count.value++;
-
-  audio.play();
+  if (!audio.paused)
+    audio2.play()
+  else
+    audio.play();
 }
 
 /**
@@ -112,7 +123,7 @@ function resetCounter() {
 /**
  * Initialize
  */
-if(loggedIn.value){  
+if (loggedIn.value) {
   getUserRecords(data.value?.user.email);
 }
 </script>
@@ -162,9 +173,10 @@ if(loggedIn.value){
           <li
             v-for="(item, index) in userArray"
             :key="item.id"
-            class="text-lg my-4 flex justify-around w-1/4"
+            class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-700"
           >
             ${{ item.count }}
+            <em class="text-neutral-500">{{ item.date ? item.date : 'No date'}}</em>
             <UButton
               @click="deleteItem(index)"
               icon="i-heroicons-x-circle-solid"
@@ -197,14 +209,18 @@ if(loggedIn.value){
       ></UButton>
 
       <!-- Submit count button -->
-      <UButton 
-      label="Submit"
-      @click="updateUserArray('add')"/>
+      <UButton label="Submit" @click="updateUserArray('add')" />
 
       <!-- Reset button -->
       <UButton
         @click="showAlert = true"
         icon="i-heroicons-arrow-path-solid"
+      ></UButton>
+
+      <!-- Show Explanation button -->
+      <UButton
+        @click="showExplanation = !showExplanation"
+        icon="i-heroicons-information-circle-solid"
       ></UButton>
     </div>
 
@@ -223,6 +239,27 @@ if(loggedIn.value){
       title="Confirm Reset"
       class="my-4"
     />
+
+    <div v-if="showExplanation">
+      <UDivider label="EXPLANATION" />
+      <p>
+        <strong
+          >Easily keep track of your spending and budget while grocery
+          shopping.</strong
+        >
+      </p>
+      <br />
+      <p class="text-sm">
+        While shopping, track the cost of every item you place in your cart with
+        this clicker tool.
+      </p>
+      <br />
+      <p class="text-sm">
+        Click submit to keep track of all your grocery trips. Be sure to sign in
+        <em>(secured with 0Auth)</em> to save your submissions. View past
+        submissions with <UIcon name="i-heroicons-banknotes-solid" />.
+      </p>
+    </div>
   </div>
 </template>
 

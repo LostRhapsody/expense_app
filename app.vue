@@ -4,12 +4,6 @@ const { status, data, signIn, signOut   } = useAuth()
 
 const loggedIn = computed(() => status.value === 'authenticated')
 
-// status.value // Session status: `unauthenticated`, `loading`, `authenticated`
-// data.value // Session data, e.g., expiration, user.email, ...
-// await signIn() // Sign in the user
-// await refresh() // Refresh the token 
-// await signOut() // Sign out the user
-
 async function handleSignIn() {
   await signIn()
 }
@@ -37,13 +31,13 @@ const links = [
 </script>
 
 <template>
-  <UContainer>
+  <UContainer class="max-w-xl">
     <!-- main -->
     <UCard class="mt-4">
       <template #header>
         <div class="flex min-w-0 w-full justify-between">
           <!-- Slider nav -->
-          <h1 class="text-lg">Expense Tracker</h1>
+          <h1 class="text-lg">Ratio</h1>
           <UButton
           v-if="loggedIn"
           label="Sign Out"
@@ -57,7 +51,6 @@ const links = [
           icon="i-heroicons-user-circle-solid"
           />
           <UButton
-            label="Nav"
             @click="isOpen = true"
             icon="i-heroicons-magnifying-glass"
           />
@@ -96,8 +89,7 @@ const links = [
       <NuxtPage />
 
       <template #footer>
-        <!-- <pre>{{ data?.user.email }}</pre> -->
-        <h2>Made with 💖</h2>
+        <h2 class="text-center">Made with 💖 ~ <em>pecuniae ratio</em></h2>
       </template>
     </UCard>
   </UContainer>

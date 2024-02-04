@@ -4,9 +4,8 @@ const route = useRoute()
 </script>
 
 <template>
-  <div>
-    <h1 class="text-lg">Home page.</h1>
-    <p>Use the Nav to go about you're business.</p>  
-
+  <div class="text-center">
+    <h1 class="text-lg"><strong class="text-4xl">Ratio 🪙</strong><br/>Simple budgeting tools.</h1>
+    <p>Use the <UIcon name="i-heroicons-magnifying-glass" /> to navigate.</p>  
   </div>
 </template>
