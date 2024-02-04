@@ -1,15 +1,14 @@
 <script setup lang="ts">
+const { status, data, signIn, signOut } = useAuth();
 
-const { status, data, signIn, signOut   } = useAuth()
-
-const loggedIn = computed(() => status.value === 'authenticated')
+const loggedIn = computed(() => status.value === "authenticated");
 
 async function handleSignIn() {
-  await signIn()
+  await signIn();
 }
 
 async function handleSignOut() {
-  await signOut()
+  await signOut();
 }
 
 const isOpen = ref(false);
@@ -19,15 +18,25 @@ const links = [
     label: "Home",
     icon: "i-heroicons-home-modern-solid",
     to: "/",
-    id:"home"
+    id: "home",
   },
   {
     label: "Grocery",
     icon: "i-heroicons-shopping-bag-solid",
     to: "/grocery",
-    id:"home"
+    id: "home",
   },
 ];
+
+const colorMode = useColorMode();
+const isDark = computed({
+  get() {
+    return colorMode.value === "dark";
+  },
+  set() {
+    colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
+  },
+});
 </script>
 
 <template>
@@ -39,21 +48,18 @@ const links = [
           <!-- Slider nav -->
           <ULink class="text-xl" to="/">Ratio</ULink>
           <UButton
-          v-if="loggedIn"
-          label="Sign Out"
-          @click="handleSignOut"
-          icon="i-heroicons-user-circle-solid"
+            v-if="loggedIn"
+            label="Sign Out"
+            @click="handleSignOut"
+            icon="i-heroicons-user-circle-solid"
           />
           <UButton
-          v-else
-          label="Sign In"
-          @click="handleSignIn"
-          icon="i-heroicons-user-circle-solid"
+            v-else
+            label="Sign In"
+            @click="handleSignIn"
+            icon="i-heroicons-user-circle-solid"
           />
-          <UButton
-            @click="isOpen = true"
-            icon="i-heroicons-magnifying-glass"
-          />
+          <UButton @click="isOpen = true" icon="i-heroicons-magnifying-glass" />
         </div>
         <USlideover v-model="isOpen" :overlay="true">
           <UCard
@@ -81,7 +87,7 @@ const links = [
               </div>
             </template>
 
-            <UVerticalNavigation :links="links" @click="isOpen = false"/>
+            <UVerticalNavigation :links="links" @click="isOpen = false" />
           </UCard>
         </USlideover>
       </template>
@@ -89,7 +95,25 @@ const links = [
       <NuxtPage />
 
       <template #footer>
-        <h2 class="text-center">Made with 💖 ~ <em>pecuniae ratio</em></h2>
+        <div class="flex flex-row justify-between min-w-0 items-center">
+          <h2 class="text-center"><em>Made with 💖 for Sarah-Jayne</em></h2>
+          <ClientOnly>
+            <UButton
+              :icon="
+                isDark
+                  ? 'i-heroicons-moon-20-solid'
+                  : 'i-heroicons-sun-20-solid'
+              "
+              color="gray"
+              variant="ghost"
+              aria-label="Theme"
+              @click="isDark = !isDark"
+            />
+            <template #fallback>
+              <div class="w-8 h-8" />
+            </template>
+          </ClientOnly>
+        </div>
       </template>
     </UCard>
   </UContainer>
