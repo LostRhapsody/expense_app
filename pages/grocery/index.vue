@@ -272,7 +272,7 @@ if (loggedIn.value) {
     </audio>
 
     <!-- Left slideout for list of counters -->
-    <USlideover v-model="showList" :overlay="true" :side="'left'">
+    <USlideover v-model="showList" :overlay="true" :side="'left'" class="overflow-auto">
       <UCard
         class="flex flex-col flex-1"
         :ui="{
