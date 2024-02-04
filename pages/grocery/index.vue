@@ -93,16 +93,33 @@ function deleteItem(index: number) {
  * audio must finish before we increment the counter again
  */
 function increment() {
-  const audio = document.getElementById("clicker");
-  const audio2 = document.getElementById("clicker");
-  if (audio === null || audio2 === null) return;
-  if (!audio.paused && !audio2.paused) return;
 
-  count.value++;
-  if (!audio.paused)
+  // Really ugly implementation.
+  // Should play one of the three sounds...
+  // Issue isn't apparent on desktop, sound finished fast,
+  // on phone, sound takes forever.
+  const audio = document.getElementById("clicker");
+  const audio2 = document.getElementById("clicker2");
+  const audio3 = document.getElementById("clicker3");
+  if (audio === null || audio2 === null || audio3 === null) return;
+  if (!audio.paused && !audio2.paused && !audio3.paused) return;
+
+  if(audio.paused){
+    audio.play()
+    count.value++;
+    return
+  }
+  if(audio2.paused){
     audio2.play()
-  else
-    audio.play();
+    count.value++;
+    return
+  }
+  if(audio3.paused){
+    audio3.play()
+    count.value++;
+    return
+  }
+
 }
 
 /**
@@ -134,6 +151,24 @@ if (loggedIn.value) {
     <audio
       pause
       id="clicker"
+      src="/click_short.mp3"
+      ref="audioPlayer"
+      @timeupdate="onPlaying"
+    >
+      Your browser does not support the <code>audio</code> element.
+    </audio>
+    <audio
+      pause
+      id="clicker2"
+      src="/click_short.mp3"
+      ref="audioPlayer"
+      @timeupdate="onPlaying"
+    >
+      Your browser does not support the <code>audio</code> element.
+    </audio>
+    <audio
+      pause
+      id="clicker3"
       src="/click_short.mp3"
       ref="audioPlayer"
       @timeupdate="onPlaying"

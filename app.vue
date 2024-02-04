@@ -37,7 +37,7 @@ const links = [
       <template #header>
         <div class="flex min-w-0 w-full justify-between">
           <!-- Slider nav -->
-          <h1 class="text-lg">Ratio</h1>
+          <ULink class="text-xl" to="/">Ratio</ULink>
           <UButton
           v-if="loggedIn"
           label="Sign Out"
