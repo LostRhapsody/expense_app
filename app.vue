@@ -1,4 +1,23 @@
 <script setup lang="ts">
+
+const { status, data, signIn, signOut   } = useAuth()
+
+const loggedIn = computed(() => status.value === 'authenticated')
+
+// status.value // Session status: `unauthenticated`, `loading`, `authenticated`
+// data.value // Session data, e.g., expiration, user.email, ...
+// await signIn() // Sign in the user
+// await refresh() // Refresh the token 
+// await signOut() // Sign out the user
+
+async function handleSignIn() {
+  await signIn()
+}
+
+async function handleSignOut() {
+  await signOut()
+}
+
 const isOpen = ref(false);
 
 const links = [
@@ -25,6 +44,18 @@ const links = [
         <div class="flex min-w-0 w-full justify-between">
           <!-- Slider nav -->
           <h1 class="text-lg">Expense Tracker</h1>
+          <UButton
+          v-if="loggedIn"
+          label="Sign Out"
+          @click="handleSignOut"
+          icon="i-heroicons-user-circle-solid"
+          />
+          <UButton
+          v-else
+          label="Sign In"
+          @click="handleSignIn"
+          icon="i-heroicons-user-circle-solid"
+          />
           <UButton
             label="Nav"
             @click="isOpen = true"
@@ -65,6 +96,7 @@ const links = [
       <NuxtPage />
 
       <template #footer>
+        <!-- <pre>{{ data?.user.email }}</pre> -->
         <h2>Made with 💖</h2>
       </template>
     </UCard>

@@ -3,9 +3,13 @@ const count = ref(0);
 const showAlert = ref(false);
 const onPlaying = ref(false);
 const showList = ref(false);
-const userArray = ref([{}]);
+const userArray = ref([]);
 const total = ref(0);
 const showConfirmDelete = ref(false);
+
+const { status, data, signIn, signOut   } = useAuth()
+
+const loggedIn = computed(() => status.value === 'authenticated')
 
 /**
  * Stores the current counter in a key-value pair
@@ -38,12 +42,12 @@ function updateTotal() {
  * Get's the key-value pair containing the
  * array of the user's expenses, updates total
  */
-async function getUserRecords(key: string) {
-  const data = await $fetch("/api/getItem/", {
+async function getUserRecords(key: string) {  
+  const itemData = await $fetch("/api/getItem/", {
     method: "post",
     body: { key: key },
   });
-  userArray.value = data.list;
+  userArray.value = itemData.list;
   updateTotal();
 }
 
@@ -60,8 +64,10 @@ function updateUserArray(mode: string) {
     });
     resetCounter();
   }
-  storeCounter("user");
   updateTotal();
+  if(loggedIn.value){
+    storeCounter(data.value?.user.email);
+  }
 }
 
 /**
@@ -106,7 +112,9 @@ function resetCounter() {
 /**
  * Initialize
  */
-getUserRecords("user");
+if(loggedIn.value){  
+  getUserRecords(data.value?.user.email);
+}
 </script>
 
 <template>
@@ -189,7 +197,9 @@ getUserRecords("user");
       ></UButton>
 
       <!-- Submit count button -->
-      <UButton @click="updateUserArray('add')">Submit</UButton>
+      <UButton 
+      label="Submit"
+      @click="updateUserArray('add')"/>
 
       <!-- Reset button -->
       <UButton

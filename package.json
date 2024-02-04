@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.11.2",
+    "@sidebase/nuxt-auth": "^0.6.7",
     "dotenv": "^16.4.1",
     "dotenv-expand": "^10.0.0",
     "nuxt": "^3.10.0",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^2.13.0",
-    "@vercel/kv": "^1.0.1"
+    "@vercel/kv": "^1.0.1",
+    "next-auth": "4.21.1"
   }
 }
