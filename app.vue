@@ -99,6 +99,7 @@ const isDark = computed({
           <h2 class="text-center"><em>Made with 💖 for Sarah-Jayne</em></h2>
           <ClientOnly>
             <UButton
+              id="darkModeButton"
               :icon="
                 isDark
                   ? 'i-heroicons-moon-20-solid'

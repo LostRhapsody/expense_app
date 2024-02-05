@@ -24,14 +24,16 @@ interface userArrayType {
   budget: number;
   usedBudget: number;
 }
-  
-var userArray: userArrayType[] = [{
-  count: 10,
-  id: 1,
-  date: "1-1-2024",
-  budget: 100,
-  usedBudget: 10
-}];
+
+var userArray: userArrayType[] = [
+  {
+    count: 10,
+    id: 1,
+    date: "1-1-2024",
+    budget: 100,
+    usedBudget: 10,
+  },
+];
 
 // total of all grocery trips
 const total = ref(0);
@@ -63,7 +65,10 @@ const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 
 // if logged in, assign email, else, set to blank string
-const emailAddr = typeof data.value?.user.email === 'string' ? data.value?.user.email : ''
+const emailAddr = typeof data.value?.user.email === "string" ? data.value?.user.email : "";
+
+// const emailAddr = "evan.robertson77@gmail.com";
+// const loggedIn = ref(true);
 
 /**
  * Updates the user's saved budget
@@ -124,7 +129,7 @@ function updateTotal() {
   totalDisplay.value = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(total.value);  
+  }).format(total.value);
 }
 
 /**
@@ -153,7 +158,7 @@ function updateUserArray(mode: string) {
       id: userArray.length + 1,
       date: currentDate,
       budget: budget.value,
-      usedBudget: percentageOfBudget
+      usedBudget: Math.round(percentageOfBudget.value),
     });
     resetCounter();
   }
@@ -161,6 +166,7 @@ function updateUserArray(mode: string) {
   if (loggedIn.value) {
     storeCounter(emailAddr);
   }
+  setCounterColor();
 }
 
 /**
@@ -169,7 +175,7 @@ function updateUserArray(mode: string) {
  */
 function deleteItem(index: number) {
   userArray.splice(index, 1);
-  updateUserArray('delete');
+  updateUserArray("delete");
 }
 
 /**
@@ -186,21 +192,21 @@ function increment() {
   const audio3 = document.getElementById("clicker3");
   if (audio === null || audio2 === null || audio3 === null) return;
   if (!audio.paused && !audio2.paused && !audio3.paused) return;
-  
+
   if (audio.paused) {
     audio.play();
-    incrementCountOperations()
+    incrementCountOperations();
     return;
   }
   if (audio2.paused) {
     audio2.play();
-    incrementCountOperations()
+    incrementCountOperations();
     return;
   }
 
   if (audio3.paused) {
     audio3.play();
-    incrementCountOperations()
+    incrementCountOperations();
     return;
   }
 }
@@ -208,11 +214,11 @@ function increment() {
 /**
  * The repetative actions performed when incrementing the count
  */
-function incrementCountOperations(){
+function incrementCountOperations() {
   count.value += incrementBy.value;
   taxEstimate.value = Math.round(count.value * taxRate.value);
-  percentageOfBudget.value = count.value / budget.value * 100
-  setCounterColor()
+  percentageOfBudget.value = (count.value / budget.value) * 100;
+  setCounterColor();
 }
 
 /**
@@ -227,20 +233,24 @@ function decrement() {
     }
   }
   taxEstimate.value = Math.round(count.value * taxRate.value);
-  percentageOfBudget.value = count.value / budget.value * 100
-  setCounterColor()
+  percentageOfBudget.value = (count.value / budget.value) * 100;
+  setCounterColor();
 }
 
 /**
  * Adjusts the color of the counter based on budget
  */
-function setCounterColor(){
-  if(percentageOfBudget.value >= 75 && percentageOfBudget.value <= 99){
-    color.value = 'orange'
-  } else if (percentageOfBudget.value >= 99){
-    color.value = 'red'
+function setCounterColor() {
+  if (percentageOfBudget.value >= 75 && percentageOfBudget.value <= 99) {
+    color.value = "orange";
+  } else if (percentageOfBudget.value >= 99) {
+    color.value = "red";
   } else {
-    color.value = 'white'
+    if (isDark.value) {
+      color.value = "white";
+    } else {
+      color.value = "black";
+    }
   }
 }
 
@@ -277,12 +287,34 @@ function resetCounter() {
 }
 
 /**
+ * dark mode button listener (and onMounted functions lol)
+ */
+onMounted(async () => {
+  await nextTick();
+  document
+    .getElementById("darkModeButton")
+    .addEventListener("click", function () {
+      setCounterColor();
+    });
+});
+
+/**
  * Initialize
  */
 if (loggedIn.value) {
   getUserTallies(emailAddr);
   getUserBudget(emailAddr);
 }
+
+const colorMode = useColorMode();
+const isDark = computed({
+  get() {
+    return colorMode.value === "dark";
+  },
+  set() {
+    colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
+  },
+});
 </script>
 
 <template>
@@ -317,7 +349,12 @@ if (loggedIn.value) {
     </audio>
 
     <!-- Left slideout for list of counters -->
-    <USlideover v-model="showList" :overlay="true" :side="'left'" class="overflow-auto">
+    <USlideover
+      v-model="showList"
+      :overlay="true"
+      :side="'left'"
+      class="overflow-auto"
+    >
       <UCard
         class="flex flex-col flex-1"
         :ui="{
@@ -380,9 +417,9 @@ if (loggedIn.value) {
               <div class="flex flex-row mx-8 my-2">
                 <UProgress :value="item.usedBudget" />
               </div>
-              <em class="text-neutral-500 text-sm text-center"
-                >{{ item.budget ? 'budget: $' + item.budget : "No budget" }}</em
-              >
+              <em class="text-neutral-500 text-sm text-center">{{
+                item.budget ? "budget: $" + item.budget : "No budget"
+              }}</em>
             </div>
           </li>
           <li
@@ -473,53 +510,72 @@ if (loggedIn.value) {
     />
 
     <!-- EXPLANATION -->
-    <div v-if="showExplanation">
-      <UDivider label="EXPLANATION" />
-      <p>
-        <strong
-          >Easily keep track of your spending and budget while grocery
-          shopping.</strong
+    <UModal :ui="{ container: 'items-center' }" v-model="showExplanation">
+      <UCard>
+        <template #header>
+          <div class="flex min-w-0 justify-between">
+            <p class="text-2xl">Information</p>
+            <UButton
+              @click="showSettings = false"
+              variant="link"
+              color="white"
+              size="xl"
+              icon="i-heroicons-x-mark-solid"
+            />
+          </div>
+        </template>
+        <p>
+          <strong
+            >Easily keep track of your spending and budget while grocery
+            shopping.</strong
+          >
+        </p>
+        <br />
+        <p class="text-sm">
+          While shopping, track the cost of every item you place in your cart
+          with this clicker tool.
+        </p>
+        <br />
+        <p class="text-sm">
+          Click <span class="text-primary">Submit</span> to keep track of all
+          your grocery trips. Be sure to sign in
+          <em
+            >(secured with
+            <ULink class="text-primary" to="https://oauth.net/2/">0Auth</ULink
+            >)</em
+          >
+          to save your submissions.
+        </p>
+        <br />
+        <p
+          class="text-sm grid grid-cols-3 gap-x-4 border-gray-700 border-2 rounded-lg p-2"
         >
-      </p>
-      <br />
-      <p class="text-sm">
-        While shopping, track the cost of every item you place in your cart with
-        this clicker tool.
-      </p>
-      <br />
-      <p class="text-sm">
-        Click <span class="text-primary-500">Submit</span> to keep track of all
-        your grocery trips. Be sure to sign in
-        <em
-          >(secured with
-          <ULink
-            active="true"
-            active-class="text-primary"
-            to="https://oauth.net/2/"
-            >0Auth</ULink
-          >)</em
-        >
-        to save your submissions.
-      </p>
-      <br />
-      <p
-        class="text-sm grid grid-cols-3 gap-x-4 border-gray-700 border-2 rounded-lg p-2"
-      >
-        <span class="col-span-2">View past submissions</span>
-        <UIcon class="text-primary-400" name="i-heroicons-banknotes-solid" />
-        <span class="col-span-2">Reset the counter</span>
-        <UIcon class="text-primary-400" name="i-heroicons-arrow-path-solid" />
-        <span class="col-span-2">Decrease the counter</span>
-        <span class="text-primary-400">-{{ incrementBy }}</span>
-        <span class="col-span-2">Adjust settings with</span>
-        <UIcon class="text-primary-400" name="i-heroicons-cog-6-tooth-solid" />
-      </p>
-    </div>
+          <span class="col-span-2">View past submissions</span>
+          <UIcon class="text-primary" name="i-heroicons-banknotes-solid" />
+          <span class="col-span-2">Reset the counter</span>
+          <UIcon class="text-primary" name="i-heroicons-arrow-path-solid" />
+          <span class="col-span-2">Decrease the counter</span>
+          <span class="text-primary">-{{ incrementBy }}</span>
+          <span class="col-span-2">Adjust settings with</span>
+          <UIcon class="text-primary" name="i-heroicons-cog-6-tooth-solid" />
+        </p>
+      </UCard>
+    </UModal>
     <!-- BUDGET MODAL -->
     <UModal :ui="{ container: 'items-center' }" v-model="showEditBudget">
-      <div class="p-4">
-        <p class="text-2xl my-4">Current Budget: ${{ budget }}</p>
-        <UDivider label="EDIT" />
+      <UCard>
+        <template #header>
+          <div class="flex min-w-0 justify-between">
+            <p class="text-2xl my-4">Current Budget: ${{ budget }}</p>
+            <UButton
+              @click="showSettings = false"
+              variant="link"
+              color="white"
+              size="xl"
+              icon="i-heroicons-x-mark-solid"
+            />
+          </div>
+        </template>
         <URange v-model="budget" name="range" :max="500" />
         <UInput
           type="number"
@@ -528,9 +584,10 @@ if (loggedIn.value) {
           :ui="{ base: 'text-center flex justify-center' }"
         >
         </UInput>
-        <!-- </div> -->
-        <UButton block label="Submit" @click="saveBudget(emailAddr)" />
-      </div>
+        <template #footer>
+          <UButton block label="Submit" @click="saveBudget(emailAddr)" />
+        </template>
+      </UCard>
     </UModal>
 
     <!-- Settings MODAL -->
