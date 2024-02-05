@@ -13,13 +13,32 @@ const incrementBy = ref(1);
 // controls audio
 const onPlaying = ref(false);
 
+// color of counter
+const color = ref("white");
+
 // stores grocery trips in memory
-const userArray = ref([]);
+interface userArrayType {
+  count: number;
+  id: number;
+  date: string;
+  budget: number;
+  usedBudget: number;
+}
+  
+var userArray: userArrayType[] = [{
+  count: 10,
+  id: 1,
+  date: "1-1-2024",
+  budget: 100,
+  usedBudget: 10
+}];
 
 // total of all grocery trips
 const total = ref(0);
 // formatted total
 const totalDisplay = ref("");
+// percentage of budget
+const percentageOfBudget = ref(0);
 
 // The clicker's val
 const count = ref(0);
@@ -42,6 +61,9 @@ const currentDate = `${day}-${month}-${year}`;
 
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
+
+// if logged in, assign email, else, set to blank string
+const emailAddr = typeof data.value?.user.email === 'string' ? data.value?.user.email : ''
 
 /**
  * Updates the user's saved budget
@@ -84,7 +106,7 @@ async function storeCounter(key: string) {
     body: {
       key: key,
       value: {
-        list: userArray.value,
+        list: userArray,
       },
     },
   });
@@ -96,13 +118,13 @@ async function storeCounter(key: string) {
  */
 function updateTotal() {
   total.value = 0;
-  userArray.value.forEach((element) => {
+  userArray.forEach((element) => {
     total.value += element.count;
   });
   totalDisplay.value = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(total.value);
+  }).format(total.value);  
 }
 
 /**
@@ -115,7 +137,7 @@ async function getUserTallies(key: string) {
     method: "post",
     body: { key: key },
   });
-  userArray.value = itemData.list;
+  userArray = itemData.list;
   updateTotal();
 }
 
@@ -126,18 +148,18 @@ async function getUserTallies(key: string) {
 function updateUserArray(mode: string) {
   if (mode === "add") {
     if (count.value <= 0) return;
-    userArray.value.push({
+    userArray.push({
       count: count.value,
-      id: userArray.value.length + 1,
+      id: userArray.length + 1,
       date: currentDate,
       budget: budget.value,
-      usedBudget: (count.value / budget.value) * 100,
+      usedBudget: percentageOfBudget
     });
     resetCounter();
   }
   updateTotal();
   if (loggedIn.value) {
-    storeCounter(data.value?.user.email);
+    storeCounter(emailAddr);
   }
 }
 
@@ -146,8 +168,8 @@ function updateUserArray(mode: string) {
  * @param index the index of the item to delete from the array
  */
 function deleteItem(index: number) {
-  userArray.value.splice(index, 1);
-  updateUserArray();
+  userArray.splice(index, 1);
+  updateUserArray('delete');
 }
 
 /**
@@ -167,23 +189,30 @@ function increment() {
   
   if (audio.paused) {
     audio.play();
-    count.value += incrementBy.value;
-    taxEstimate.value = Math.round(count.value * taxRate.value);
+    incrementCountOperations()
     return;
   }
   if (audio2.paused) {
     audio2.play();
-    count.value += incrementBy.value;
-    taxEstimate.value = Math.round(count.value * taxRate.value);
+    incrementCountOperations()
     return;
   }
 
   if (audio3.paused) {
     audio3.play();
-    count.value += incrementBy.value;
-    taxEstimate.value = Math.round(count.value * taxRate.value);
+    incrementCountOperations()
     return;
   }
+}
+
+/**
+ * The repetative actions performed when incrementing the count
+ */
+function incrementCountOperations(){
+  count.value += incrementBy.value;
+  taxEstimate.value = Math.round(count.value * taxRate.value);
+  percentageOfBudget.value = count.value / budget.value * 100
+  setCounterColor()
 }
 
 /**
@@ -196,6 +225,22 @@ function decrement() {
     } else {
       count.value -= incrementBy.value;
     }
+  }
+  taxEstimate.value = Math.round(count.value * taxRate.value);
+  percentageOfBudget.value = count.value / budget.value * 100
+  setCounterColor()
+}
+
+/**
+ * Adjusts the color of the counter based on budget
+ */
+function setCounterColor(){
+  if(percentageOfBudget.value >= 75 && percentageOfBudget.value <= 99){
+    color.value = 'orange'
+  } else if (percentageOfBudget.value >= 99){
+    color.value = 'red'
+  } else {
+    color.value = 'white'
   }
 }
 
@@ -235,8 +280,8 @@ function resetCounter() {
  * Initialize
  */
 if (loggedIn.value) {
-  getUserTallies(data.value?.user.email);
-  getUserBudget(data.value?.user.email);
+  getUserTallies(emailAddr);
+  getUserBudget(emailAddr);
 }
 </script>
 
@@ -336,7 +381,7 @@ if (loggedIn.value) {
                 <UProgress :value="item.usedBudget" />
               </div>
               <em class="text-neutral-500 text-sm text-center"
-                >budget: ${{ item.budget ? item.budget : "No budget" }}</em
+                >{{ item.budget ? 'budget: $' + item.budget : "No budget" }}</em
               >
             </div>
           </li>
@@ -362,7 +407,7 @@ if (loggedIn.value) {
     <!-- Total Tracker -->
     <UDivider label="TOTAL" />
     <div class="my-4">
-      <p class="text-center text-3xl">${{ count }}</p>
+      <p class="text-center text-3xl counterText">${{ count }}</p>
       <p v-if="showTaxEstimate" class="text-center text-gray-400">
         After tax: ${{ taxEstimate + count }}
       </p>
@@ -458,15 +503,15 @@ if (loggedIn.value) {
       </p>
       <br />
       <p
-        class="text-sm grid grid-cols-2 gap-x-4 border-gray-700 border-2 rounded-lg p-2"
+        class="text-sm grid grid-cols-3 gap-x-4 border-gray-700 border-2 rounded-lg p-2"
       >
-        View past submissions
+        <span class="col-span-2">View past submissions</span>
         <UIcon class="text-primary-400" name="i-heroicons-banknotes-solid" />
-        Reset the counter
+        <span class="col-span-2">Reset the counter</span>
         <UIcon class="text-primary-400" name="i-heroicons-arrow-path-solid" />
-        Decrease the counter
+        <span class="col-span-2">Decrease the counter</span>
         <span class="text-primary-400">-{{ incrementBy }}</span>
-        Adjust settings with
+        <span class="col-span-2">Adjust settings with</span>
         <UIcon class="text-primary-400" name="i-heroicons-cog-6-tooth-solid" />
       </p>
     </div>
@@ -484,7 +529,7 @@ if (loggedIn.value) {
         >
         </UInput>
         <!-- </div> -->
-        <UButton block label="Submit" @click="saveBudget(data.user.email)" />
+        <UButton block label="Submit" @click="saveBudget(emailAddr)" />
       </div>
     </UModal>
 
@@ -545,5 +590,8 @@ if (loggedIn.value) {
 <style>
 li {
   list-style-type: none;
+}
+.counterText {
+  color: v-bind(color);
 }
 </style>
