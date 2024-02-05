@@ -217,7 +217,7 @@ function increment() {
 function incrementCountOperations() {
   count.value += incrementBy.value;
   taxEstimate.value = Math.round(count.value * taxRate.value);
-  percentageOfBudget.value = (count.value / budget.value) * 100;
+  updatePercentOfBudget()
   setCounterColor();
 }
 
@@ -233,14 +233,19 @@ function decrement() {
     }
   }
   taxEstimate.value = Math.round(count.value * taxRate.value);
-  percentageOfBudget.value = (count.value / budget.value) * 100;
+  updatePercentOfBudget()
   setCounterColor();
+}
+
+function updatePercentOfBudget(){
+  percentageOfBudget.value = (count.value / budget.value) * 100;
 }
 
 /**
  * Adjusts the color of the counter based on budget
  */
 function setCounterColor() {
+  updatePercentOfBudget()
   if (percentageOfBudget.value >= 75 && percentageOfBudget.value <= 99) {
     color.value = "orange";
   } else if (percentageOfBudget.value >= 99) {
@@ -284,26 +289,7 @@ function resetCounter() {
   hideAlert();
   count.value = 0;
   taxEstimate.value = 0;
-}
-
-/**
- * dark mode button listener (and onMounted functions lol)
- */
-onMounted(async () => {
-  await nextTick();
-  document
-    .getElementById("darkModeButton")
-    .addEventListener("click", function () {
-      setCounterColor();
-    });
-});
-
-/**
- * Initialize
- */
-if (loggedIn.value) {
-  getUserTallies(emailAddr);
-  getUserBudget(emailAddr);
+  setCounterColor()
 }
 
 const colorMode = useColorMode();
@@ -315,6 +301,27 @@ const isDark = computed({
     colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
   },
 });
+
+/**
+ * dark mode button listener (and onMounted functions lol)
+ */
+ onMounted(async () => {
+  await nextTick();
+  document
+    .getElementById("darkModeButton")
+    .addEventListener("click", function () {
+      setCounterColor();
+    });
+});
+
+/**
+ * Initialize
+ */
+ if (loggedIn.value) {
+  getUserTallies(emailAddr);
+  getUserBudget(emailAddr);
+}
+setCounterColor();
 </script>
 
 <template>
@@ -469,7 +476,7 @@ const isDark = computed({
       />
       <!-- reset count -->
       <UButton
-        @click="showAlert = true"
+        @click="showAlert = !showAlert "
         class="justify-center"
         icon="i-heroicons-arrow-path-solid"
       ></UButton>
@@ -516,7 +523,7 @@ const isDark = computed({
           <div class="flex min-w-0 justify-between">
             <p class="text-2xl">Information</p>
             <UButton
-              @click="showSettings = false"
+              @click="showExplanation = false"
               variant="link"
               color="white"
               size="xl"
@@ -568,7 +575,7 @@ const isDark = computed({
           <div class="flex min-w-0 justify-between">
             <p class="text-2xl my-4">Current Budget: ${{ budget }}</p>
             <UButton
-              @click="showSettings = false"
+              @click="showEditBudget = false"
               variant="link"
               color="white"
               size="xl"
