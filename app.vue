@@ -21,10 +21,16 @@ const links = [
     id: "home",
   },
   {
-    label: "Grocery",
+    label: "Grocery - The Clicker",
     icon: "i-heroicons-shopping-bag-solid",
-    to: "/grocery",
-    id: "home",
+    to: "/grocery/clicker",
+    id: "Grocery",
+  },
+  {
+    label: "Grocery - The Converter",
+    icon: "i-heroicons-shopping-bag-solid",
+    to: "/grocery/converter",
+    id: "Grocery",
   },
 ];
 
