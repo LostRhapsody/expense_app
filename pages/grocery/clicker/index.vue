@@ -166,7 +166,6 @@ function updateUserArray(mode: string) {
   if (loggedIn.value) {
     storeCounter(emailAddr);
   }
-  setCounterColor();
 }
 
 /**
@@ -218,6 +217,7 @@ function incrementCountOperations() {
   count.value += incrementBy.value;
   taxEstimate.value = Math.round(count.value * taxRate.value);
   updatePercentOfBudget()
+  // here to switch to warning/regular color when increasing counter
   setCounterColor();
 }
 
@@ -234,6 +234,7 @@ function decrement() {
   }
   taxEstimate.value = Math.round(count.value * taxRate.value);
   updatePercentOfBudget()
+  // here to set warning/regular color when decreasing counter
   setCounterColor();
 }
 
@@ -257,6 +258,14 @@ function setCounterColor() {
       color.value = "black";
     }
   }
+}
+
+/** A listener function. 
+ *  When the value of isDark updates, this function is called
+ *  Really, just handles updating the color.
+ */
+function colorUpdate(){
+  setCounterColor()
 }
 
 /**
@@ -289,6 +298,7 @@ function resetCounter() {
   hideAlert();
   count.value = 0;
   taxEstimate.value = 0;
+  // here to set after a submit or reset back to regular color
   setCounterColor()
 }
 
@@ -303,16 +313,18 @@ const isDark = computed({
 });
 
 /**
- * dark mode button listener (and onMounted functions lol)
+ * onMounted functions
+ * Anything that needs to run AFTER the component has been mounted
+ * Currently... not used. Here for reference.
  */
- onMounted(async () => {
-  await nextTick();
-  document
-    .getElementById("darkModeButton")
-    .addEventListener("click", function () {
-      setCounterColor();
-    });
-});
+//  onMounted(async () => {
+//   await nextTick();
+//   document
+//     .getElementById("darkModeButton")
+//     .addEventListener("click", function () {
+//       setCounterColor();
+//     });    
+// });
 
 /**
  * Initialize
@@ -321,10 +333,13 @@ const isDark = computed({
   getUserTallies(emailAddr);
   getUserBudget(emailAddr);
 }
-setCounterColor();
 </script>
 
 <template>
+  <input 
+    class="hidden"
+    :value="isDark" 
+    :change="colorUpdate()"/>
   <div class="flex flex-col mx-auto justify-center">
     <!--  audio for clicker -->
     <audio
