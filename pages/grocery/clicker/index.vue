@@ -37,10 +37,15 @@ var userArray: userArrayType[] = [
 
 // total of all grocery trips
 const total = ref(0);
+// total of all grocery trips budget
+const budgetTotal = ref(0);
+
 // formatted total
 const totalDisplay = ref("");
 // percentage of budget
 const percentageOfBudget = ref(0);
+// percentage of TOTAL and all budgets
+const percentageOfTotalBudget = ref(0);
 
 // The clicker's val
 const count = ref(0);
@@ -65,7 +70,8 @@ const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 
 // if logged in, assign email, else, set to blank string
-const emailAddr = typeof data.value?.user.email === "string" ? data.value?.user.email : "";
+const emailAddr =
+  typeof data.value?.user.email === "string" ? data.value?.user.email : "";
 
 // const emailAddr = "evan.robertson77@gmail.com";
 // const loggedIn = ref(true);
@@ -119,17 +125,26 @@ async function storeCounter(key: string) {
 
 /**
  * Updates the total value of past tallies
- * Also formats the display value
+ * Also formats the display value and the ratio
  */
 function updateTotal() {
   total.value = 0;
+  budgetTotal.value = 0;
   userArray.forEach((element) => {
     total.value += element.count;
+    budgetTotal.value += element.budget;
   });
   totalDisplay.value = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(total.value);
+  if (budgetTotal.value > 0) {
+    percentageOfTotalBudget.value = Math.round(
+      (total.value / budgetTotal.value) * 100
+    );
+  } else {
+    percentageOfTotalBudget.value = 0;
+  }
 }
 
 /**
@@ -216,7 +231,7 @@ function increment() {
 function incrementCountOperations() {
   count.value += incrementBy.value;
   taxEstimate.value = Math.round(count.value * taxRate.value);
-  updatePercentOfBudget()
+  updatePercentOfBudget();
   // here to switch to warning/regular color when increasing counter
   setCounterColor();
 }
@@ -233,12 +248,12 @@ function decrement() {
     }
   }
   taxEstimate.value = Math.round(count.value * taxRate.value);
-  updatePercentOfBudget()
+  updatePercentOfBudget();
   // here to set warning/regular color when decreasing counter
   setCounterColor();
 }
 
-function updatePercentOfBudget(){
+function updatePercentOfBudget() {
   percentageOfBudget.value = (count.value / budget.value) * 100;
 }
 
@@ -246,7 +261,7 @@ function updatePercentOfBudget(){
  * Adjusts the color of the counter based on budget
  */
 function setCounterColor() {
-  updatePercentOfBudget()
+  updatePercentOfBudget();
   if (percentageOfBudget.value >= 75 && percentageOfBudget.value <= 99) {
     color.value = "orange";
   } else if (percentageOfBudget.value >= 99) {
@@ -260,12 +275,12 @@ function setCounterColor() {
   }
 }
 
-/** A listener function. 
+/** A listener function.
  *  When the value of isDark updates, this function is called
  *  Really, just handles updating the color.
  */
-function colorUpdate(){
-  setCounterColor()
+function colorUpdate() {
+  setCounterColor();
 }
 
 /**
@@ -299,7 +314,7 @@ function resetCounter() {
   count.value = 0;
   taxEstimate.value = 0;
   // here to set after a submit or reset back to regular color
-  setCounterColor()
+  setCounterColor();
 }
 
 const colorMode = useColorMode();
@@ -317,29 +332,24 @@ const isDark = computed({
  * Anything that needs to run AFTER the component has been mounted
  * Currently... not used. Here for reference.
  */
-//  onMounted(async () => {
+// onMounted(async () => {
 //   await nextTick();
-//   document
-//     .getElementById("darkModeButton")
-//     .addEventListener("click", function () {
-//       setCounterColor();
-//     });    
 // });
 
 /**
  * Initialize
  */
- if (loggedIn.value) {
+if (loggedIn.value) {
   getUserTallies(emailAddr);
   getUserBudget(emailAddr);
+} else {
+  // normally get's called in getUserTallies, can't be when not logged in.
+  updateTotal();
 }
 </script>
 
 <template>
-  <input 
-    class="hidden"
-    :value="isDark" 
-    :change="colorUpdate()"/>
+  <input class="hidden" :value="isDark" :change="colorUpdate()" />
   <div class="flex flex-col mx-auto justify-center">
     <!--  audio for clicker -->
     <audio
@@ -453,6 +463,10 @@ const isDark = computed({
         </ol>
         <hr class="my-2" />
         <p class="text-xl">TOTAL: {{ totalDisplay }}</p>
+        <p class="text-xl">
+          Average budget used:<br />
+          <UProgress :value="percentageOfTotalBudget" indicator />
+        </p>
       </UCard>
     </USlideover>
 
@@ -491,7 +505,7 @@ const isDark = computed({
       />
       <!-- reset count -->
       <UButton
-        @click="showAlert = !showAlert "
+        @click="showAlert = !showAlert"
         class="justify-center"
         icon="i-heroicons-arrow-path-solid"
       ></UButton>
