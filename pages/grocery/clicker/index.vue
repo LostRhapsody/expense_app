@@ -165,22 +165,25 @@ async function getRecords(key: string) {
 function updateTotal() {
   total.value = 0;
   budgetTotal.value = 0;
-  if(!userArray === undefined && !userArray === null){
-    userArray.forEach((element) => {
-      total.value += element.count;
-      budgetTotal.value += element.budget;
-    });
-    totalDisplay.value = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(total.value);
-    if (budgetTotal.value > 0) {
-      percentageOfTotalBudget.value = Math.round(
-        (total.value / budgetTotal.value) * 100
-      );
-    } else {
-      percentageOfTotalBudget.value = 0;
-    }
+  
+  if(userArray === undefined || userArray.length == 0){
+    console.log("undefined array");
+    return;
+  }
+  userArray.forEach((element) => {
+    total.value += element.count;
+    budgetTotal.value += element.budget;
+  });
+  totalDisplay.value = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(total.value);
+  if (budgetTotal.value > 0) {
+    percentageOfTotalBudget.value = Math.round(
+      (total.value / budgetTotal.value) * 100
+    );
+  } else {
+    percentageOfTotalBudget.value = 0;
   }
 }
 
