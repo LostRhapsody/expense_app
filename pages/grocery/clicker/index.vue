@@ -7,6 +7,9 @@ const showEditBudget = ref(false);
 const showSettings = ref(false);
 const showTaxEstimate = ref(true);
 
+// For notifications
+const toast = useToast();
+
 // How much to increase the counter by
 const incrementBy = ref(1);
 
@@ -25,15 +28,7 @@ interface userArrayType {
   usedBudget: number;
 }
 
-var userArray: userArrayType[] = [
-  {
-    count: 10,
-    id: 1,
-    date: "1-1-2024",
-    budget: 100,
-    usedBudget: 10,
-  },
-];
+var userArray: userArrayType[];
 
 // total of all grocery trips
 const total = ref(0);
@@ -69,28 +64,30 @@ const currentDate = `${day}-${month}-${year}`;
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 
-// if logged in, assign email, else, set to blank string
-const emailAddr =
-  typeof data.value?.user.email === "string" ? data.value?.user.email : "";
-
-// const emailAddr = "evan.robertson77@gmail.com";
-// const loggedIn = ref(true);
+let userEmail = "";
 
 /**
  * Updates the user's saved budget
  * @param key the key used to store this value (user email)
  */
-async function saveBudget(key: string) {
-  await $fetch("/api/setItem/", {
+async function setBudget(key: string) {
+  showEditBudget.value = false;
+  const setBudgetResponse = await $fetch("/api/grocery/setBudget", {
     method: "post",
     body: {
-      key: key + "budget",
+      key: key + "groceryBudget",
       value: {
         budget: budget.value,
       },
     },
   });
-  showEditBudget.value = false;
+
+  if (setBudgetResponse === null || setBudgetResponse === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (setBudgetResponse.error) {
+    toast.add({ title: "Error: " + setBudgetResponse.message });
+  }
+
 }
 
 /**
@@ -98,29 +95,67 @@ async function saveBudget(key: string) {
  * @param key the key used to retrieve this value (user email + budget)
  */
 async function getUserBudget(key: string) {
-  const budgetData = await $fetch("/api/getItem/", {
+  const records = await $fetch("/api/grocery/getBudget", {
     method: "post",
-    body: { key: key + "budget" },
+    body: { key: key + "groceryBudget" },
   });
-  if (budgetData !== null)
-    if (budgetData.budget !== null && typeof budgetData.budget === "number")
-      budget.value = budgetData.budget;
+  if (records === null || records === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (records.error) {
+    toast.add({ title: "Error: " + records.message });
+  } else {
+    if (records !== null && records !== undefined) {
+      if (records.budget !== null && typeof records.budget === "number") {
+        budget.value = records.budget;
+      }
+    }
+  }
 }
 
 /**
- * Stores the current counter in a key-value pair
- * @param key the key used to store this value (user email)
+ * Stores the user's array of data (previous history and current count)
+ * @param key the key used to store this value
  */
-async function storeCounter(key: string) {
-  await $fetch("/api/setItem/", {
+async function setRecord(key: string) {
+  const setRecordResponse = await $fetch("/api/grocery/setRecord", {
     method: "post",
     body: {
-      key: key,
+      key: key + "groceryRecords",
       value: {
         list: userArray,
       },
     },
   });
+  if (setRecordResponse === null || setRecordResponse === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (setRecordResponse.error) {
+    toast.add({ title: "Error: " + setRecordResponse.message });
+  }
+}
+
+/**
+ * Get's the key-value pair containing the
+ * array of the user's expenses, updates total
+ * @param key the key used to retrive the value
+ */
+async function getRecords(key: string) {
+    
+  const records = await $fetch("/api/grocery/getRecords/", {
+    method: "post",
+    body: { key: key + "groceryRecords" },
+    key: "groceryRecords",
+  });
+
+  if (records === null || records === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (records.error) {
+    toast.add({ title: "Error: " + records.message });
+  } else if (typeof records.list === "object") {
+    if (records.list[0]) {
+      userArray = records.list;
+      updateTotal();
+    }
+  }
 }
 
 /**
@@ -148,38 +183,39 @@ function updateTotal() {
 }
 
 /**
- * Get's the key-value pair containing the
- * array of the user's expenses, updates total
- * @param key the key used to retrive the value
- */
-async function getUserTallies(key: string) {
-  const itemData = await $fetch("/api/getItem/", {
-    method: "post",
-    body: { key: key },
-  });
-  userArray = itemData.list;
-  updateTotal();
-}
-
-/**
  * Updates the userArray with the current counter
  * @param mode add mode: resets counter and pushes to array
  */
 function updateUserArray(mode: string) {
   if (mode === "add") {
     if (count.value <= 0) return;
-    userArray.push({
-      count: count.value,
-      id: userArray.length + 1,
-      date: currentDate,
-      budget: budget.value,
-      usedBudget: Math.round(percentageOfBudget.value),
-    });
+
+    // if array is undefined, create the first element, else push new element
+    if (userArray === undefined || userArray === null) {
+      userArray = [
+        {
+          count: count.value,
+          id: 1,
+          date: currentDate,
+          budget: budget.value,
+          usedBudget: Math.round(percentageOfBudget.value),
+        },
+      ];
+    } else {
+      userArray.push({
+        count: count.value,
+        id: userArray.length + 1,
+        date: currentDate,
+        budget: budget.value,
+        usedBudget: Math.round(percentageOfBudget.value),
+      });
+    }
+
     resetCounter();
   }
   updateTotal();
   if (loggedIn.value) {
-    storeCounter(emailAddr);
+    setRecord(uuid.value);
   }
 }
 
@@ -336,14 +372,28 @@ const isDark = computed({
 //   await nextTick();
 // });
 
+const uuid = ref("");
 /**
  * Initialize
  */
 if (loggedIn.value) {
-  getUserTallies(emailAddr);
-  getUserBudget(emailAddr);
+  if (data !== null && data !== undefined) {
+    if (data.value !== null && data.value !== undefined) {
+      if (typeof data.value.user === "object") {
+        if (typeof data.value.user.email === "string") {
+          userEmail = data.value.user?.email;
+        }
+      }
+    }
+  }
+
+  // check if the UUID is set in the cache
+  const { data: cachedID } = useNuxtData("uuid");
+  uuid.value = cachedID.value;
+  getRecords(uuid.value);
+  getUserBudget(uuid.value);
 } else {
-  // normally get's called in getUserTallies, can't be when not logged in.
+  // normally get's called in getRecords, can't be when not logged in.
   updateTotal();
 }
 </script>
@@ -427,7 +477,7 @@ if (loggedIn.value) {
         <!-- Past tallies list -->
         <ol>
           <li
-            v-if="userArray[0]"
+            v-if="userArray"
             v-for="(item, index) in userArray"
             :key="item.id"
             class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-700"
@@ -621,7 +671,7 @@ if (loggedIn.value) {
         >
         </UInput>
         <template #footer>
-          <UButton block label="Submit" @click="saveBudget(emailAddr)" />
+          <UButton block label="Submit" @click="setBudget(uuid)" />
         </template>
       </UCard>
     </UModal>

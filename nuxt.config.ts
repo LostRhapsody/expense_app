@@ -11,7 +11,8 @@ export default defineNuxtConfig({
     GOOGLE_ID:process.env.GITHUB_ID,
     GOOGLE_SECRET:process.env.GITHUB_SECRET,
     AUTH_SECRET:process.env.AUTH_SECRET,
-    AUTH_ORIGIN:process.env.AUTH_ORIGIN
+    AUTH_ORIGIN:process.env.AUTH_ORIGIN,
+    AUTH_NAMESPACE:process.env.AUTH_NAMESPACE
     }
   },
   devtools: { enabled: true },

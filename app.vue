@@ -3,6 +3,9 @@ const { status, data, signIn, signOut } = useAuth();
 
 const loggedIn = computed(() => status.value === "authenticated");
 
+const userAvatar = ref("");
+let userEmail = "";
+
 async function handleSignIn() {
   await signIn();
 }
@@ -43,6 +46,39 @@ const isDark = computed({
     colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
   },
 });
+
+if (loggedIn.value) {
+  
+  if (data !== null && data !== undefined) {
+    if (data.value !== null && data.value !== undefined) {
+      if (typeof data.value.user === "object") {
+        if (typeof data.value.user.image === "string") {
+          userAvatar.value = data.value.user?.image;
+        }
+        if (typeof data.value.user.email === "string") {
+          userEmail = data.value.user?.email;
+        }
+      }
+    }
+  }
+
+  // check if the UUID is set in the cache
+  const { data: uuid } = useNuxtData("uuid");
+
+  // if no, we'll get it from the server from /UUID
+  if (uuid.value === null) {
+
+    await useFetch("/api/auth/UUID", {
+      method: "post",
+      body: {
+        key: "key",
+        value: userEmail,
+      },
+      // this key ensures we store it in the cache
+      key: "uuid",
+    });
+  } 
+}
 </script>
 
 <template>
@@ -50,21 +86,20 @@ const isDark = computed({
     <!-- main -->
     <UCard class="mt-4">
       <template #header>
-        <div class="flex min-w-0 w-full justify-between">
+        <div class="flex min-w-0 w-full justify-between items-center">
           <!-- Slider nav -->
           <ULink class="text-xl" to="/">Ratio</ULink>
           <UButton
-            v-if="loggedIn"
-            label="Sign Out"
+            v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
             @click="handleSignOut"
-            icon="i-heroicons-user-circle-solid"
-          />
-          <UButton
-            v-else
-            label="Sign In"
-            @click="handleSignIn"
-            icon="i-heroicons-user-circle-solid"
-          />
+            ><UAvatar :src="userAvatar" />Sign out</UButton
+          >
+          <UButton v-else-if="loggedIn" @click="handleSignOut"
+            ><UAvatar icon="i-heroicons-user-circle-solid" />Sign out</UButton
+          >
+          <UButton v-else label="Sign In" @click="handleSignIn"
+            ><UAvatar icon="i-heroicons-user-circle-solid" />Sign in</UButton
+          >
           <UButton @click="isOpen = true" icon="i-heroicons-magnifying-glass" />
         </div>
         <USlideover v-model="isOpen" :overlay="true">
@@ -122,6 +157,7 @@ const isDark = computed({
           </ClientOnly>
         </div>
       </template>
+      <UNotifications />
     </UCard>
   </UContainer>
 </template>
