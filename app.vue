@@ -6,6 +6,9 @@ const loggedIn = computed(() => status.value === "authenticated");
 const userAvatar = ref("");
 let userEmail = "";
 
+// For notifications
+const toast = useToast();
+
 async function handleSignIn() {
   await signIn();
 }
@@ -48,7 +51,9 @@ const isDark = computed({
 });
 
 if (loggedIn.value) {
-  
+  toast.add({
+    title: "Hey, " + data.value?.user.name + "! Ready to start saving?",
+  });
   if (data !== null && data !== undefined) {
     if (data.value !== null && data.value !== undefined) {
       if (typeof data.value.user === "object") {
@@ -67,7 +72,6 @@ if (loggedIn.value) {
 
   // if no, we'll get it from the server from /UUID
   if (uuid.value === null) {
-
     await useFetch("/api/auth/UUID", {
       method: "post",
       body: {
@@ -77,7 +81,7 @@ if (loggedIn.value) {
       // this key ensures we store it in the cache
       key: "uuid",
     });
-  } 
+  }
 }
 </script>
 
@@ -151,10 +155,12 @@ if (loggedIn.value) {
               aria-label="Theme"
               @click="isDark = !isDark"
             />
-            <template #fallback>
-              <div class="w-8 h-8" />
-            </template>
           </ClientOnly>
+        </div>
+        <div class="flex flex-row justify-between min-w-0 items-center">
+          <h2>
+            <ULink class="text-primary-400" to="mailto:evan.robertson77@gmail.com">Contact me.</ULink>
+          </h2>
         </div>
       </template>
       <UNotifications />

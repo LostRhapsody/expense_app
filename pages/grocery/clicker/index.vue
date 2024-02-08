@@ -376,6 +376,7 @@ const uuid = ref("");
 /**
  * Initialize
  */
+ toast.add({ title: "Woohoo! 🥳 'The Clicker' is the first mini-app to be completed for Ratio. Enjoy!" });
 if (loggedIn.value) {
   if (data !== null && data !== undefined) {
     if (data.value !== null && data.value !== undefined) {
