@@ -165,20 +165,22 @@ async function getRecords(key: string) {
 function updateTotal() {
   total.value = 0;
   budgetTotal.value = 0;
-  userArray.forEach((element) => {
-    total.value += element.count;
-    budgetTotal.value += element.budget;
-  });
-  totalDisplay.value = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(total.value);
-  if (budgetTotal.value > 0) {
-    percentageOfTotalBudget.value = Math.round(
-      (total.value / budgetTotal.value) * 100
-    );
-  } else {
-    percentageOfTotalBudget.value = 0;
+  if(!userArray === undefined && !userArray === null){
+    userArray.forEach((element) => {
+      total.value += element.count;
+      budgetTotal.value += element.budget;
+    });
+    totalDisplay.value = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(total.value);
+    if (budgetTotal.value > 0) {
+      percentageOfTotalBudget.value = Math.round(
+        (total.value / budgetTotal.value) * 100
+      );
+    } else {
+      percentageOfTotalBudget.value = 0;
+    }
   }
 }
 
@@ -376,6 +378,7 @@ const uuid = ref("");
 /**
  * Initialize
  */
+ if(process.client)
  toast.add({ title: "Woohoo! 🥳 'The Clicker' is the first mini-app to be completed for Ratio. Enjoy!" });
 if (loggedIn.value) {
   if (data !== null && data !== undefined) {

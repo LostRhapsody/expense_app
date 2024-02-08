@@ -51,9 +51,10 @@ const isDark = computed({
 });
 
 if (loggedIn.value) {
-  toast.add({
-    title: "Hey, " + data.value?.user.name + "! Ready to start saving?",
-  });
+  if(process.client)
+    toast.add({
+      title: "Hey, " + data.value?.user.name + "! Ready to start saving?",
+    });
   if (data !== null && data !== undefined) {
     if (data.value !== null && data.value !== undefined) {
       if (typeof data.value.user === "object") {
