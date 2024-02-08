@@ -11,6 +11,9 @@ dependencies:
   '@vercel/kv':
     specifier: ^1.0.1
     version: 1.0.1
+  convert:
+    specifier: ^4.14.1
+    version: 4.14.1
   next-auth:
     specifier: 4.21.1
     version: 4.21.1(next@13.5.6)(react-dom@18.2.0)(react@18.2.0)
@@ -2758,6 +2761,10 @@ packages:
 
   /convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  /convert@4.14.1:
+    resolution: {integrity: sha512-haeYUERJCdvILEfZC2OHZd8JIIvU6Kl93zfDrDCG3dvws4icuWC2D5O7jyaKh8vjECdfkWkVB6qDycQpGhWWSA==}
+    dev: false
 
   /cookie-es@1.0.0:
     resolution: {integrity: sha512-mWYvfOLrfEc996hlKcdABeIiPHUPC6DM2QYZdGGOvhOTbA3tjm2eBwqlJpoFdjC89NI4Qt6h0Pu06Mp+1Pj5OQ==}

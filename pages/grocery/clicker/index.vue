@@ -64,8 +64,6 @@ const currentDate = `${day}-${month}-${year}`;
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 
-let userEmail = "";
-
 /**
  * Updates the user's saved budget
  * @param key the key used to store this value (user email)
@@ -384,16 +382,6 @@ const uuid = ref("");
  if(process.client)
  toast.add({ title: "Woohoo! 🥳 'The Clicker' is the first mini-app to be completed for Ratio. Enjoy!" });
 if (loggedIn.value) {
-  if (data !== null && data !== undefined) {
-    if (data.value !== null && data.value !== undefined) {
-      if (typeof data.value.user === "object") {
-        if (typeof data.value.user.email === "string") {
-          userEmail = data.value.user?.email;
-        }
-      }
-    }
-  }
-
   // check if the UUID is set in the cache
   const { data: cachedID } = useNuxtData("uuid");
   uuid.value = cachedID.value;
