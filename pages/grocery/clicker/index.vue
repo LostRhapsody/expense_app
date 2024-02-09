@@ -85,7 +85,6 @@ async function setBudget(key: string) {
   } else if (setBudgetResponse.error) {
     toast.add({ title: "Error: " + setBudgetResponse.message });
   }
-
 }
 
 /**
@@ -137,7 +136,6 @@ async function setRecord(key: string) {
  * @param key the key used to retrive the value
  */
 async function getRecords(key: string) {
-    
   const records = await $fetch("/api/grocery/getRecords/", {
     method: "post",
     body: { key: key + "groceryRecords" },
@@ -163,8 +161,8 @@ async function getRecords(key: string) {
 function updateTotal() {
   total.value = 0;
   budgetTotal.value = 0;
-  
-  if(userArray === undefined || userArray.length == 0){
+
+  if (userArray === undefined || userArray.length == 0) {
     console.log("undefined array");
     return;
   }
@@ -379,8 +377,6 @@ const uuid = ref("");
 /**
  * Initialize
  */
- if(process.client)
- toast.add({ title: "Woohoo! 🥳 'The Clicker' is the first mini-app to be completed for Ratio. Enjoy!" });
 if (loggedIn.value) {
   // check if the UUID is set in the cache
   const { data: cachedID } = useNuxtData("uuid");
@@ -391,10 +387,20 @@ if (loggedIn.value) {
   // normally get's called in getRecords, can't be when not logged in.
   updateTotal();
 }
+
+const links = getBreadcrumbs([
+  { name: "Grocery", icon: "i-heroicons-shopping-bag-solid", url: "/grocery" },
+  {
+    name: "Clicker",
+    icon: "i-heroicons-cursor-arrow-rays-solid",
+    url: "/grocery/clicker",
+  },
+]);
 </script>
 
 <template>
   <input class="hidden" :value="isDark" :change="colorUpdate()" />
+  <BreadcrumbHTML><UBreadcrumb :links="links" /></BreadcrumbHTML>
   <div class="flex flex-col mx-auto justify-center">
     <!--  audio for clicker -->
     <audio

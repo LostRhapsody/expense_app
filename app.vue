@@ -20,24 +20,51 @@ async function handleSignOut() {
 const isOpen = ref(false);
 
 const links = [
-  {
-    label: "Home",
-    icon: "i-heroicons-home-modern-solid",
-    to: "/",
-    id: "home",
-  },
-  {
-    label: "Grocery - The Clicker",
-    icon: "i-heroicons-shopping-bag-solid",
-    to: "/grocery/clicker",
-    id: "Grocery",
-  },
-  {
-    label: "Grocery - The Converter",
-    icon: "i-heroicons-shopping-bag-solid",
-    to: "/grocery/converter",
-    id: "Grocery",
-  },
+  [
+    {
+      label: "Home",
+      icon: "i-heroicons-home-modern-solid",
+      to: "/",
+      id: "home",
+    },
+  ],
+  [
+    {
+      label: "Grocery",
+      desc: "Tools to save you money while you shop.",
+      to: "/grocery",
+      isTitle: true,
+    },
+    {
+      label: "Clicker",
+      icon: "i-heroicons-shopping-bag-solid",
+      to: "/grocery/clicker",
+      id: "Clicker",
+      desc: "Easily track your grocery limit while you shop",
+    },
+    {
+      label: "Converter",
+      icon: "i-heroicons-shopping-bag-solid",
+      to: "/grocery/converter",
+      id: "Converter",
+      desc: "Quickly convert common weights and prices",
+    },
+  ],
+  [
+    {
+      label: "Budgeting",
+      isTitle: true,
+      to: "/budgeting",
+      desc: "Balance your checkbook, create digital envelopes, and more budgeting tools.",
+    },
+    {
+      label: "Envelopes",
+      icon: "i-heroicons-envelope-solid",
+      id: "Envelopes",
+      desc: "Create digital envelopes to help categorize spending habits.",
+      to: "/budgeting/envelopes",
+    },
+  ],
 ];
 
 const colorMode = useColorMode();
@@ -51,7 +78,7 @@ const isDark = computed({
 });
 
 if (loggedIn.value) {
-  if(process.client)
+  if (process.client)
     toast.add({
       title: "Hey, " + data.value?.user.name + "! Ready to start saving?",
     });
@@ -127,13 +154,35 @@ if (loggedIn.value) {
                   color="gray"
                   variant="ghost"
                   icon="i-heroicons-x-mark-20-solid"
-                  class="-my-1"
+                  class="my-1"
                   @click="isOpen = false"
                 />
               </div>
             </template>
 
-            <UVerticalNavigation :links="links" @click="isOpen = false" />
+            <UVerticalNavigation
+              :links="links"
+              @click="isOpen = false"
+              :ui="{
+                active:
+                  'text-gray-900 dark:text-white before:bg-transparent dark:before:bg-transparent',
+              }"
+            >
+              <template #default="{ link }">
+                <div v-if="link.isTitle" class="text-center w-full my-4">
+                  <p class="text-xl">{{ link.label }}</p>
+                  <em>{{ link.desc }}</em>
+                </div>
+                <div v-else class="flex flex-col">
+                  <strong
+                    ><p class="z-100">{{ link.label }}</p></strong
+                  >
+                  <em
+                    ><p v-if="link.desc !== ''">{{ link.desc }}</p></em
+                  >
+                </div>
+              </template>
+            </UVerticalNavigation>
           </UCard>
         </USlideover>
       </template>
@@ -160,7 +209,11 @@ if (loggedIn.value) {
         </div>
         <div class="flex flex-row justify-between min-w-0 items-center">
           <h2>
-            <ULink class="text-primary-400" to="mailto:evan.robertson77@gmail.com">Contact me.</ULink>
+            <ULink
+              class="dark:text-primary-400 text-primary-500"
+              to="mailto:evan.robertson77@gmail.com"
+              >Contact</ULink
+            >
           </h2>
         </div>
       </template>
