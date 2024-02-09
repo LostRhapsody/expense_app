@@ -18,8 +18,8 @@ dependencies:
     specifier: ^0.0.5
     version: 0.0.5
   next-auth:
-    specifier: 4.24.5
-    version: 4.24.5(next@13.5.6)(react-dom@18.2.0)(react@18.2.0)
+    specifier: 4.21.1
+    version: 4.21.1(next@13.5.6)(react-dom@18.2.0)(react@18.2.0)
   uuid:
     specifier: ^9.0.1
     version: 9.0.1
@@ -30,7 +30,7 @@ devDependencies:
     version: 6.11.3
   '@sidebase/nuxt-auth':
     specifier: ^0.6.7
-    version: 0.6.7(@vercel/kv@1.0.1)(next-auth@4.24.5)(vue@3.4.18)
+    version: 0.6.7(@vercel/kv@1.0.1)(next-auth@4.21.1)(vue@3.4.18)
   dotenv:
     specifier: ^16.4.1
     version: 16.4.1
@@ -1831,7 +1831,7 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@sidebase/nuxt-auth@0.6.7(@vercel/kv@1.0.1)(next-auth@4.24.5)(vue@3.4.18):
+  /@sidebase/nuxt-auth@0.6.7(@vercel/kv@1.0.1)(next-auth@4.21.1)(vue@3.4.18):
     resolution: {integrity: sha512-cfCRL0LTtv2Ih8VQSkyLyuYAJwNxYXT7ocAXRF9Ys0Lru0XtCl8gbtZMkbjk4iPDlCJv8QIqXCUM0t5TRUcytA==}
     peerDependencies:
       next-auth: ^4.21.1
@@ -1841,7 +1841,7 @@ packages:
       defu: 6.1.4
       h3: 1.10.1
       knitwork: 1.0.0
-      next-auth: 4.24.5(next@13.5.6)(react-dom@18.2.0)(react@18.2.0)
+      next-auth: 4.21.1(next@13.5.6)(react-dom@18.2.0)(react@18.2.0)
       nitropack: 2.8.1(@vercel/kv@1.0.1)
       requrl: 3.0.2
       ufo: 1.3.2
@@ -4482,10 +4482,10 @@ packages:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
 
-  /next-auth@4.24.5(next@13.5.6)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-3RafV3XbfIKk6rF6GlLE4/KxjTcuMCifqrmD+98ejFq73SRoj2rmzoca8u764977lH/Q7jo6Xu6yM+Re1Mz/Og==}
+  /next-auth@4.21.1(next@13.5.6)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-NYkU4jAPSVxWhCblE8dDFAnKM7kOoO/QEobQ0RoEVP9Wox99A3PKHwOAsWhSg8ahJG/iKIWk2Bo1xHvsS4R39Q==}
     peerDependencies:
-      next: ^12.2.5 || ^13 || ^14
+      next: ^12.2.5 || ^13
       nodemailer: ^6.6.5
       react: ^17.0.2 || ^18
       react-dom: ^17.0.2 || ^18
