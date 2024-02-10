@@ -116,7 +116,7 @@ if (loggedIn.value) {
 <template>
   <UContainer class="max-w-xl">
     <!-- main -->
-    <UCard class="mt-4">
+    <UCard class="my-4">
       <template #header>
         <div class="flex min-w-0 w-full justify-between items-center">
           <!-- Slider nav -->
