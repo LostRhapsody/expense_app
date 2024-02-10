@@ -9,6 +9,9 @@ const toast = useToast();
 // show/hide things
 const showExplanation = ref(false);
 
+// max length for inputs
+const maxLength = 9;
+
 // first unit of conversion, default lb
 const firstUnit = ref({
   label: "Pounds",
@@ -22,7 +25,7 @@ const secondUnit = ref({
 });
 
 // amount we're converting (would be in the firstUnit's measurement)
-const value = ref(1);
+const weight = ref(1);
 // the converted value
 const convertedValue = ref("0.45");
 
@@ -66,21 +69,22 @@ const convertedCost = ref(2.22);
  * update the unit of mass used for conversion
  */
 async function updateMassUnit() {
-  if (value.value.toString().length >= 10) {
-    console.log(value.value.toString().length);
-    convertedValue.value = "😖";
-    return;
+  // if weight is longer than maxLength, shorten to maxLength
+  if (weight.value.toString().length > maxLength) {
+    weight.value = Number(weight.value.toString().substring(0, maxLength));
   }
+
   // if using the same units (maybe by accident?) don't send a request
   if (firstUnit.value.id == secondUnit.value.id) {
-    convertedValue.value = value.value.toString();
+    convertedValue.value = weight.value.toString();
     return;
   }
+
+  // send request to convert_mass endpoint
   const response = await $fetch("/api/grocery/convert_mass", {
     method: "post",
     body: {
-      // lol
-      value: value.value,
+      value: weight.value,
       firstUnit: firstUnit.value.id,
       secondUnit: secondUnit.value.id,
     },
@@ -96,6 +100,7 @@ async function updateMassUnit() {
   if (response !== null || response !== undefined) {
     // check if it's over 10 digits. We're only working with small numbers here.
     if (response.toString().length >= 10) {
+      toast.add({ title: "Oops, result was too large to display!" });
       convertedValue.value = "😖";
     } else {
       convertedValue.value = response.toString();
@@ -111,10 +116,36 @@ async function updateMassUnit() {
  * the converted cost per unit
  */
 function convertCost() {
-  // get total cost (first unit)
-  let totalCost = initialCost.value * value.value;
-  // divide that total by the total weight (second unit)
-  let newCost = totalCost / Number(convertedValue.value);
+  let newCost;
+  let totalCost;
+
+  // if cost is longer than maxLength, shorten to maxLength
+  if (initialCost.value.toString().length > maxLength) {
+    initialCost.value = Number(
+      initialCost.value.toString().substring(0, maxLength)
+    );
+  }
+  // if not a number, empty, or null, set to 0
+  if (
+    typeof initialCost.value !== "number" ||
+    initialCost.value === null ||
+    initialCost.value.toString() == ""
+  ) {
+    initialCost.value = 0;
+  }
+
+  // get the total cost (price times weight)
+  totalCost = initialCost.value * weight.value;
+
+  // if the converted weight is less than or equal to 0 don't convert
+  if (Number(convertedValue.value) > 0) {
+    // divide that total by the total weight (second unit)
+    newCost = totalCost / Number(convertedValue.value);
+  } else {
+    newCost = 0;
+  }
+
+  // final cost per unit
   convertedCost.value = Number(newCost.toFixed(2));
 }
 
@@ -129,10 +160,28 @@ const links = getBreadcrumbs([
 </script>
 
 <template>
-  <BreadcrumbHTML><UBreadcrumb :links="links" /></BreadcrumbHTML>
+  <BreadcrumbHTML class="flex items-center"
+    ><UBreadcrumb :links="links"
+  /></BreadcrumbHTML>
+  <UButton
+    @click="showExplanation = !showExplanation"
+    class="justify-center w-full mx-auto text-xl my-2"
+    icon="i-heroicons-information-circle-solid"
+  >
+    How to use ( •̀ ω •́ )✧
+  </UButton>
+  <UAlert
+    v-if="Number.isNaN(Number(convertedValue))"
+    icon="i-heroicons-exclamation-triangle-solid"
+    description="This converter is built for convenience, not exact science. Values greater than 10 digits won't be displayed."
+    title="Heads up!"
+    color="orange"
+  />
   <div class="mx-auto grid grid-cols-2">
-    <p class="text-xl my-4 row-span-2 items-center flex">Convert</p>
-    <div class="flex flex-col row-span-2">
+    <p class="text-3xl my-4 row-span-2 col-span-2 text-center text-primary">
+      Convert
+    </p>
+    <div class="flex flex-col row-span-2 col-span-2 mx-auto">
       <UInputMenu
         @change="updateMassUnit()"
         v-model="firstUnit"
@@ -153,12 +202,14 @@ const links = getBreadcrumbs([
         size="xl"
       />
     </div>
-    <UDivider
-      label="Enter mass"
-      class="col-span-2 my-4"
-      :ui="{ label: 'text-xl' }"
-    />
-    <div class="col-span-2 text-center">
+  </div>
+  <UDivider
+    label="Enter weight"
+    class="col-span-2 my-4"
+    :ui="{ label: 'text-xl' }"
+  />
+  <div class="grid grid-cols-2 grid-rows-1 my-8">
+    <div class="text-center w-full">
       <UInput
         @change="updateMassUnit()"
         :ui="{
@@ -167,40 +218,25 @@ const links = getBreadcrumbs([
         }"
         :padded="false"
         type="number"
-        v-model="value"
+        v-model="weight"
         class="inline-block"
       >
         <template #trailing>
           {{ firstUnit.id }}
         </template>
       </UInput>
-      <p class="text-xl text-center my-2">
-        <UIcon name="i-heroicons-arrows-up-down-solid" />
-      </p>
-      <UInput
-        :ui="{
-          base: '!text-xl text-center !ring-primary-500 dark:!ring-primary-400',
-          trailing: { padding: 'p-0' },
-        }"
-        :padded="false"
-        type="number"
-        v-model="convertedValue"
-        class="inline-block"
-        :disabled="true"
-      >
-        <template #trailing>
-          {{ secondUnit.id }}
-        </template>
-      </UInput>
     </div>
+    <p class="text-xl text-center w-full">
+      = {{ convertedValue }}/{{ firstUnit.id }}
+    </p>
   </div>
   <UDivider
     label="Enter cost per unit"
     class="col-span-2 my-4"
     :ui="{ label: 'text-xl' }"
   />
-  <div class="grid grid-cols-2">
-    <div class="col-span-2 text-center">
+  <div class="grid grid-cols-2 grid-rows-1 my-8">
+    <div class="text-center w-full">
       <UInput
         @change="convertCost"
         :ui="{
@@ -214,48 +250,21 @@ const links = getBreadcrumbs([
         class="inline-block"
       >
         <template #leading>$</template>
-        <template #trailing>per {{ firstUnit.id }}</template>
-      </UInput>
-      <p class="text-xl text-center my-2">
-        <UIcon name="i-heroicons-arrows-up-down-solid" />
-      </p>
-      <UInput
-        :ui="{
-          base: '!text-xl text-center !ring-primary-500 dark:!ring-primary-400',
-          trailing: { padding: 'ps-0' },
-          leading: { padding: 'ps-0' },
-        }"
-        :padded="false"
-        type="number"
-        v-model="convertedCost"
-        class="inline-block"
-        :disabled="true"
-      >
-        <template #leading>$</template>
-        <template #trailing>per {{ secondUnit.id }}</template>
+        <template #trailing>{{ secondUnit.id }}</template>
       </UInput>
     </div>
+    <p class="text-xl text-center w-full">
+      = ${{ convertedCost }}/{{ secondUnit.id }}
+    </p>
   </div>
-  <UDivider label="Result" class="col-span-2 my-2" />
+  <UDivider label="Result" class="col-span-2 my-2" :ui="{ label: 'text-xl' }" />
   <p class="text-xl my-4">
-    <strong>{{ value }} {{ firstUnit.label }}</strong> equals
-    <strong>{{ convertedValue }} {{ secondUnit.label }}</strong> and
-    <strong>${{ initialCost }}/ {{ firstUnit.id }}</strong> costs
-    <strong>${{ convertedCost }}/{{ secondUnit.id }}</strong
-    >.
+    <strong>{{ weight }} {{ firstUnit.label }}</strong> equals
+    <strong>{{ convertedValue }} {{ secondUnit.label }}</strong
+    ><br />
+    <strong>${{ initialCost }} per {{ firstUnit.id }}</strong> costs
+    <strong>${{ convertedCost }} per {{ secondUnit.id }}</strong>
   </p>
-  <UButton
-    @click="showExplanation = !showExplanation"
-    class="justify-center w-full"
-    icon="i-heroicons-information-circle-solid"
-  />
-  <UAlert
-    v-if="value.toString().length >= 10 || convertedValue.length >= 10"
-    icon="i-heroicons-exclamation-triangle-solid"
-    description="This converter is built for convenience, not exact science. Values greater than 10 digits won't be displayed."
-    title="Heads up!"
-    color="orange"
-  />
   <!-- EXPLANATION -->
   <UModal :ui="{ container: 'items-center' }" v-model="showExplanation">
     <UCard>
