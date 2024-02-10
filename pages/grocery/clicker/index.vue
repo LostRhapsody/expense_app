@@ -6,6 +6,7 @@ const showExplanation = ref(false);
 const showEditBudget = ref(false);
 const showSettings = ref(false);
 const showTaxEstimate = ref(true);
+const showTallies = ref(false);
 
 // For notifications
 const toast = useToast();
@@ -147,7 +148,7 @@ async function getRecords(key: string) {
   } else if (records.error) {
     toast.add({ title: "Error: " + records.message });
   } else if (typeof records.list === "object") {
-    if (records.list[0]) {
+    if (records.list.length > 0) {
       userArray = records.list;
       updateTotal();
     }
@@ -214,7 +215,13 @@ function updateUserArray(mode: string) {
 
     resetCounter();
   }
-  updateTotal();
+  // only updateTotal if there is an array to update
+  if (userArray !== undefined && userArray.length != 0) {
+    updateTotal();
+    showTallies.value = true;
+  } else {
+    showTallies.value = false;  
+  }
   if (loggedIn.value) {
     setRecord(uuid.value);
   }
@@ -478,7 +485,7 @@ const links = getBreadcrumbs([
         <!-- Past tallies list -->
         <ol>
           <li
-            v-if="userArray"
+            v-if="showTallies"
             v-for="(item, index) in userArray"
             :key="item.id"
             class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-700"
