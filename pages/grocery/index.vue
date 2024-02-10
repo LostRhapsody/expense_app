@@ -29,14 +29,10 @@ const breadCrumbs = getBreadcrumbs([
 <template>
   <BreadcrumbHTML><UBreadcrumb :links="breadCrumbs" /></BreadcrumbHTML>
   <div class="text-center">
-    <h1 class="text-lg">
-      <strong class="text-4xl">Ratio 💵</strong><br />Simple tools to help track
-      spending while shopping 🛒
-    </h1>
-    <UDivider label="All grocery tools" class="my-8"/>
-    <UVerticalNavigation
-      :links="links"
-    >
+    <ratio_title />
+    <p>Simple tools to help track spending while shopping 🛒</p>
+    <UDivider label="All grocery tools" class="my-8" />
+    <UVerticalNavigation :links="links">
       <template #default="{ link }">
         <div class="flex flex-col text-start">
           <strong

@@ -22,11 +22,8 @@ const breadCrumbs = getBreadcrumbs([
 <template>
   <BreadcrumbHTML><UBreadcrumb :links="breadCrumbs" /></BreadcrumbHTML>
   <div class="text-center">
-    <h1 class="text-lg">
-      <strong class="text-4xl">Ratio 💵</strong>
-      <br />Balance a checkbook, create digital envelopes, and more simple
-      budgeting tools 🧾
-    </h1>
+    <RatioTitle />
+    <p>Balance a checkbook, create digital envelopes, and more simple budgeting tools 🧾</p>
     <UDivider label="All budgeting tools" class="my-8" />
     <UVerticalNavigation :links="links">
       <template #default="{ link }">
