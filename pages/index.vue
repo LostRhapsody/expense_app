@@ -22,7 +22,7 @@ const breadCrumbs = getBreadcrumbs([]);
 <template>
   <div class="text-center">
     <BreadcrumbHTML><UBreadcrumb :links="breadCrumbs" /></BreadcrumbHTML>
-    <RatioTitle/>
+    <BudgieTitle />
     <p>Use the <UIcon name="i-heroicons-magnifying-glass" /> to navigate, or see the categories down below.</p>  
     <UDivider label="Categories" class="my-4" />
     <UVerticalNavigation

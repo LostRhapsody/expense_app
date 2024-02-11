@@ -63,7 +63,7 @@ const loggedIn = computed(() => status.value === "authenticated");
 
 /**
  * Updates the user's saved budget
- * @param key the key used to store this value (user email)
+ * @param key the key used to store this value
  */
 async function setBudget(key: string) {
   showEditBudget.value = false;
@@ -86,7 +86,7 @@ async function setBudget(key: string) {
 
 /**
  * Get's the user's saved budget
- * @param key the key used to retrieve this value (user email + budget)
+ * @param key the key used to retrieve this value
  */
 async function getUserBudget(key: string) {
   const records = await $fetch("/api/grocery/getBudget", {
@@ -176,7 +176,6 @@ function updateTotal() {
   if (userArray === undefined || userArray.length == 0) {
     totalDisplay.value = formatCurrency(total.value);
     percentageOfTotalBudget.value = 0;
-    console.log("undefined array");
     return;
   }
 

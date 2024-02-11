@@ -167,8 +167,16 @@ const links = getBreadcrumbs([
     @click="showExplanation = !showExplanation"
     class="justify-center w-full mx-auto text-xl my-2"
     icon="i-heroicons-information-circle-solid"
+    variant="outline"
   >
-    How to use ( •̀ ω •́ )✧
+    How to use
+    <img
+      alt="An icon of a budgie, which is a kind of bird."
+      class="inline-block text-primary"
+      src="/edited_budgie.svg"
+      height="25"
+      width="25"
+    />
   </UButton>
   <UAlert
     v-if="Number.isNaN(Number(convertedValue))"
@@ -227,7 +235,7 @@ const links = getBreadcrumbs([
       </UInput>
     </div>
     <p class="text-xl text-center w-full">
-      = {{ convertedValue }}/{{ firstUnit.id }}
+      = {{ convertedValue }}/{{ secondUnit.id }}
     </p>
   </div>
   <UDivider
@@ -250,7 +258,7 @@ const links = getBreadcrumbs([
         class="inline-block"
       >
         <template #leading>$</template>
-        <template #trailing>{{ secondUnit.id }}</template>
+        <template #trailing>{{ firstUnit.id }}</template>
       </UInput>
     </div>
     <p class="text-xl text-center w-full">

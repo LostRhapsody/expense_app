@@ -1,36 +1,20 @@
 <script setup lang="ts">
 import getCurrentDate from "~/utils/getCurrentDate";
 
-const route = useRoute();
+// For notifications
+const toast = useToast();
 
 // show things
 const showExplanation = ref(false);
 const editOpen = ref(false);
 
-// array of envelopes, init as empty array of objects
-//const envelopeArray = [{}]
+// user data
+const { status, data, signIn, signOut } = useAuth();
+const loggedIn = computed(() => status.value === "authenticated");
+const uuid = ref("");
 
-// for testing, init as array of built objects
-const envelopeArray = ref([
-  {
-    name: "groceries",
-    budget: 100,
-    created: getCurrentDate(),
-    open: false,
-  },
-  {
-    name: "bills",
-    budget: 150,
-    created: getCurrentDate(),
-    open: false,
-  },
-  {
-    name: "car",
-    budget: 300,
-    created: getCurrentDate(),
-    open: false,
-  },
-]);
+// array of envelopes, init as empty array of objects
+const envelopeArray = ref([]);
 
 // stores the envelope that is currently open
 let openEnvelope = {};
@@ -47,6 +31,50 @@ const links = getBreadcrumbs([
     url: "/budgeting/envelopes",
   },
 ]);
+
+/**
+ * save's an envelope to the DB
+ * @param key the key used to retrieve this value
+ */
+async function setEnvelopeArray(key: string) {
+  const setEnvelopeResponse = await $fetch("/api/budgeting/setEnvelope", {
+    method: "post",
+    body: {
+      key: key + "Envelope",
+      value: {
+        envelopeArray: envelopeArray.value,
+      },
+    },
+  });
+
+  if (setEnvelopeResponse === null || setEnvelopeResponse === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (setEnvelopeResponse.error) {
+    toast.add({ title: "Error: " + setEnvelopeResponse.message });
+  }
+}
+
+/**
+ * Get's the user's saved envelopes
+ * @param key the key used to retrieve this value
+ */
+async function getEnvelopeArray(key: string) {
+  const getEnvelopeResponse = await $fetch("/api/budgeting/getEnvelope", {
+    method: "post",
+    body: { key: key + "Envelope" },
+  });
+  if (
+    getEnvelopeResponse === null ||
+    getEnvelopeResponse === undefined ||
+    getEnvelopeResponse.length > 0
+  ) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (getEnvelopeResponse.error) {
+    toast.add({ title: "Error: " + getEnvelopeResponse.message });
+  } else {
+    envelopeArray.value = getEnvelopeResponse.envelopeArray;
+  }
+}
 
 /**
  * displays a modal to edit the envelope's properties
@@ -86,6 +114,7 @@ function saveEnvelope() {
 
   // hide modal
   editOpen.value = false;
+  setEnvelopeArray(uuid.value);
 }
 
 /**
@@ -112,8 +141,14 @@ function createEnvelope() {
     created: getCurrentDate(),
     open: true,
   };
-  envelopeArray.value.push(envelope);
+  // if array is empty, set element 0
+  if (envelopeArray.value === null || envelopeArray.value === undefined) {
+    envelopeArray.value = [envelope];
+  } else {
+    envelopeArray.value.push(envelope);
+  }
   openAnEnvelope(envelopeArray.value.length - 1);
+  setEnvelopeArray(uuid.value);
 }
 
 /**
@@ -122,7 +157,14 @@ function createEnvelope() {
 function deleteEnvelope() {
   envelopeArray.value.splice(openEnvelope.index, 1);
   editOpen.value = false;
-  //updateUserArray("delete");
+  setEnvelopeArray(uuid.value);
+}
+
+if (loggedIn.value) {
+  // check if the UUID is set in the cache
+  const { data: cachedID } = useNuxtData("uuid");
+  uuid.value = cachedID.value;
+  getEnvelopeArray(uuid.value);
 }
 </script>
 
@@ -132,13 +174,21 @@ function deleteEnvelope() {
     @click="showExplanation = !showExplanation"
     class="justify-center w-full mx-auto text-xl my-2"
     icon="i-heroicons-information-circle-solid"
+    variant="outline"
   >
-    How to use ( •̀ ω •́ )✧
+    How to use
+    <img
+      alt="An icon of a budgie, which is a kind of bird."
+      class="inline-block text-primary"
+      src="/edited_budgie.svg"
+      height="25"
+      width="25"
+    />
   </UButton>
   <div class="text-center my-4">
     <h1 class="text-3xl">Digital Envelopes</h1>
   </div>
-  <div class="grid grid-cols-2">
+  <div v-if="envelopeArray.length > 0" class="grid grid-cols-2">
     <!-- envelopes -->
     <div class="envelopeContainer" v-for="(envelope, index) in envelopeArray">
       <div
@@ -166,6 +216,15 @@ function deleteEnvelope() {
         </div>
       </div>
     </div>
+  </div>
+  <div v-else v-if="loggedIn" class="grid grid-cols-2">
+    <!-- skeleton envelopes -->
+    <div class="flex justify-center">
+      <USkeleton class="h-[170px] w-[116px]" />
+    </div>
+    <div class="flex justify-center mb-4">
+      <USkeleton class="h-[170px] w-[116px]" />
+    </div>    
   </div>
   <div class="text-center">
     <UButton
@@ -267,7 +326,9 @@ function deleteEnvelope() {
       </p>
       <br />
       <p>
-      Lastly, you can use <span class="text-red-500">the "Delete" button</span> to delete that envelope.
+        Lastly, you can use
+        <span class="text-red-500">the "Delete" button</span> to delete that
+        envelope.
       </p>
     </UCard>
   </UModal>

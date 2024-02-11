@@ -29,8 +29,8 @@ const breadCrumbs = getBreadcrumbs([
 <template>
   <BreadcrumbHTML><UBreadcrumb :links="breadCrumbs" /></BreadcrumbHTML>
   <div class="text-center">
-    <ratio_title />
-    <p>Simple tools to help track spending while shopping 🛒</p>
+    <BudgieTitle/>
+    <p>Easy to use tools to help track spending while your shopping 🛒</p>
     <UDivider label="All grocery tools" class="my-8" />
     <UVerticalNavigation :links="links">
       <template #default="{ link }">
