@@ -156,25 +156,39 @@ async function getRecords(key: string) {
 }
 
 /**
+ * utility function to numbers format to US currency
+ * @param num number value to format as currency
+ * @returns num formated as US currency
+ */
+function formatCurrency(num:number){
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(num);
+}
+
+/**
  * Updates the total value of past tallies
  * Also formats the display value and the ratio
  */
 function updateTotal() {
+
   total.value = 0;
   budgetTotal.value = 0;
 
+  // if empty, set everything to zero.
   if (userArray === undefined || userArray.length == 0) {
+    totalDisplay.value = formatCurrency(total.value);
+    percentageOfTotalBudget.value = 0;
     console.log("undefined array");
     return;
   }
+
   userArray.forEach((element) => {
     total.value += element.count;
     budgetTotal.value += element.budget;
   });
-  totalDisplay.value = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(total.value);
+  totalDisplay.value = formatCurrency(total.value);
   if (budgetTotal.value > 0) {
     percentageOfTotalBudget.value = Math.round(
       (total.value / budgetTotal.value) * 100
@@ -215,13 +229,18 @@ function updateUserArray(mode: string) {
 
     resetCounter();
   }
-  // only updateTotal if there is an array to update
+
+  // always update total, have to catch undefined array errors inside
+  updateTotal();
+
+  // if array is empty, don't show tallies
   if (userArray !== undefined && userArray.length != 0) {
-    updateTotal();
     showTallies.value = true;
   } else {
     showTallies.value = false;  
   }
+
+  // set record in DB if logged in
   if (loggedIn.value) {
     setRecord(uuid.value);
   }
