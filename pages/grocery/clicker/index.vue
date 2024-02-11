@@ -56,11 +56,7 @@ const taxRate = ref(0.13);
 const taxEstimate = ref(0);
 
 // Grab the date
-const date = new Date();
-const day = date.getDate();
-const month = date.getMonth() + 1;
-const year = date.getFullYear();
-const currentDate = `${day}-${month}-${year}`;
+const currentDate = getCurrentDate();
 
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
