@@ -33,22 +33,6 @@ const iouArray = ref([
   },
 ]);
 
-// columns to show in table
-const columns = [
-  {
-    key: "name",
-    label: "Name",
-  },
-  {
-    key: "amount",
-    label: "Amount",
-  },
-  {
-    key: "borrowed",
-    label: "Borrowed",
-  },
-];
-
 const currentIOU = ref({});
 
 const links = getBreadcrumbs([
@@ -146,90 +130,54 @@ function deleteIOU() {
   </UButton>
   <UDivider label="IOU LIST" class="mt-8" />
   <!-- List of IOUs -->
-  <UTable :rows="iouArray" :columns="columns" />
-  <div class="grid grid-cols-1">
-    <div
-      class="ring-2 ring-gray-800 mx-4 my-4 text-center rounded-lg"
-      v-for="(iou, index) in iouArray"
-    >
-      <div class="grid-cols-2 grid-rows-2 grid">
-        <p
-          class="ring-2 ring-gray-500 rounded m-2 flex items-center justify-center"
+  <div class="grid grid-cols-2">
+    <div v-for="(iou, index) in iouArray">
+      <div v-if="iou.borrowed" class="m-2">
+        <UChip
+          size="3xl"
+          :text="'$' + iou.amount"
+          class="w-full my-4"
+          color="red"
         >
-          {{ iou.name }}
-        </p>
-        <p
-          v-if="iou.borrowed"
-          class="ring-2 ring-primary rounded m-2 flex items-center justify-center"
-        >
-          Borrowed
-        </p>
-        <p
-          v-else
-          class="ring-2 ring-red-400 rounded m-2 flex items-center justify-center"
-        >
-          Lent
-        </p>
-        <p
-          class="ring-2 ring-gray-500 rounded m-2 flex items-center justify-center"
-        >
-          ${{ iou.amount }}
-        </p>
-        <UButton
-          @click="togglePayModal(index)"
-          class="m-2"
-          icon="i-heroicons-check-solid"
-        >
-          Resolve
-        </UButton>
+          <UButton
+            @click="togglePayModal(index)"
+            color="red"
+            class="w-full block text-start"
+            variant="outline"
+          >
+            <span>{{ iou.name }}</span
+            ><br />
+            <span>Borrow</span>
+          </UButton>
+        </UChip>
+      </div>
+      <div v-else class="m-2">
+        <UChip size="3xl" :text="'$' + iou.amount" class="w-full my-4">
+          <UButton
+            @click="togglePayModal(index)"
+            class="w-full block text-start"
+            variant="outline"
+          >
+            <span>{{ iou.name }}</span
+            ><br />
+            <span>Lent</span>
+          </UButton>
+        </UChip>
       </div>
     </div>
   </div>
-
-  <div class="grid grid-cols-2 text-center">
-    <div v-for="(iou, index) in iouArray">
-      <br />
-      <UChip size="xl" :text="'$' + iou.amount"
-        ><UButton @click="togglePayModal(index)" variant="outline">
-          <div class="flex items-center">
-            <UIcon v-if="iou.borrowed" name="i-heroicons-arrow-up" />
-            <UIcon v-else name="i-heroicons-arrow-down" />
-            <div>
-              {{ iou.name }}
-              <p v-if="iou.borrowed">Borrowed</p>
-              <p v-else>Lent</p>
-            </div>
-          </div>
-        </UButton></UChip
-      >
-    </div>
-  </div>
-
-  <div v-for="(iou, index) in iouArray">
-    <UCard class="my-6 mx-8">
-      <template #header>
-        <div class="flex justify-between items-center">
-          <p v-if="iou.borrowed">Borrowed by: {{ iou.name }}</p>
-          <p v-else>Lent to:{{ iou.name }}</p>
-          <UButton
-            @click="togglePayModal(index)"
-            icon="i-heroicons-check-circle-solid"
-          />
-        </div>
-      </template>
-      <p class="text-lg">${{ iou.amount }}</p>
-      <template #footer>
-        <p v-if="iou.borrowed">Pay by: {{ iou.date }}</p>
-        <p v-else>Recieve by: {{ iou.date }}</p>
-      </template>
-    </UCard>
+  <div class="text-center">
+    <!-- @click="createIOU" -->
+    <UButton class="mx-auto my-4 rounded-full h-28 w-28 justify-center text-3xl"
+      >+ IOU</UButton
+    >
   </div>
   <!-- Pay IOU modal -->
   <UModal :ui="{ container: 'items-center' }" v-model="showPayIOU">
     <UCard>
       <template #header>
         <div class="flex min-w-0 justify-between items-center">
-          {{ currentIOU.name }}
+          IOU: {{ currentIOU.name }}
           <UButton
             @click="showPayIOU = false"
             variant="link"
@@ -239,8 +187,9 @@ function deleteIOU() {
           />
         </div>
       </template>
-      Has The amount of ${{ currentIOU.amount }} been paid to
-      {{ currentIOU.name }}?
+      Has The amount of ${{ currentIOU.amount }} been
+      <span v-if="currentIOU.borrowed">paid to</span
+      ><span v-else>received from</span> {{ currentIOU.name }}?
       <template #footer>
         <div class="flex justify-around mx-auto">
           <UButton
@@ -280,11 +229,15 @@ function deleteIOU() {
       </p>
       <br />
       <p>
-        If you 'borrow' money from someone, set the IOU to 'borrowed'.<br />If
-        someone owes you money, set the IOU to 'lent'.
+        If you 'borrow' money from someone, set the IOU to 'borrowed'. These
+        will be in <span class="text-red-400">red</span>.<br /><br />If someone
+        owes you money, set the IOU to 'lent'. These will be in
+        <span class="text-primary">green</span>.
       </p>
       <br />
-      <p>Always pay back your debts! O(∩_∩)O</p>
+      <p>
+        Always pay back your debts! <span class="text-primary">O(∩_∩)O</span>
+      </p>
       <UDivider class="my-2" />
     </UCard>
   </UModal>
