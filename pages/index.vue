@@ -24,20 +24,6 @@ const breadCrumbs = getBreadcrumbs([]);
     <BreadcrumbHTML><UBreadcrumb :links="breadCrumbs" /></BreadcrumbHTML>
     <BudgieTitle />
     <p>Use the <UIcon name="i-heroicons-magnifying-glass" /> to navigate, or see the categories down below.</p>  
-    <UDivider label="Categories" class="my-4" />
-    <UVerticalNavigation
-      :links="pageCategories"
-    >
-      <template #default="{ link }">
-        <div class="flex flex-col text-start">
-          <strong
-            ><p class="z-100">{{ link.label }}</p></strong
-          >
-          <em
-            ><p v-if="link.desc !== ''">{{ link.desc }}</p></em
-          >
-        </div>
-      </template>
-    </UVerticalNavigation>
+    <GroupLinks :links="pageCategories" label="Category" />    
   </div>
 </template>

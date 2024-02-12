@@ -31,18 +31,6 @@ const breadCrumbs = getBreadcrumbs([
   <div class="text-center">
     <BudgieTitle/>
     <p>Easy to use tools to help track spending while your shopping 🛒</p>
-    <UDivider label="All grocery tools" class="my-8" />
-    <UVerticalNavigation :links="links">
-      <template #default="{ link }">
-        <div class="flex flex-col text-start">
-          <strong
-            ><p class="z-100">{{ link.label }}</p></strong
-          >
-          <em
-            ><p v-if="link.desc !== ''">{{ link.desc }}</p></em
-          >
-        </div>
-      </template>
-    </UVerticalNavigation>
+    <GroupLinks :links="links" label="All grocery tools" />    
   </div>
 </template>
