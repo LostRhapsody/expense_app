@@ -9,13 +9,20 @@ const links = [
     desc: "Create digital envelopes to help categorize spending habits.",
     to: "/budgeting/envelopes",
   },
+  {
+    label: "IOUs",
+    icon: "i-heroicons-user-solid",
+    id: "IOUs",
+    desc: "Track lending and borrowing.",
+    to: "/budgeting/iou",
+  },
 ];
 const breadCrumbs = getBreadcrumbs([
   {
     name: "Budgeting",
     icon: "i-heroicons-currency-dollar-solid",
     url: "/budgeting",
-  },
+  }
 ]);
 </script>
 
