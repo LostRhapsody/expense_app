@@ -24,6 +24,6 @@ const breadCrumbs = getBreadcrumbs([]);
     <BreadcrumbHTML><UBreadcrumb :links="breadCrumbs" /></BreadcrumbHTML>
     <BudgieTitle />
     <p>Use the <UIcon name="i-heroicons-magnifying-glass" /> to navigate, or see the categories down below.</p>  
-    <GroupLinks :links="pageCategories" label="Category" />    
+    <GroupLinks :links="pageCategories" label="Categories" />    
   </div>
 </template>

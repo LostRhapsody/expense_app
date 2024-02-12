@@ -169,16 +169,20 @@ if (loggedIn.value) {
               }"
             >
               <template #default="{ link }">
-                <div v-if="link.isTitle" class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2">
-                  <p class="text-xl dark:border-gray-800 ring-gray-200 border-b-2 mb-2">{{ link.label }}</p>
+                <div
+                  v-if="link.isTitle"
+                  class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2"
+                >
+                  <p
+                    class="text-xl dark:border-gray-800 ring-gray-200 border-b-2 mb-2"
+                  >
+                    {{ link.label }}
+                  </p>
                   <em>{{ link.desc }}</em>
                 </div>
                 <div v-else class="flex flex-col">
-                  <strong
-                    ><p class="z-100">{{ link.label }}</p></strong
-                  >
-                  <em
-                    ><p v-if="link.desc !== ''">{{ link.desc }}</p></em
+                  <strong class="text-lg dark:text-white text-black"
+                    ><p>{{ link.label }}</p></strong
                   >
                 </div>
               </template>
