@@ -1,75 +1,31 @@
-# Nuxt 3 Minimal Starter
+# Budgie: Your Simple and Private Budgeting Companion
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Budgie is your go-to budgeting app available on the web, Android, and iOS, designed with minimalism and simplicity in mind. Currently undergoing development.
 
-## Setup
+## Key Features:
+- **Tools**: Budgie offers a range of tools including a clicker, converter, envelope budgeting system, IOU tracker, a checkbook, ideal-saving/investing ratios based on provided income, and savings goals tracking to effectively manage your finances.
 
-Make sure to install the dependencies:
+- **Privacy and UI/UX**: Our standout features include privacy protection and a user-friendly interface. Budgie prioritizes speed, allowing you to swiftly perform tasks like transaction logging and expense tracking. No personal information is required to use Budgie, you can stay logged out, in which case no data leaves your device. Or you can sign in with your google account to store your budgeting data in a secured database using End-to-End-Encryption.
 
-```bash
-# npm
-npm install
+- **Data Security**: Your privacy matters. Budgie does not link to your bank account or store personal information. We only require your email for Google login verification, secured with OAuth. Your budget data is the sole information transferred between your device and our secure database, and is encrypted during the transport process.
 
-# pnpm
-pnpm install
+- **Contributions**: Budgie is an open-source project welcoming contributions from individuals proficient in OSS, user security, and UI/UX. While contributors are not employees, we're committed to transparency and long-term success.
 
-# yarn
-yarn install
+## Tech Stack:
+Built on the Nuxt.js metaframework, Budgie employs Vue.js for frontend and Nitro for the server.
+Hosted on Vercel, utilizing Vercel KV for database storage. We plan to migrate to a different platform for scaling purposes in the future, if necessary. In the meantime, we look forward to seeing how we can grow with Vercel at cost.
+Future plans include leveraging Capacitor to support native Android and iOS APIs for app store distribution.
+|![Nuxt.JS Logo](https://www.webnoob.dev/img/og/getting-started-with-nuxt.jpg)|![Nitro Logo](https://github.com/unjs/nitro/raw/main/docs/public/cover.png)|![Vercel Logo](https://repository-images.githubusercontent.com/659798237/9a6acdfe-6f48-47a7-9420-08047878569c)|
+|---|---|---|
 
-# bun
-bun install
-```
+## Roadmap:
+Budgie is currently in active development, with several tools nearing completion. We anticipate closed beta testing in the coming months and aim to launch a fully-fledged web and mobile app shortly thereafter.
 
-## Development Server
+## Business Strategy:
+During beta testing, Budgie will adopt a freemium model to assess the viability of free users. We'll explore options like rate limits and minimal advertising for free users, while offering an ad-free experience and lifted rate limits for premium subscribers.
 
-Start the development server on `http://localhost:3000`:
+While we're exploring various revenue models, our commitment to user satisfaction remains steadfast. We'll refine our approach during beta testing to ensure Budgie's sustainability without compromising user experience.
 
-```bash
-# npm
-npm run dev
+Experience the simplicity and privacy of Budgie for smarter financial management. Join us on our journey towards better budgeting!
 
-# pnpm
-pnpm run dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm run build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm run preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+**Feel free to reach out with any questions or to get involved in shaping Budgie's future!**
