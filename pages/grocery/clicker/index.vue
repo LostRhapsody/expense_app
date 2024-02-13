@@ -502,7 +502,7 @@ const links = getBreadcrumbs([
             v-if="showTallies"
             v-for="(item, index) in userArray"
             :key="item.id"
-            class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-700"
+            class="text-lg my-4 flex justify-around w-full dark:border-gray-800 border-gray-200 border-solid border-2 py-1 rounded-lg dark:hover:bg-gray-700 hover:bg-gray-100"
           >
             <div class="flex flex-col w-full">
               <div class="flex flex-row justify-between mx-8 text-xl">
