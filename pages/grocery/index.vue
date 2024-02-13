@@ -32,7 +32,7 @@ const breadCrumbs = getBreadcrumbs([
 ><UBreadcrumb :ui="{ li: 'text-black' }" :links="breadCrumbs" /></BreadcrumbHTML>
   <div class="text-center">
     <BudgieTitle/>
-    <p>Easy to use tools to help track spending while your shopping 🛒</p>
+    <p>Easy to use tools to help track spending while shopping 🛒</p>
     <GroupLinks :links="links" label="All grocery tools" />    
   </div>
 </template>

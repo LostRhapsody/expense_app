@@ -34,37 +34,17 @@ const showFavoritesList = computed(() => {
   return faveoriteLinks.value[0].find((e) => e.toggled);
 });
 
-const pageCategories = [
-  {
-    label: "Grocery",
-    desc: "Tools to save you money while you shop.",
-    to: "/grocery",
-    isTitle: true,
-  },
-  {
-    label: "Budgeting",
-    isTitle: true,
-    to: "/budgeting",
-    desc: "Balance your checkbook, create digital envelopes, and more budgeting tools.",
-  },
-];
 // just home, lol
 const breadCrumbs = getBreadcrumbs([]);
 </script>
 
 <template>
   <div class="text-center">
-    <BreadcrumbHTML
-      class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
-      ><UBreadcrumb :ui="{ li: 'text-black' }" :links="breadCrumbs"
-    /></BreadcrumbHTML>
     <BudgieTitle />
-    <p>
-      Use the <UIcon name="i-heroicons-magnifying-glass" /> to navigate, or see
-      the categories down below.
+    <p class="flex items-center justify-center">
+      Use the <UIcon name="i-heroicons-bars-3" class="mx-1 text-xl py-8" /> to navigate.
     </p>
-    <GroupLinks :links="pageCategories" label="Categories" />
-    <UDivider label="Favorites" class="my-4" />
+    <UDivider label="Favorites" class="mt-8" />
     <div class="m-2 p-1"> 
 
       <UButton
