@@ -156,7 +156,7 @@ async function getRecords(key: string) {
  * @param num number value to format as currency
  * @returns num formated as US currency
  */
-function formatCurrency(num:number){
+function formatCurrency(num: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -168,7 +168,6 @@ function formatCurrency(num:number){
  * Also formats the display value and the ratio
  */
 function updateTotal() {
-
   total.value = 0;
   budgetTotal.value = 0;
 
@@ -232,7 +231,7 @@ function updateUserArray(mode: string) {
   if (userArray !== undefined && userArray.length != 0) {
     showTallies.value = true;
   } else {
-    showTallies.value = false;  
+    showTallies.value = false;
   }
 
   // set record in DB if logged in
@@ -421,7 +420,9 @@ const links = getBreadcrumbs([
 
 <template>
   <input class="hidden" :value="isDark" :change="colorUpdate()" />
-  <BreadcrumbHTML><UBreadcrumb :links="links" /></BreadcrumbHTML>
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+    ><UBreadcrumb :ui="{ li: 'text-black' }" :links="links"
+  /></BreadcrumbHTML>
   <div class="flex flex-col mx-auto justify-center">
     <!--  audio for clicker -->
     <audio
@@ -553,7 +554,10 @@ const links = getBreadcrumbs([
     <UDivider label="TOTAL" />
     <div class="my-4">
       <p class="text-center text-3xl counterText">${{ count }}</p>
-      <p v-if="showTaxEstimate" class="text-center text-gray-400">
+      <p
+        v-if="showTaxEstimate"
+        class="text-center dark:text-gray-400 text-gray-600"
+      >
         After tax: ${{ taxEstimate + count }}
       </p>
     </div>

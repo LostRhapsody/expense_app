@@ -160,8 +160,8 @@ const links = getBreadcrumbs([
 </script>
 
 <template>
-  <BreadcrumbHTML class="flex items-center"
-    ><UBreadcrumb :links="links"
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1 "
+    ><UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links"
   /></BreadcrumbHTML>
   <UButton
     @click="showExplanation = !showExplanation"
@@ -186,7 +186,7 @@ const links = getBreadcrumbs([
     color="orange"
   />
   <div class="mx-auto grid grid-cols-2">
-    <p class="text-3xl my-4 row-span-2 col-span-2 text-center text-primary">
+    <p class="text-3xl my-4 row-span-2 col-span-2 text-center">
       Convert
     </p>
     <div class="flex flex-col row-span-2 col-span-2 mx-auto">

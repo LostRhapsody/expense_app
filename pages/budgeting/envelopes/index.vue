@@ -169,7 +169,9 @@ if (loggedIn.value) {
 </script>
 
 <template>
-  <BreadcrumbHTML><UBreadcrumb :links="links" /></BreadcrumbHTML>
+  <BreadcrumbHTML
+  class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+  ><UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links" /></BreadcrumbHTML>
   <UButton
     @click="showExplanation = !showExplanation"
     class="justify-center w-full mx-auto text-xl my-2"

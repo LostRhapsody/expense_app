@@ -112,7 +112,9 @@ function deleteIOU() {
 </script>
 
 <template>
-  <BreadcrumbHTML><UBreadcrumb :links="links" /></BreadcrumbHTML>
+  <BreadcrumbHTML
+  class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+><UBreadcrumb :ui="{ li: 'text-black' }" :links="links" /></BreadcrumbHTML>
   <UButton
     @click="showExplanation = !showExplanation"
     class="justify-center w-full mx-auto text-xl my-2"
@@ -128,9 +130,8 @@ function deleteIOU() {
       width="25"
     />
   </UButton>
-  <UDivider label="IOU LIST" class="mt-8" />
   <!-- List of IOUs -->
-  <div class="grid grid-cols-2">
+  <div class="grid grid-cols-2 gap-4">
     <div v-for="(iou, index) in iouArray">
       <div v-if="iou.borrowed" class="m-2">
         <UChip

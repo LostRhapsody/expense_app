@@ -116,7 +116,7 @@ if (loggedIn.value) {
 <template>
   <UContainer class="max-w-xl">
     <!-- main -->
-    <UCard class="my-4">
+    <UCard class="my-4 cardBody">
       <template #header>
         <div class="flex min-w-0 w-full justify-between items-center">
           <!-- Slider nav -->
@@ -164,8 +164,7 @@ if (loggedIn.value) {
               :links="links"
               @click="isOpen = false"
               :ui="{
-                active:
-                  'before:bg-transparent dark:before:bg-transparent',
+                active: 'before:bg-transparent dark:before:bg-transparent',
               }"
               class="custom-nav-links"
             >
@@ -182,7 +181,7 @@ if (loggedIn.value) {
                   <em>{{ link.desc }}</em>
                 </div>
                 <div v-else class="flex flex-col">
-                  <strong class="text-lg dark:text-white text-black "
+                  <strong class="text-lg dark:text-white text-black"
                     ><p>{{ link.label }}</p></strong
                   >
                 </div>
@@ -215,7 +214,7 @@ if (loggedIn.value) {
         <div class="flex flex-row justify-between min-w-0 items-center">
           <h2>
             <ULink
-              class="dark:text-primary-400 text-primary-500"
+              class="dark:text-primary-400 text-primary-600"
               to="mailto:evan.robertson77@gmail.com"
               >Contact</ULink
             >
@@ -231,13 +230,37 @@ if (loggedIn.value) {
 .custom-nav-links a::before {
   background-color: transparent !important;
 }
-.dark body{
-  background: rgb(0,0,0);
-  background: linear-gradient(131deg, rgba(0,0,0,1) 48%, rgba(72,211,128,1) 100%);  
+.dark body {
+  background: rgb(0, 0, 0);
+  background: linear-gradient(
+    131deg,
+    rgba(0, 0, 0, 1) 48%,
+    rgba(72, 211, 128, 1) 100%
+  );
 }
 body {
   min-height: 100vh;
-  background: rgb(160,212,181);
-  background: linear-gradient(131deg, rgba(160,212,181,1) 26%, rgba(72,211,128,1) 100%);
+  background: rgb(160, 212, 181);
+  background: linear-gradient(
+    131deg,
+    rgba(160, 212, 181, 1) 26%,
+    rgba(72, 211, 128, 1) 100%
+  );
+}
+.dark .cardBody {
+  background: rgba(70, 70, 70, 0.3) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(104, 104, 104, 0.5) !important;
+}
+.cardBody {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 </style>
