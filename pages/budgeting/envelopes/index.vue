@@ -193,7 +193,7 @@ if (loggedIn.value) {
     <div class="envelopeContainer" v-for="(envelope, index) in envelopeArray">
       <div
         @click="openAnEnvelope(index)"
-        class="text-center text-3xl m-4 ring-2 ring-primary rounded-xl py-3"
+        class="text-center text-3xl m-4 ring-2 ring-primary rounded-xl py-3 hover:bg-gray-300 hover:dark:bg-gray-700"
       >
         <UIcon
           v-if="!envelope.open"
