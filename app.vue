@@ -243,8 +243,8 @@ body {
   background: rgb(160, 212, 181);
   background: linear-gradient(
     131deg,
-    rgba(160, 212, 181, 1) 26%,
-    rgba(72, 211, 128, 1) 100%
+    rgb(212, 212, 212) 26%,
+    rgb(34, 197, 94) 100%
   );
 }
 .dark .cardBody {
