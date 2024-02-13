@@ -7,11 +7,11 @@ defineProps({
 
 <template>
   <UDivider :label="label" class="mt-8" />
-  <UVerticalNavigation :links="links">
-    <template #default="{ link }">
+  <UVerticalNavigation :links="links" class="custom-nav-links">
+    <template #default="{ link }" >
       <div class="flex flex-col text-start">
         <p>
-          <strong class="text-lg dark:text-white text-black">{{
+          <strong class="text-lg dark:text-white text-black underline underline-offset-2 decoration-2 decoration-gray-400">{{
             link.label
           }}</strong>
         </p>
@@ -22,3 +22,9 @@ defineProps({
     </template>
   </UVerticalNavigation>
 </template>
+
+<style>
+.custom-nav-links a::before {
+  background-color: transparent !important;
+}
+</style>

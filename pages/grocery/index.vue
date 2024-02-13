@@ -11,7 +11,7 @@ const links = [
   },
   {
     label: "Converter",
-    icon: "i-heroicons-shopping-bag-solid",
+    icon: "i-heroicons-arrows-up-down-solid",
     to: "/grocery/converter",
     id: "Converter",
     desc: "Quickly convert common weights and prices",

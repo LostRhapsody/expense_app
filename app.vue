@@ -44,7 +44,7 @@ const links = [
     },
     {
       label: "Converter",
-      icon: "i-heroicons-shopping-bag-solid",
+      icon: "i-heroicons-arrows-up-down-solid",
       to: "/grocery/converter",
       id: "Converter",
       desc: "Quickly convert common weights and prices",
@@ -165,8 +165,9 @@ if (loggedIn.value) {
               @click="isOpen = false"
               :ui="{
                 active:
-                  'text-gray-900 dark:text-white before:bg-transparent dark:before:bg-transparent',
+                  'before:bg-transparent dark:before:bg-transparent',
               }"
+              class="custom-nav-links"
             >
               <template #default="{ link }">
                 <div
@@ -174,14 +175,14 @@ if (loggedIn.value) {
                   class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2"
                 >
                   <p
-                    class="text-xl dark:border-gray-800 ring-gray-200 border-b-2 mb-2"
+                    class="text-xl dark:border-gray-800 ring-gray-200 border-b-2 mb-2 !hover:color-red"
                   >
                     {{ link.label }}
                   </p>
                   <em>{{ link.desc }}</em>
                 </div>
                 <div v-else class="flex flex-col">
-                  <strong class="text-lg dark:text-white text-black"
+                  <strong class="text-lg dark:text-white text-black "
                     ><p>{{ link.label }}</p></strong
                   >
                 </div>
@@ -225,3 +226,18 @@ if (loggedIn.value) {
     </UCard>
   </UContainer>
 </template>
+
+<style>
+.custom-nav-links a::before {
+  background-color: transparent !important;
+}
+.dark body{
+  background: rgb(0,0,0);
+  background: linear-gradient(131deg, rgba(0,0,0,1) 48%, rgba(72,211,128,1) 100%);  
+}
+body {
+  min-height: 100vh;
+  background: rgb(160,212,181);
+  background: linear-gradient(131deg, rgba(160,212,181,1) 26%, rgba(72,211,128,1) 100%);
+}
+</style>
