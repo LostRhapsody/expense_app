@@ -491,7 +491,7 @@ const links = getBreadcrumbs([
             color="white"
             :padded="false"
             icon="i-heroicons-cog-6-tooth-solid"
-            class="ml-2"
+            class="ml-2 hover:bg-gray-300 dark:hover:bg-gray-700"
             size="xl"
           />
         </p>
@@ -528,7 +528,7 @@ const links = getBreadcrumbs([
           </li>
           <li
             v-else
-            class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-700"
+            class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700"
           >
             No past tallies
           </li>
@@ -629,6 +629,7 @@ const links = getBreadcrumbs([
               color="white"
               size="xl"
               icon="i-heroicons-x-mark-solid"
+              class="text-gray-600 hover:text-gray-900"
             />
           </div>
         </template>
@@ -681,6 +682,7 @@ const links = getBreadcrumbs([
               color="white"
               size="xl"
               icon="i-heroicons-x-mark-solid"
+              class="text-gray-600 hover:text-gray-900"
             />
           </div>
         </template>
@@ -710,6 +712,7 @@ const links = getBreadcrumbs([
               color="white"
               size="xl"
               icon="i-heroicons-x-mark-solid"
+              class="text-gray-600 hover:text-gray-900"
             />
           </div>
         </template>

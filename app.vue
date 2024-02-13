@@ -120,7 +120,7 @@ if (loggedIn.value) {
       <template #header>
         <div class="flex min-w-0 w-full justify-between items-center">
           <!-- Slider nav -->
-          <ULink class="text-xl" to="/">Ratio</ULink>
+          <ULink class="text-xl" to="/">Budgie</ULink>
           <UButton
             v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
             @click="handleSignOut"

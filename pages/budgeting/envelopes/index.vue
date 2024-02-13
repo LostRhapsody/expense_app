@@ -245,6 +245,7 @@ if (loggedIn.value) {
             color="white"
             size="xl"
             icon="i-heroicons-x-mark-solid"
+            class="text-gray-600 hover:text-gray-900"
           />
         </div>
       </template>
@@ -298,6 +299,7 @@ if (loggedIn.value) {
             color="white"
             size="xl"
             icon="i-heroicons-x-mark-solid"
+            class="text-gray-600 hover:text-gray-900"
           />
         </div>
       </template>

@@ -184,6 +184,7 @@ function deleteIOU() {
             color="white"
             size="xl"
             icon="i-heroicons-x-mark-solid"
+            class="text-gray-600 hover:text-gray-900"
           />
         </div>
       </template>
@@ -219,6 +220,7 @@ function deleteIOU() {
             color="white"
             size="xl"
             icon="i-heroicons-x-mark-solid"
+            class="text-gray-600 hover:text-gray-900"
           />
         </div>
       </template>
