@@ -11,7 +11,6 @@ const editOpen = ref(false);
 // user data
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
-const uuid = ref("");
 
 // array of envelopes, init as empty array of objects
 const envelopeArray = ref([]);
@@ -36,7 +35,8 @@ const links = getBreadcrumbs([
  * save's an envelope to the DB
  * @param key the key used to retrieve this value
  */
-async function setEnvelopeArray(key: string) {
+async function setEnvelopeArray() {
+  const key = localStorage.getItem("uuid");
   const setEnvelopeResponse = await $fetch("/api/budgeting/setEnvelope", {
     method: "post",
     body: {
@@ -58,7 +58,9 @@ async function setEnvelopeArray(key: string) {
  * Get's the user's saved envelopes
  * @param key the key used to retrieve this value
  */
-async function getEnvelopeArray(key: string) {
+async function getEnvelopeArray() {
+  const key = localStorage.getItem("uuid");
+
   const getEnvelopeResponse = await $fetch("/api/budgeting/getEnvelope", {
     method: "post",
     body: { key: key + "Envelope" },
@@ -161,10 +163,7 @@ function deleteEnvelope() {
 }
 
 if (loggedIn.value) {
-  // check if the UUID is set in the cache
-  const { data: cachedID } = useNuxtData("uuid");
-  uuid.value = cachedID.value;
-  getEnvelopeArray(uuid.value);
+  getEnvelopeArray();
 }
 </script>
 

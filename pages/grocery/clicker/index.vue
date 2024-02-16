@@ -65,7 +65,8 @@ const loggedIn = computed(() => status.value === "authenticated");
  * Updates the user's saved budget
  * @param key the key used to store this value
  */
-async function setBudget(key: string) {
+async function setBudget() {
+  const key = localStorage.getItem("uuid");
   showEditBudget.value = false;
   const setBudgetResponse = await $fetch("/api/grocery/setBudget", {
     method: "post",
@@ -88,7 +89,8 @@ async function setBudget(key: string) {
  * Get's the user's saved budget
  * @param key the key used to retrieve this value
  */
-async function getUserBudget(key: string) {
+async function getUserBudget() {
+  const key = localStorage.getItem("uuid");
   const records = await $fetch("/api/grocery/getBudget", {
     method: "post",
     body: { key: key + "groceryBudget" },
@@ -110,7 +112,9 @@ async function getUserBudget(key: string) {
  * Stores the user's array of data (previous history and current count)
  * @param key the key used to store this value
  */
-async function setRecord(key: string) {
+async function setRecord() {
+  const key = localStorage.getItem("uuid");
+
   const setRecordResponse = await $fetch("/api/grocery/setRecord", {
     method: "post",
     body: {
@@ -132,7 +136,9 @@ async function setRecord(key: string) {
  * array of the user's expenses, updates total
  * @param key the key used to retrive the value
  */
-async function getRecords(key: string) {
+async function getRecords() {
+  const key = localStorage.getItem("uuid");
+
   const records = await $fetch("/api/grocery/getRecords/", {
     method: "post",
     body: { key: key + "groceryRecords" },
@@ -146,6 +152,7 @@ async function getRecords(key: string) {
   } else if (typeof records.list === "object") {
     if (records.list.length > 0) {
       userArray = records.list;
+      showTallies.value = true;
       updateTotal();
     }
   }
@@ -236,7 +243,7 @@ function updateUserArray(mode: string) {
 
   // set record in DB if logged in
   if (loggedIn.value) {
-    setRecord(uuid.value);
+    setRecord();
   }
 }
 
@@ -393,16 +400,15 @@ const isDark = computed({
 //   await nextTick();
 // });
 
-const uuid = ref("");
 /**
  * Initialize
  */
-if (loggedIn.value) {
-  // check if the UUID is set in the cache
-  const { data: cachedID } = useNuxtData("uuid");
-  uuid.value = cachedID.value;
-  getRecords(uuid.value);
-  getUserBudget(uuid.value);
+if (loggedIn.value && process.client) {
+  const uuid = localStorage.getItem("uuid");
+  if (uuid !== null) {
+    getRecords();
+    getUserBudget();
+  }
 } else {
   // normally get's called in getRecords, can't be when not logged in.
   updateTotal();
@@ -699,7 +705,7 @@ const links = getBreadcrumbs([
         >
         </UInput>
         <template #footer>
-          <UButton block label="Submit" @click="setBudget(uuid)" />
+          <UButton block label="Submit" @click="setBudget()" />
         </template>
       </UCard>
     </UModal>

@@ -42,7 +42,7 @@ const breadCrumbs = getBreadcrumbs([]);
   <div class="text-center">
     <BudgieTitle />
     <p class="flex items-center justify-center">
-      Use the <UIcon name="i-heroicons-bars-3" class="mx-1 text-xl py-8" /> to navigate.
+      Use the <UIcon name="i-heroicons-bars-3" class="mx-1" /> to navigate.
     </p>
     <UDivider label="Favorites" class="mt-8" />
     <div class="m-2 p-1"> 

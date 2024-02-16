@@ -1,14 +1,14 @@
 <script setup lang="ts">
+//const theme = "glassy_gradient.css";
+
+////// User Variables and Constants //////////////////////
 const { status, data, signIn, signOut } = useAuth();
-
 const loggedIn = computed(() => status.value === "authenticated");
-
 const userAvatar = ref("");
 let userEmail = "";
+let userName = "";
 
-// For notifications
-const toast = useToast();
-
+////// Authentication Functions //////////////////////
 async function handleSignIn() {
   await signIn();
 }
@@ -17,8 +17,21 @@ async function handleSignOut() {
   await signOut();
 }
 
-const isOpen = ref(false);
+////// Toast Functions //////////////////////
+const toast = useToast();
 
+////// Display Control Variables //////////////////////
+const colorMode = useColorMode();
+const isDark = computed({
+  get() {
+    return colorMode.value === "dark";
+  },
+  set() {
+    colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
+  },
+});
+const isNavOpen = ref(false);
+const isPrefrencesOpen = ref(false);
 const links = [
   [
     {
@@ -67,21 +80,9 @@ const links = [
   ],
 ];
 
-const colorMode = useColorMode();
-const isDark = computed({
-  get() {
-    return colorMode.value === "dark";
-  },
-  set() {
-    colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
-  },
-});
-
+// INIT logged in logic
 if (loggedIn.value) {
-  if (process.client)
-    toast.add({
-      title: "Hey, " + data.value?.user.name + "! Ready to start saving?",
-    });
+  // pull the user's email and avatar
   if (data !== null && data !== undefined) {
     if (data.value !== null && data.value !== undefined) {
       if (typeof data.value.user === "object") {
@@ -91,25 +92,168 @@ if (loggedIn.value) {
         if (typeof data.value.user.email === "string") {
           userEmail = data.value.user?.email;
         }
+        if (typeof data.value.user.name === "string") {
+          // user name just grabs the first name.
+          userName = data.value.user?.name.substring(
+            0,
+            data.value.user?.name.indexOf(" ")
+          );
+        }
       }
     }
   }
 
-  // check if the UUID is set in the cache
-  const { data: uuid } = useNuxtData("uuid");
-
-  // if no, we'll get it from the server from /UUID
-  if (uuid.value === null) {
-    await useFetch("/api/auth/UUID", {
-      method: "post",
-      body: {
-        key: "key",
-        value: userEmail,
-      },
-      // this key ensures we store it in the cache
-      key: "uuid",
+  // Client ONLY processes (don't run on server)
+  if (process.client) {
+    // say hi!
+    toast.add({
+      title: "Hey, " + userName + "! Ready to start saving?",
     });
+
+    let currentUUID = localStorage.getItem("uuid");
+
+    // check if the UUID is in local storage
+    if (currentUUID === null) {
+      // if no, we'll get it from the server from /UUID
+      await postUUID(userEmail);
+    } else {
+      // attempt to set the theme.
+      // this handles getting the theme from cache/db/retrying
+      setClientTheme();
+    }
   }
+}
+
+/**
+ * Posts an email to the backend, stores UUID in cache to verify requests
+ * @param email user's email for UUID
+ */
+async function postUUID(email: string) {
+  await useFetch("/api/auth/UUID", {
+    method: "post",
+    body: {
+      value: email,
+    },
+    // this key ensures we store it in the cache
+    key: "uuid",
+    onResponse({ response }) {
+      localStorage.setItem("uuid", response._data);
+      postUUIDCallback();
+    },
+  });
+}
+
+/**
+ * Callback function for postUUID, any logic that requires a UUID to be in
+ * local storage runs here
+ */
+async function postUUIDCallback() {
+  const currentUUID = localStorage.getItem("uuid");
+
+  if (
+    currentUUID === null ||
+    currentUUID === undefined ||
+    currentUUID === "guest"
+  ) {
+    alert("The client token failed to get set correctly.");
+    return;
+  }
+
+  // we can now set our theme, since the UUID is set
+  setClientTheme();
+}
+
+/**
+ * This logic runs AFTER the UUID has been set in the cache
+ * if theme is not in cache, requests it from the db
+ * if theme is in cache, we set the theme on the client
+ */
+async function setClientTheme() {
+
+  const theme = localStorage.getItem("budgie_theme");
+  const currentUUID = localStorage.getItem("uuid");
+
+  // if not in cache, pull the server from /getTheme
+  if (theme === null && currentUUID !== null) {
+    await getTheme(currentUUID);
+  } else if (currentUUID === null) {
+    alert("Setting client token failed! Alert evan.robertson77@gmail.com");
+  } else {
+    // if theme is default, don't set a link tag
+    if (theme !== "default") {
+      useHead({
+        link: [{ rel: "stylesheet", href: "/themes/" + theme }],
+      });
+    }
+  }
+}
+
+/**
+ * get's the user's theme preferences from the db
+ * @param key key to get record
+ */
+async function getTheme(key: string) {
+  await useFetch("/api/user/getTheme", {
+    method: "post",
+    body: {
+      key: key + "Theme",
+    },
+    key: "theme",
+    onResponse({ response }) {
+      localStorage.setItem("budgie_theme", response._data);
+      getThemeCallback();
+    },
+  });
+}
+
+/**
+ * callback for getTheme
+ * Now that the theme is set in local storage, we can apply it
+ */
+
+function getThemeCallback() {
+
+  const theme = localStorage.getItem("budgie_theme");
+
+  // if not in cache, pull the server from /getTheme
+  if (theme === null) {
+    alert("An error occurred retrieving you're theme preference");
+    return;
+  } else {
+    setClientTheme();
+  }
+}
+
+/**
+ * set's the user's theme preference in the db and calls setClientTheme
+ * @param theme theme we're setting
+ */
+async function setTheme(theme: string) {
+  const key = localStorage.getItem("uuid");
+
+  localStorage.setItem("budgie_theme", theme);
+
+  if (key === null) {
+    alert("Getting client token failed! Alert evan.robertson77@gmail.com");
+    return;
+  }
+
+  // we can't delete the link tag Nuxt generates
+  // ...yet. So we just refresh the page instead.
+  if(theme === "default") {
+    location.reload();
+  }
+
+  await useFetch("/api/user/setTheme", {
+    method: "post",
+    body: {
+      key: key + "Theme",
+      value: theme,
+    },
+    onResponse({ response }) {
+      setClientTheme();
+    },
+  });
 }
 </script>
 
@@ -119,46 +263,146 @@ if (loggedIn.value) {
     <UCard class="my-4 cardBody">
       <template #header>
         <div class="flex min-w-0 w-full justify-between items-center">
-          <!-- Slider nav -->
           <!-- button to display a user's avatar when logged in, will log you out -->
-          <UButton v-if="loggedIn && userAvatar !== null && userAvatar !== ''" @click="handleSignOut" variant="none">
+          <UButton
+            v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
+            @click="isPrefrencesOpen = true"
+            variant="ghost"
+          >
             <UAvatar class="ring-2 ring-primary" :src="userAvatar" />
           </UButton>
 
           <!-- button that displays normal user icon when logged in, will log you out -->
-          <UButton variant="none" v-else-if="loggedIn" @click="handleSignOut">
-            <UAvatar class="ring-2 ring-primary" icon="i-heroicons-user-circle-solid" />
+          <UButton
+            variant="ghost"
+            v-else-if="loggedIn"
+            @click="isPrefrencesOpen = true"
+          >
+            <UAvatar
+              class="ring-2 ring-primary"
+              icon="i-heroicons-user-circle-solid"
+            />
           </UButton>
 
           <!-- button that displays normal user icon when logged out, will log you in -->
-          <UButton variant="none" v-else @click="handleSignIn">
-            <UAvatar class="ring-2 ring-gray-500" icon="i-heroicons-user-circle-solid" />
+          <UButton variant="ghost" v-else @click="isPrefrencesOpen = true">
+            <UAvatar
+              class="ring-2 ring-gray-500"
+              icon="i-heroicons-user-circle-solid"
+            />
           </UButton>
-          <UButton @click="isOpen = true" icon="i-heroicons-bars-3" />
+          <UButton @click="isNavOpen = true" icon="i-heroicons-bars-3" />
         </div>
-        <USlideover v-model="isOpen" :overlay="true">
-          <UCard class="flex flex-col flex-1" :ui="{
-            body: { base: 'flex-1' },
-            ring: '',
-            divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-          }">
+
+        <!-- Slideover user preferences -->
+        <USlideover v-model="isPrefrencesOpen" :overlay="true" side="left">
+          <UCard
+            class="flex flex-col flex-1 cardBody"
+            :ui="{
+              body: { base: 'flex-1' },
+              ring: '',
+              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+            }"
+          >
             <template #header>
               <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+                <h3
+                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+                >
+                  Preferences
+                </h3>
+                <UButton
+                  color="gray"
+                  variant="ghost"
+                  icon="i-heroicons-x-mark-20-solid"
+                  class="my-1"
+                  @click="isPrefrencesOpen = false"
+                />
+              </div>
+            </template>
+            <div class="grid grid-cols-2 gap-4">
+              <UButton
+                v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
+                @click="handleSignOut"
+                variant="ghost"
+              >
+                <UAvatar class="ring-2 ring-primary" :src="userAvatar" />Sign
+                Out
+              </UButton>
+
+              <!-- button that displays normal user icon when logged in, will log you out -->
+              <UButton
+                variant="ghost"
+                v-else-if="loggedIn"
+                @click="handleSignOut"
+              >
+                <UAvatar
+                  class="ring-2 ring-primary"
+                  icon="i-heroicons-user-circle-solid"
+                />Sign Out
+              </UButton>
+
+              <!-- button that displays normal user icon when logged out, will log you in -->
+              <UButton variant="ghost" v-else @click="handleSignIn">
+                <UAvatar
+                  class="ring-2 ring-gray-500"
+                  icon="i-heroicons-user-circle-solid"
+                />Sign In
+              </UButton>
+
+              <UButton variant="ghost" @click="setTheme('glassy_gradient.css')"
+                >Set theme to "Glassy"</UButton
+              >
+              <UButton variant="ghost" @click="setTheme('default')"
+                >Set theme to "Default"</UButton
+              >
+            </div>
+          </UCard>
+        </USlideover>
+
+        <!-- Slideover navigation -->
+        <USlideover v-model="isNavOpen" :overlay="true">
+          <UCard
+            class="flex flex-col flex-1 cardBody"
+            :ui="{
+              body: { base: 'flex-1' },
+              ring: '',
+              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+            }"
+          >
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h3
+                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+                >
                   Navigation
                 </h3>
-                <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="my-1"
-                  @click="isOpen = false" />
+                <UButton
+                  color="gray"
+                  variant="ghost"
+                  icon="i-heroicons-x-mark-20-solid"
+                  class="my-1"
+                  @click="isNavOpen = false"
+                />
               </div>
             </template>
 
-            <UVerticalNavigation :links="links" @click="isOpen = false" :ui="{
-              active: 'before:bg-transparent dark:before:bg-transparent',
-            }" class="custom-nav-links">
+            <UVerticalNavigation
+              :links="links"
+              @click="isNavOpen = false"
+              :ui="{
+                active: 'before:bg-transparent dark:before:bg-transparent',
+              }"
+              class="custom-nav-links"
+            >
               <template #default="{ link }">
-                <div v-if="link.isTitle"
-                  class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2">
-                  <p class="text-xl dark:border-gray-800 ring-gray-200 border-b-2 mb-2 !hover:color-red">
+                <div
+                  v-if="link.isTitle"
+                  class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2"
+                >
+                  <p
+                    class="text-xl dark:border-gray-800 ring-gray-200 border-b-2 mb-2 !hover:color-red"
+                  >
                     {{ link.label }}
                   </p>
                   <em>{{ link.desc }}</em>
@@ -180,15 +424,27 @@ if (loggedIn.value) {
         <div class="flex flex-row justify-between min-w-0 items-center">
           <h2 class="text-center"><em>Made with 💖 for Sarah-Jayne</em></h2>
           <ClientOnly>
-            <UButton id="darkModeButton" :icon="isDark
-                ? 'i-heroicons-moon-20-solid'
-                : 'i-heroicons-sun-20-solid'
-              " color="gray" variant="ghost" aria-label="Theme" @click="isDark = !isDark" />
+            <UButton
+              id="darkModeButton"
+              :icon="
+                isDark
+                  ? 'i-heroicons-moon-20-solid'
+                  : 'i-heroicons-sun-20-solid'
+              "
+              color="gray"
+              variant="ghost"
+              aria-label="Theme"
+              @click="isDark = !isDark"
+            />
           </ClientOnly>
         </div>
         <div class="flex flex-row justify-between min-w-0 items-center">
           <h2>
-            <ULink class="dark:text-primary-400 text-primary-600" to="mailto:evan.robertson77@gmail.com">Contact</ULink>
+            <ULink
+              class="dark:text-primary-400 text-primary-600"
+              to="mailto:evan.robertson77@gmail.com"
+              >Contact</ULink
+            >
           </h2>
         </div>
       </template>
@@ -200,38 +456,5 @@ if (loggedIn.value) {
 <style>
 .custom-nav-links a::before {
   background-color: transparent !important;
-}
-
-.dark body {
-  background: rgb(0, 0, 0);
-  background: linear-gradient(131deg,
-      rgba(0, 0, 0, 1) 48%,
-      rgba(72, 211, 128, 1) 100%);
-}
-
-body {
-  min-height: 100vh;
-  background: rgb(160, 212, 181);
-  background: linear-gradient(131deg,
-      rgb(212, 212, 212) 26%,
-      rgb(34, 197, 94) 100%);
-}
-
-.dark .cardBody {
-  background: rgba(70, 70, 70, 0.3) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(104, 104, 104, 0.5) !important;
-}
-
-.cardBody {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 </style>
