@@ -1,5 +1,5 @@
 <script setup lang="ts">
-//const theme = "glassy_gradient.css";
+// TODO - add command pallete for setting themes
 
 ////// User Variables and Constants //////////////////////
 const { status, data, signIn, signOut } = useAuth();
