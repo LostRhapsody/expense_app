@@ -1,0 +1,32 @@
+.dark body {
+  background: radial-gradient(
+    circle,
+    rgb(39, 68, 212) 0%,
+    rgb(207, 42, 75) 100%
+  );
+}
+body {
+  min-height: 100vh;
+  background: rgb(160, 212, 181);
+  background: radial-gradient(
+    circle,
+    rgb(94, 114, 214) 0%,
+    rgb(211, 85, 110) 100%
+  );
+}
+.dark .cardBody {
+  background: rgba(70, 70, 70, 0.3) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(104, 104, 104, 0.5) !important;
+}
+.cardBody {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
