@@ -289,6 +289,22 @@ function increment() {
   }
 }
 
+function adjustIncrement() {
+  switch (incrementBy.value) {
+    case 1:
+      incrementBy.value = 3;
+      break;
+    case 3:
+      incrementBy.value = 5;
+      break;
+    case 5:
+      incrementBy.value = 1;
+      break;
+    default:
+      break;
+  }
+}
+
 /**
  * The repetative actions performed when incrementing the count
  */
@@ -550,11 +566,21 @@ const links = getBreadcrumbs([
     </USlideover>
 
     <!-- clicker -->
-    <UButton
-      @click="increment"
-      class="mx-auto my-12 rounded-full h-28 w-28 justify-center text-3xl"
-      >+{{ incrementBy }}</UButton
-    >
+    <div class="relative text-center">
+      <UButton
+        @click="increment"
+        class="mx-auto my-12 rounded-full h-28 w-28 justify-center text-3xl"
+        >+{{ incrementBy }}</UButton
+      >
+      <div class="absolute quickswitch">
+        <!-- quick switch clicker -->
+        <UButton
+          @click="adjustIncrement"
+          variant="outline"
+          icon="i-heroicons-arrows-up-down"
+        />
+      </div>
+    </div>
 
     <!-- Total Tracker -->
     <UDivider label="TOTAL" />
@@ -671,6 +697,8 @@ const links = getBreadcrumbs([
         >
           <span class="col-span-2">View past submissions</span>
           <UIcon class="text-primary" name="i-heroicons-banknotes-solid" />
+          <span class="col-span-2">Change the counter with</span>
+          <UIcon class="text-primary" name="i-heroicons-arrows-up-down" />
           <span class="col-span-2">Reset the counter</span>
           <UIcon class="text-primary" name="i-heroicons-arrow-path-solid" />
           <span class="col-span-2">Decrease the counter</span>
@@ -771,5 +799,9 @@ li {
 }
 .counterText {
   color: v-bind(color);
+}
+.quickswitch {
+  left: 81%;
+  bottom: 41%;
 }
 </style>
