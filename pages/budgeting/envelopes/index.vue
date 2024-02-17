@@ -162,7 +162,7 @@ function deleteEnvelope() {
   setEnvelopeArray(uuid.value);
 }
 
-if (loggedIn.value) {
+if (loggedIn.value && process.client) {
   getEnvelopeArray();
 }
 </script>

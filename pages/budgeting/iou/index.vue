@@ -186,7 +186,7 @@ function updateIOUArray() {
 /**
  * Logged in INIT!
  */
-if (loggedIn && process.client) {
+if (loggedIn.value && process.client) {
   getIouArray();
 }
 </script>

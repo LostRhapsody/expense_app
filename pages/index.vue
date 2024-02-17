@@ -80,7 +80,7 @@ async function getFavorites() {
   });
 }
 
-if(loggedIn && process.client){
+if(loggedIn.value && process.client){
   getFavorites();
 }
 </script>
