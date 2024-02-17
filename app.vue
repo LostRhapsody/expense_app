@@ -77,6 +77,13 @@ const links = [
       desc: "Create digital envelopes to help categorize spending habits.",
       to: "/budgeting/envelopes",
     },
+    {
+      label: "IOUs",
+      icon: "i-heroicons-user-solid",
+      id: "IOUs",
+      desc: "Track debts, credit, IOUs, etc.",
+      to: "/budgeting/iou",
+    },
   ],
 ];
 
