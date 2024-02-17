@@ -116,7 +116,7 @@ function saveEnvelope() {
 
   // hide modal
   editOpen.value = false;
-  setEnvelopeArray(uuid.value);
+  setEnvelopeArray();
 }
 
 /**
@@ -150,7 +150,7 @@ function createEnvelope() {
     envelopeArray.value.push(envelope);
   }
   openAnEnvelope(envelopeArray.value.length - 1);
-  setEnvelopeArray(uuid.value);
+  setEnvelopeArray();
 }
 
 /**
@@ -159,7 +159,7 @@ function createEnvelope() {
 function deleteEnvelope() {
   envelopeArray.value.splice(openEnvelope.index, 1);
   editOpen.value = false;
-  setEnvelopeArray(uuid.value);
+  setEnvelopeArray();
 }
 
 if (loggedIn.value && process.client) {
