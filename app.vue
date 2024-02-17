@@ -39,6 +39,7 @@ const links = [
       icon: "i-heroicons-home-modern-solid",
       to: "/",
       id: "home",
+      isTitle: false,
     },
   ],
   [
@@ -54,6 +55,7 @@ const links = [
       to: "/grocery/clicker",
       id: "Clicker",
       desc: "Easily track your grocery limit while you shop",
+      isTitle: false,
     },
     {
       label: "Converter",
@@ -61,14 +63,15 @@ const links = [
       to: "/grocery/converter",
       id: "Converter",
       desc: "Quickly convert common weights and prices",
+      isTitle: false,
     },
   ],
   [
     {
       label: "Budgeting",
-      isTitle: true,
       to: "/budgeting",
       desc: "Balance your checkbook, create digital envelopes, and more budgeting tools.",
+      isTitle: true,
     },
     {
       label: "Envelopes",
@@ -76,6 +79,7 @@ const links = [
       id: "Envelopes",
       desc: "Create digital envelopes to help categorize spending habits.",
       to: "/budgeting/envelopes",
+      isTitle: false,
     },
     {
       label: "IOUs",
@@ -83,6 +87,7 @@ const links = [
       id: "IOUs",
       desc: "Track debts, credit, IOUs, etc.",
       to: "/budgeting/iou",
+      isTitle: false,
     },
   ],
 ];
@@ -290,7 +295,7 @@ function openThemeModal() {
   isPrefrencesOpen.value = false;
 }
 
-function onThemeSelect(option: themeType) {  
+function onThemeSelect(option: themeType) {
   // leave if this was not a real selection
   if (option === null || option === undefined) {
     return;
@@ -325,18 +330,18 @@ onMounted(async () => {
   await nextTick();
 
   /**
-  * keybind listeners
-  * Not currently used... this is a mobile app after all
-  * Keeping it for reference as a possible use
-  */
+   * keybind listeners
+   * Not currently used... this is a mobile app after all
+   * Keeping it for reference as a possible use
+   */
   // window.addEventListener(
-  //   "keydown", 
-  //   (event) => {     
+  //   "keydown",
+  //   (event) => {
   //     /**
-  //      * On "T" keydown... 
-  //      * */ 
-  //     if (event.code === "KeyT") {        
-  //       openThemeModal();        
+  //      * On "T" keydown...
+  //      * */
+  //     if (event.code === "KeyT") {
+  //       openThemeModal();
   //   }
   // });
 });
@@ -472,16 +477,14 @@ onMounted(async () => {
                 />
               </div>
             </template>
-
             <UVerticalNavigation
               :links="links"
               @click="isNavOpen = false"
               :ui="{
-                active: 'before:bg-transparent dark:before:bg-transparent',
+                active: 'dark:before:bg-gray-600/25 before:bg-gray-300/25',
               }"
-              class="custom-nav-links"
             >
-              <template #Default="{ link }">
+              <template #default="{ link }">
                 <div
                   v-if="link.isTitle"
                   class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2"
@@ -542,8 +545,8 @@ onMounted(async () => {
         nullable
         :autoselect="false"
         :groups="[{ key: 'themes', commands: themes }]"
-        @update:model-value="onThemeSelect"    
-        ref="themePalett"    
+        @update:model-value="onThemeSelect"
+        ref="themePalett"
       />
     </UModal>
   </UContainer>
