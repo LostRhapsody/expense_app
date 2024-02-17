@@ -288,7 +288,7 @@ if (loggedIn.value && process.client) {
       >Remaining Budget: ${{ totalBudget - usedBudget }}</em
       >
     </div>
-    <UButton @click="showEditBudget = true" class="text-start col-span-2">Budget: ${{ totalBudget }}</UButton>
+    <UButton icon="i-heroicons-banknotes-solid" @click="showEditBudget = true" class="text-center col-span-2">Budget: ${{ totalBudget }}</UButton>
   </div>
   <div v-if="envelopeArray.length > 0" class="grid grid-cols-2">
     <!-- envelopes -->
