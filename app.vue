@@ -1,6 +1,4 @@
 <script setup lang="ts">
-//const theme = "glassy_gradient.css";
-
 ////// User Variables and Constants //////////////////////
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
@@ -32,6 +30,8 @@ const isDark = computed({
 });
 const isNavOpen = ref(false);
 const isPrefrencesOpen = ref(false);
+const isThemeModalOpen = ref(false);
+
 const links = [
   [
     {
@@ -79,6 +79,20 @@ const links = [
     },
   ],
 ];
+
+////// Themes //////////////////////
+interface themeType {
+  id: number;
+  label: string;
+  path: string;
+}
+
+const themes: themeType[] = [
+  { id: 1, label: "Default", path: "" },
+  { id: 2, label: "Glassy", path: "glassy_gradient.css" },
+  { id: 3, label: "Warm-Hot", path: "warm_hot.css" },
+];
+const themeSelected = ref();
 
 // INIT logged in logic
 if (loggedIn.value) {
@@ -169,7 +183,6 @@ async function postUUIDCallback() {
  * if theme is in cache, we set the theme on the client
  */
 async function setClientTheme() {
-
   const theme = localStorage.getItem("budgie_theme");
   const currentUUID = localStorage.getItem("uuid");
 
@@ -179,11 +192,24 @@ async function setClientTheme() {
   } else if (currentUUID === null) {
     alert("Setting client token failed! Alert evan.robertson77@gmail.com");
   } else {
-    // if theme is default, don't set a link tag
-    if (theme !== "default") {
+    // if theme is Default, don't set a link tag
+    if (theme !== "Default") {
       useHead({
-        link: [{ rel: "stylesheet", href: "/themes/" + theme }],
+        link: [
+          {
+            rel: "stylesheet",
+            href: "/themes/" + theme,
+            id: "themeStylesheet",
+          },
+        ],
       });
+    } else {
+      // just remove it lol
+      let themeTag = document.getElementById("themeStylesheet");
+      if (themeTag !== null && themeTag !== undefined) {
+        // clear the tag
+        themeTag.href = "";
+      }
     }
   }
 }
@@ -212,7 +238,6 @@ async function getTheme(key: string) {
  */
 
 function getThemeCallback() {
-
   const theme = localStorage.getItem("budgie_theme");
 
   // if not in cache, pull the server from /getTheme
@@ -240,8 +265,8 @@ async function setTheme(theme: string) {
 
   // we can't delete the link tag Nuxt generates
   // ...yet. So we just refresh the page instead.
-  if(theme === "default") {
-    location.reload();
+  if (theme === "Default") {
+    // location.reload();
   }
 
   await useFetch("/api/user/setTheme", {
@@ -255,6 +280,65 @@ async function setTheme(theme: string) {
     },
   });
 }
+
+/**
+ * Opens the theme modal
+ */
+function openThemeModal() {
+  isThemeModalOpen.value = true;
+  isPrefrencesOpen.value = false;
+}
+
+function onThemeSelect(option: themeType) {  
+  // leave if this was not a real selection
+  if (option === null || option === undefined) {
+    return;
+  }
+
+  // if chosen theme is already set, do nothing
+  const currentTheme = localStorage.getItem("budgie_theme");
+  if (currentTheme === option.label || currentTheme === option.path) {
+    isThemeModalOpen.value = false;
+    return;
+  }
+
+  if (option.path !== null && option.path !== undefined && option.path !== "") {
+    setTheme(option.path);
+    isThemeModalOpen.value = false;
+    return;
+  } else if (option.label === "Default") {
+    // if Default, we pass the label instead to tell the page to refresh
+    setTheme(option.label);
+    isThemeModalOpen.value = false;
+    return;
+  }
+
+  // if no returns are hit we did something wrong
+  alert(
+    "Error setting theme! Object is probably malformed. Please report to evan.robertson77@gmail.com"
+  );
+}
+
+// These events happen AFTER app is mounted (DOM is loaded)
+onMounted(async () => {
+  await nextTick();
+
+  /**
+  * keybind listeners
+  * Not currently used... this is a mobile app after all
+  * Keeping it for reference as a possible use
+  */
+  // window.addEventListener(
+  //   "keydown", 
+  //   (event) => {     
+  //     /**
+  //      * On "T" keydown... 
+  //      * */ 
+  //     if (event.code === "KeyT") {        
+  //       openThemeModal();        
+  //   }
+  // });
+});
 </script>
 
 <template>
@@ -320,7 +404,7 @@ async function setTheme(theme: string) {
                 />
               </div>
             </template>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4">
               <UButton
                 v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
                 @click="handleSignOut"
@@ -350,12 +434,13 @@ async function setTheme(theme: string) {
                 />Sign In
               </UButton>
 
-              <UButton variant="ghost" @click="setTheme('glassy_gradient.css')"
+              <UButton label="Select Theme" @click="openThemeModal" />
+              <!-- <UButton variant="ghost" @click="setTheme('glassy_gradient.css')"
                 >Set theme to "Glassy"</UButton
               >
-              <UButton variant="ghost" @click="setTheme('default')"
+              <UButton variant="ghost" @click="setTheme('Default')"
                 >Set theme to "Default"</UButton
-              >
+              > -->
             </div>
           </UCard>
         </USlideover>
@@ -395,7 +480,7 @@ async function setTheme(theme: string) {
               }"
               class="custom-nav-links"
             >
-              <template #default="{ link }">
+              <template #Default="{ link }">
                 <div
                   v-if="link.isTitle"
                   class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2"
@@ -450,6 +535,16 @@ async function setTheme(theme: string) {
       </template>
       <UNotifications />
     </UCard>
+    <UModal :ui="{ container: 'items-center' }" v-model="isThemeModalOpen">
+      <UCommandPalette
+        v-model="themeSelected"
+        nullable
+        :autoselect="false"
+        :groups="[{ key: 'themes', commands: themes }]"
+        @update:model-value="onThemeSelect"    
+        ref="themePalett"    
+      />
+    </UModal>
   </UContainer>
 </template>
 
