@@ -1,7 +1,8 @@
 <script setup lang="ts">
 const showAddFaveModal = ref(false);
-
-const faveoriteLinks = ref([
+const { status, data, signIn, signOut } = useAuth();
+const loggedIn = computed(() => status.value === "authenticated");
+const favoriteLinks = ref([
   [
     {
       label: "Clicker",
@@ -31,11 +32,57 @@ const faveoriteLinks = ref([
 ]);
 
 const showFavoritesList = computed(() => {
-  return faveoriteLinks.value[0].find((e) => e.toggled);
+  return favoriteLinks.value[0].find((e) => e.toggled);
 });
 
-// just home, lol
-const breadCrumbs = getBreadcrumbs([]);
+/**
+ * get's the user's favorited app tools
+ */
+async function getFavorites() {
+  const key = localStorage.getItem("uuid");
+  await useFetch("/api/user/getFavorites", {
+    method: "post",
+    body: {
+      key: key + "Favorites",
+    },
+    key: "Favorites",
+    onResponse({ response }) {
+      if(response._data !== "No favorites"){
+        localStorage.setItem("favorites", response._data);
+        favoriteLinks.value[0].forEach((fave, index) => {
+          fave.toggled = response._data[0][index].toggled;
+        });      
+      }
+    },
+  });
+}
+
+/**
+ * set's the user's favorite links
+ */
+ async function setFavorites() {
+  const key = localStorage.getItem("uuid");
+
+  if (key === null) {
+    alert("Getting client token failed! Alert evan.robertson77@gmail.com");
+    return;
+  }
+
+  await useFetch("/api/user/setFavorites", {
+    method: "post",
+    body: {
+      key: key + "Favorites",
+      value: favoriteLinks,
+    },
+    onResponse({ response }) {
+      // setClientTheme();
+    },
+  });
+}
+
+if(loggedIn && process.client){
+  getFavorites();
+}
 </script>
 
 <template>
@@ -55,7 +102,7 @@ const breadCrumbs = getBreadcrumbs([]);
       />
     </div>
     <div v-if="showFavoritesList" class="block">
-      <div v-for="link in faveoriteLinks[0]">
+      <div v-for="link in favoriteLinks[0]">
         <div v-if="link.toggled" class="m-2 p-1">
           <UButton
             :icon="link.icon"
@@ -87,12 +134,12 @@ const breadCrumbs = getBreadcrumbs([]);
         </div>
       </template>
       <p>Toggle the pages below for quick access to them on the homepage.</p>
-      <div v-for="link in faveoriteLinks[0]">
+      <div v-for="link in favoriteLinks[0]">
         <p
           class="m-2 p-1 ring-1 ring-gray-300 rounded flex items-center justify-between"
         >
           {{ link.label }}
-          <UToggle v-model="link.toggled" />
+          <UToggle v-model="link.toggled"  v-on:blur="setFavorites" />
         </p>
       </div>
     </UCard>
