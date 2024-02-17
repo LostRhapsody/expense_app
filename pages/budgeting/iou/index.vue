@@ -230,6 +230,8 @@ if (loggedIn.value && process.client) {
               <span>{{ iou.name }}</span
               ><br />
               <span>Borrow</span>
+              <br />
+              <span>{{  iou.date }}</span>
             </UButton>
           </UChip>
         </div>
@@ -243,6 +245,8 @@ if (loggedIn.value && process.client) {
               <span>{{ iou.name }}</span
               ><br />
               <span>Lent</span>
+              <br />
+              <span>{{  iou.date }}</span>
             </UButton>
           </UChip>
         </div>
@@ -318,7 +322,7 @@ if (loggedIn.value && process.client) {
       </template>
       <div class="p-4">
         <!-- IOU for who -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-4 my-2">
           <p v-if="currentIOU.borrowed">Pay back:</p>
           <p v-else>Due from:</p>
           <UInput
@@ -336,7 +340,7 @@ if (loggedIn.value && process.client) {
         </div>
 
         <!-- IOU Amount -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-4 my-2">
           <p>Amount:</p>
           <UInput
             class="col-span-2"
@@ -349,7 +353,7 @@ if (loggedIn.value && process.client) {
         </div>
 
         <!-- IOU Date -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-4 my-2">
           <p>Due Date:</p>
           <UInput class="col-span-2" type="date" v-model="currentIOU.date" />
         </div>
