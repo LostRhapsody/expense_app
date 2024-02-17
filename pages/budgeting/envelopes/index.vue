@@ -7,6 +7,7 @@ const toast = useToast();
 // show things
 const showExplanation = ref(false);
 const editOpen = ref(false);
+const showEditBudget = ref(false);
 
 // user data
 const { status, data, signIn, signOut } = useAuth();
@@ -17,6 +18,23 @@ const envelopeArray = ref([]);
 
 // stores the envelope that is currently open
 let openEnvelope = {};
+
+// total budget
+const totalBudget = ref(0);
+
+// used budget
+const usedBudget = computed(() => {
+  let budgetUsed = 0;
+  envelopeArray.value.forEach((envelope) => {
+    budgetUsed += envelope.budget;
+  });
+  return budgetUsed;
+});
+
+// returns the percentage of the budget remaining out of 100%
+const usedBudgetPercent = computed(() => {
+  return (usedBudget.value / totalBudget.value) * 100;
+});
 
 const links = getBreadcrumbs([
   {
@@ -30,6 +48,54 @@ const links = getBreadcrumbs([
     url: "/budgeting/envelopes",
   },
 ]);
+
+/**
+ * Updates the user's saved budget
+ * @param key the key used to store this value
+ */
+ async function setBudget() {
+  const key = localStorage.getItem("uuid");
+  showEditBudget.value = false;
+  const setBudgetResponse = await $fetch("/api/budgeting/setEnvelopeBudget", {
+    method: "post",
+    body: {
+      key: key + "envelopeBudget",
+      value: {
+        budget: totalBudget.value,
+      },
+    },
+  });
+
+  if (setBudgetResponse === null || setBudgetResponse === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (setBudgetResponse.error) {
+    toast.add({ title: "Error: " + setBudgetResponse.message });
+  }
+}
+
+/**
+ * Get's the user's saved budget
+ * @param key the key used to retrieve this value
+ */
+async function getBudget() {
+  const key = localStorage.getItem("uuid");
+  const records = await $fetch("/api/budgeting/getEnvelopeBudget", {
+    method: "post",
+    body: { key: key + "envelopeBudget" },
+  });
+
+  if (records === null || records === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (records.error) {
+    toast.add({ title: "Error: " + records.message });
+  } else {
+    if (records !== null && records !== undefined) {
+      if (records.budget !== null && typeof records.budget === "number") {
+        totalBudget.value = records.budget;
+      }
+    }
+  }
+}
 
 /**
  * save's an envelope to the DB
@@ -100,14 +166,18 @@ function openAnEnvelope(index: number) {
  * saves the currently open envelope to the envelope array
  */
 function saveEnvelope() {
+  // validate envelope
+  if (!validateEnvelope()) {
+    return;
+  }
+
   // grab the index
   let index = openEnvelope.index;
 
   // set all the values to the array
   envelopeArray.value[index].name = openEnvelope.name;
   envelopeArray.value[index].budget = openEnvelope.budget;
-  envelopeArray.value[index].created = openEnvelope.created;
-  envelopeArray.value[index].created = openEnvelope.created;
+  envelopeArray.value[index].date = openEnvelope.date;
   // close the envelope icon
   envelopeArray.value[index].open = false;
 
@@ -138,9 +208,9 @@ function cancelEdit() {
  */
 function createEnvelope() {
   let envelope = {
-    name: "new",
+    name: "",
     budget: 0,
-    created: getCurrentDate(),
+    date: getCurrentDate("ymd"),
     open: true,
   };
   // if array is empty, set element 0
@@ -162,15 +232,37 @@ function deleteEnvelope() {
   setEnvelopeArray();
 }
 
+/**
+ * Validates that the 'envelope' object is valid and can be saved
+ */
+function validateEnvelope() {
+  let validIOU = true;
+  if (openEnvelope.name.length <= 0) {
+    alert("Please enter a name for the IOU record.");
+    validIOU = false;
+  }
+  if (openEnvelope.budget <= 0 && validIOU) {
+    alert("Please enter a positive budget for the IOU record.");
+    validIOU = false;
+  }
+
+  return validIOU;
+}
+
+/**
+ * Logged In INIT logic
+ */
 if (loggedIn.value && process.client) {
   getEnvelopeArray();
+  getBudget();
 }
+
 </script>
 
 <template>
-  <BreadcrumbHTML
-  class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
-  ><UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links" /></BreadcrumbHTML>
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+    ><UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links"
+  /></BreadcrumbHTML>
   <UButton
     @click="showExplanation = !showExplanation"
     class="justify-center w-full mx-auto text-xl my-2"
@@ -188,6 +280,15 @@ if (loggedIn.value && process.client) {
   </UButton>
   <div class="text-center my-4">
     <h1 class="text-3xl">Digital Envelopes</h1>
+  </div>
+  <div class="py-2 grid grid-cols-5 items-center gap-3">
+    <div class="col-span-3">
+      <UProgress indicator class="pb-2" :value="usedBudgetPercent" />
+      <em class="text-gray-500"
+      >Remaining Budget: ${{ totalBudget - usedBudget }}</em
+      >
+    </div>
+    <UButton @click="showEditBudget = true" class="text-start col-span-2">Budget: ${{ totalBudget }}</UButton>
   </div>
   <div v-if="envelopeArray.length > 0" class="grid grid-cols-2">
     <!-- envelopes -->
@@ -212,7 +313,7 @@ if (loggedIn.value && process.client) {
           </p>
           <p>${{ envelope.budget }}</p>
           <p>
-            <em>{{ envelope.created }}</em>
+            <em>{{ envelope.date }}</em>
           </p>
         </div>
       </div>
@@ -225,7 +326,7 @@ if (loggedIn.value && process.client) {
     </div>
     <div class="flex justify-center mb-4">
       <USkeleton class="h-[170px] w-[116px]" />
-    </div>    
+    </div>
   </div>
   <div class="text-center">
     <UButton
@@ -250,32 +351,34 @@ if (loggedIn.value && process.client) {
           />
         </div>
       </template>
-      <UInput
-        type="text"
-        v-model="openEnvelope.name"
-        class="my-4 text-xl"
-        input-class="text-xl"
-      >
-        <template #trailing> Name </template>
-      </UInput>
-      <UInput
-        type="number"
-        v-model="openEnvelope.budget"
-        class="my-4 text-xl"
-        input-class="text-xl"
-      >
-        <template #leading> $ </template>
-        <template #trailing> Budget </template>
-      </UInput>
-      <UInput
-        type="text"
-        v-model="openEnvelope.created"
-        class="my-4 text-xl"
-        input-class="text-xl"
-      >
-        <template #trailing>Date</template>
-      </UInput>
-
+      <div class="grid grid-cols-3 items-center">
+        <p>Label:</p>
+        <UInput
+          type="text"
+          v-model="openEnvelope.name"
+          class="my-4 text-xl col-span-2"
+          input-class="text-xl"
+        >
+        </UInput>
+        <p>Amount:</p>
+        <UInput
+          type="number"
+          v-model="openEnvelope.budget"
+          class="my-4 text-xl col-span-2"
+          input-class="text-xl"
+        >
+          <template #leading> $ </template>
+        </UInput>
+        <p>Due Date:</p>
+        <UInput
+          type="date"
+          v-model="openEnvelope.date"
+          class="my-4 text-xl col-span-2"
+          input-class="text-xl"
+        >
+        </UInput>
+      </div>
+      <em class="text-gray-400">Due date is optional</em>
       <template #footer>
         <UButton block label="Submit" @click="saveEnvelope" />
         <UButton
@@ -335,6 +438,35 @@ if (loggedIn.value && process.client) {
       </p>
     </UCard>
   </UModal>
+  <!-- BUDGET MODAL -->
+  <UModal :ui="{ container: 'items-center' }" v-model="showEditBudget">
+      <UCard>
+        <template #header>
+          <div class="flex min-w-0 justify-between">
+            <p class="text-2xl my-4">Current Budget: ${{ totalBudget }}</p>
+            <UButton
+              @click="showEditBudget = false"
+              variant="link"
+              color="white"
+              size="xl"
+              icon="i-heroicons-x-mark-solid"
+              class="text-gray-600 hover:text-gray-900"
+            />
+          </div>
+        </template>
+        <URange v-model="totalBudget" name="range" :max="5000" />
+        <UInput
+          type="number"
+          v-model="totalBudget"
+          class="my-4"
+          :ui="{ base: 'text-center flex justify-center' }"
+        >    
+        </UInput>
+        <template #footer>
+          <UButton block label="Submit" @click="setBudget()" />
+        </template>
+      </UCard>
+    </UModal>
 </template>
 
 <style>
