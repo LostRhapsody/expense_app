@@ -179,8 +179,8 @@ async function setClientTheme() {
   } else if (currentUUID === null) {
     alert("Setting client token failed! Alert evan.robertson77@gmail.com");
   } else {
-    // if theme is default, don't set a link tag
-    if (theme !== "default") {
+    // if theme is Default, don't set a link tag
+    if (theme !== "Default") {
       useHead({
         link: [{ rel: "stylesheet", href: "/themes/" + theme }],
       });
@@ -240,7 +240,7 @@ async function setTheme(theme: string) {
 
   // we can't delete the link tag Nuxt generates
   // ...yet. So we just refresh the page instead.
-  if(theme === "default") {
+  if(theme === "Default") {
     location.reload();
   }
 
@@ -353,7 +353,7 @@ async function setTheme(theme: string) {
               <UButton variant="ghost" @click="setTheme('glassy_gradient.css')"
                 >Set theme to "Glassy"</UButton
               >
-              <UButton variant="ghost" @click="setTheme('default')"
+              <UButton variant="ghost" @click="setTheme('Default')"
                 >Set theme to "Default"</UButton
               >
             </div>
@@ -395,7 +395,7 @@ async function setTheme(theme: string) {
               }"
               class="custom-nav-links"
             >
-              <template #default="{ link }">
+              <template #Default="{ link }">
                 <div
                   v-if="link.isTitle"
                   class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2"
