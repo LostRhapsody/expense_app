@@ -390,14 +390,14 @@ onMounted(async () => {
             />
           </UButton>
           <strong
-            ><span class="text-lg text-primary"
+            ><ULink to="/" class="text-lg text-primary"
               >Budgie
               <img
                 alt="An icon of a budgie, which is a kind of bird."
                 class="inline-block text-primary"
                 src="/edited_budgie.svg"
                 height="25"
-                width="25" /></span
+                width="25" /></ULink
           ></strong>
 
           <!--  Nav Button -->

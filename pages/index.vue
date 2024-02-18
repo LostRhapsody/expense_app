@@ -28,6 +28,12 @@ const favoriteLinks = ref([
       url: "/budgeting/iou",
       icon: "i-heroicons-user-solid",
     },
+    {
+      label: "Savings Goals",
+      toggled: false,
+      url: "/budgeting/goals",
+      icon: "i-heroicons-trophy-solid",
+    },    
   ],
 ]);
 
