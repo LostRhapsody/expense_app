@@ -281,21 +281,24 @@ if (loggedIn.value && process.client) {
   <div class="text-center my-4">
     <h1 class="text-3xl">Digital Envelopes</h1>
   </div>
-  <div class="py-2 grid grid-cols-5 items-center gap-3">
-    <div class="col-span-3">
+  <div class="py-2 flex justify-between items-center">
+    <div class="w-9/12">
       <UProgress indicator class="pb-2" :value="usedBudgetPercent" />
       <em class="text-gray-500"
       >Remaining Budget: ${{ totalBudget - usedBudget }}</em
+      ><br />
+      <em class="text-gray-500"
+      >Total Budget: ${{ totalBudget }}</em
       >
     </div>
-    <UButton icon="i-heroicons-banknotes-solid" @click="showEditBudget = true" class="text-center col-span-2">Budget: ${{ totalBudget }}</UButton>
+    <UButton icon="i-heroicons-banknotes-solid" @click="showEditBudget = true" class="text-center col-span-2" />
   </div>
   <div v-if="envelopeArray.length > 0" class="grid grid-cols-2">
     <!-- envelopes -->
     <div class="envelopeContainer" v-for="(envelope, index) in envelopeArray">
       <div
         @click="openAnEnvelope(index)"
-        class="text-center text-3xl m-4 ring-2 ring-primary rounded-xl py-3 hover:bg-gray-300 hover:dark:bg-gray-700"
+        class="text-center text-3xl m-4 ring-2 ring-primary rounded-xl py-3 hover:bg-gray-300 hover:dark:bg-gray-700 relative"
       >
         <UIcon
           v-if="!envelope.open"
@@ -315,6 +318,10 @@ if (loggedIn.value && process.client) {
           <p>
             <em>{{ envelope.date }}</em>
           </p>
+        </div>
+        <div class="absolute text-xs rounded-full p-1 percentage bg-primary">
+          <p v-if="(((envelope.budget / totalBudget) * 100).toFixed()).length > 1">%{{ ((envelope.budget / totalBudget) * 100).toFixed() }}</p>
+          <p v-else>%0{{ ((envelope.budget / totalBudget) * 100).toFixed() }}</p>
         </div>
       </div>
     </div>
@@ -432,6 +439,10 @@ if (loggedIn.value && process.client) {
       </p>
       <br />
       <p>
+        To set and update your <span class="text-primary">budget</span>, use the <UIcon class="text-primary" name="i-heroicons-banknotes-solid" /> button.        
+      </p>
+      <br />
+      <p>
         Lastly, you can use
         <span class="text-red-500">the "Delete" button</span> to delete that
         envelope.
@@ -473,5 +484,9 @@ if (loggedIn.value && process.client) {
 .envelopeContainer .i-heroicons-envelope-solid,
 .envelopeContainer .i-heroicons-envelope-open-solid {
   font-size: 5rem;
+}
+.envelopeContainer .percentage {
+  left: 65%;
+  bottom: 75%;
 }
 </style>
