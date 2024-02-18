@@ -31,6 +31,7 @@ const isDark = computed({
 const isNavOpen = ref(false);
 const isPrefrencesOpen = ref(false);
 const isThemeModalOpen = ref(false);
+const isConfirmClearUserDataOpen = ref(false);
 
 const links = [
   [
@@ -333,6 +334,29 @@ function onThemeSelect(option: themeType) {
   );
 }
 
+/**
+ * Clears the user's data
+ */
+async function clearUserData() {
+  isConfirmClearUserDataOpen.value = false;
+  const key = localStorage.getItem("uuid");
+
+  await useFetch("/api/user/clearUserData", {
+    method: "post",
+    body: {
+      key: key + "clearRecords",
+      value: key,
+    },
+    onResponse({ response }) {
+      isPrefrencesOpen.value = false;
+      toast.add({
+        title: response._data.message,
+        callback: location.reload(),
+      });
+    },
+  });
+}
+
 // These events happen AFTER app is mounted (DOM is loaded)
 onMounted(async () => {
   await nextTick();
@@ -360,7 +384,9 @@ onMounted(async () => {
     <!-- main -->
     <UCard class="my-4 cardBody">
       <template #header>
-        <div class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2">
+        <div
+          class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2"
+        >
           <!-- button to display a user's avatar when logged in, will log you out -->
           <UButton
             v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
@@ -402,7 +428,11 @@ onMounted(async () => {
 
           <!--  Nav Button -->
           <div class="text-end">
-            <UButton class="rounded-full w-min" @click="isNavOpen = true" icon="i-heroicons-bars-3" />
+            <UButton
+              class="rounded-full w-min"
+              @click="isNavOpen = true"
+              icon="i-heroicons-bars-3"
+            />
           </div>
         </div>
 
@@ -463,12 +493,11 @@ onMounted(async () => {
               </UButton>
 
               <UButton label="Select Theme" @click="openThemeModal" />
-              <!-- <UButton variant="ghost" @click="setTheme('glassy_gradient.css')"
-                >Set theme to "Glassy"</UButton
-              >
-              <UButton variant="ghost" @click="setTheme('Default')"
-                >Set theme to "Default"</UButton
-              > -->
+              <UButton
+                label="Clear User Data"
+                color="red"
+                @click="isConfirmClearUserDataOpen = true"
+              />
             </div>
           </UCard>
         </USlideover>
@@ -570,6 +599,34 @@ onMounted(async () => {
         @update:model-value="onThemeSelect"
         ref="themePalett"
       />
+    </UModal>
+    <UModal
+      :ui="{ container: 'items-center' }"
+      v-model="isConfirmClearUserDataOpen"
+    >
+      <div class="p-4">
+        <p class="text-xl text-red-500"><strong>Confirm clear user data?</strong></p>
+        <UDivider class="my-2" />
+        <p>
+          This includes all your previous grocery trips, envelopes, favorites,
+          current theme, savings goals, IOUs, and anything Budgie stores on your
+          behalf.
+        </p>        
+        <div class="text-center">
+          
+          <UButton
+          label="No, I want to keepy my data in Budgie"
+          @click="isConfirmClearUserDataOpen = false"
+          class="w-3/4 my-2"
+          />
+          <UButton
+          label="Yes, delete all my Budgie data"
+          @click="clearUserData"
+          class="w-3/4 my-2"
+          color="red"
+          />
+        </div>
+      </div>
     </UModal>
   </UContainer>
 </template>

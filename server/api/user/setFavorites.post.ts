@@ -10,9 +10,9 @@ export default defineEventHandler(async (event) => {
       "Setting user records failed, try logging out and back in again."
     );
   } else {
-    if (!body.key.includes("Favorite")) {
+    if (!body.key.includes("Favorites")) {
       response = setApiError(
-        "The key did not include a 'Favorite' indicator, could not set Favorites."
+        "The key did not include a 'Favorites' indicator, could not set Favorites."
       );
     } else {
       await kv.set(body.key, body.value);
