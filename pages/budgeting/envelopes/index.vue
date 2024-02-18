@@ -22,6 +22,18 @@ let openEnvelope = {};
 // total budget
 const totalBudget = ref(0);
 
+const totalComputedBudget = computed(() => {
+  if (
+    totalBudget.value < 0 ||
+    totalBudget.value === null ||
+    totalBudget.value === undefined ||
+    totalBudget.value === ""
+  ) {
+    totalBudget.value = 0;
+  }
+  return totalBudget.value;
+});
+
 // used budget
 const usedBudget = computed(() => {
   let budgetUsed = 0;
@@ -33,6 +45,9 @@ const usedBudget = computed(() => {
 
 // returns the percentage of the budget remaining out of 100%
 const usedBudgetPercent = computed(() => {
+  if (usedBudget.value === 0 || totalBudget.value === 0) {
+    return 0;
+  }
   return (usedBudget.value / totalBudget.value) * 100;
 });
 
@@ -53,7 +68,7 @@ const links = getBreadcrumbs([
  * Updates the user's saved budget
  * @param key the key used to store this value
  */
- async function setBudget() {
+async function setBudget() {
   const key = localStorage.getItem("uuid");
   showEditBudget.value = false;
   const setBudgetResponse = await $fetch("/api/budgeting/setEnvelopeBudget", {
@@ -94,6 +109,22 @@ async function getBudget() {
         totalBudget.value = records.budget;
       }
     }
+  }
+}
+
+/**
+ * Ensures the budget is a valid number
+ * note: we use a computed property to ensure the budget is always 0 or greater
+ * so this is a redundant, backup method
+ */
+function validateBudget() {
+  if (
+    totalBudget.value < 0 ||
+    totalBudget.value === null ||
+    totalBudget.value === undefined ||
+    totalBudget.value === ""
+  ) {
+    totalBudget.value = 0;
   }
 }
 
@@ -249,6 +280,14 @@ function validateEnvelope() {
   return validIOU;
 }
 
+function getEnvelopeRatio(amount: number, total: number) {
+  if (amount === 0 || total === 0) return 0;
+  if (amount === null || total === null) return 0;
+  if (amount === undefined || total === undefined) return 0;
+  let ratio = (amount / total) * 100;
+  return ratio.toFixed();
+}
+
 /**
  * Logged In INIT logic
  */
@@ -256,11 +295,10 @@ if (loggedIn.value && process.client) {
   getEnvelopeArray();
   getBudget();
 }
-
 </script>
 
 <template>
-  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1"
     ><UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links"
   /></BreadcrumbHTML>
   <UButton
@@ -285,13 +323,15 @@ if (loggedIn.value && process.client) {
     <div class="w-9/12">
       <UProgress indicator class="pb-2" :value="usedBudgetPercent" />
       <em class="text-gray-500"
-      >Remaining Budget: ${{ totalBudget - usedBudget }}</em
+        >Remaining Budget: ${{ totalBudget - usedBudget }}</em
       ><br />
-      <em class="text-gray-500"
-      >Total Budget: ${{ totalBudget }}</em
-      >
+      <em class="text-gray-500">Total Budget: ${{ totalBudget }}</em>
     </div>
-    <UButton icon="i-heroicons-banknotes-solid" @click="showEditBudget = true" class="text-center col-span-2" />
+    <UButton
+      icon="i-heroicons-banknotes-solid"
+      @click="showEditBudget = true"
+      class="text-center col-span-2 p-3"
+    />
   </div>
   <div v-if="envelopeArray.length > 0" class="grid grid-cols-2">
     <!-- envelopes -->
@@ -319,9 +359,15 @@ if (loggedIn.value && process.client) {
             <em>{{ envelope.date }}</em>
           </p>
         </div>
-        <div class="absolute text-xs rounded-full p-1 percentage bg-primary">
-          <p v-if="(((envelope.budget / totalBudget) * 100).toFixed()).length > 1">%{{ ((envelope.budget / totalBudget) * 100).toFixed() }}</p>
-          <p v-else>%0{{ ((envelope.budget / totalBudget) * 100).toFixed() }}</p>
+        <div class="absolute text-xs rounded-full p-1 percentage bg-primary text-gray-700">
+          <p
+            v-if="((envelope.budget / totalBudget) * 100).toFixed().length > 1"
+          >
+            %{{ getEnvelopeRatio(envelope.budget, totalComputedBudget) }}
+          </p>
+          <p v-else>
+            %0{{ getEnvelopeRatio(envelope.budget, totalComputedBudget) }}
+          </p>
         </div>
       </div>
     </div>
@@ -439,7 +485,9 @@ if (loggedIn.value && process.client) {
       </p>
       <br />
       <p>
-        To set and update your <span class="text-primary">budget</span>, use the <UIcon class="text-primary" name="i-heroicons-banknotes-solid" /> button.        
+        To set and update your <span class="text-primary">budget</span>, use the
+        <UIcon class="text-primary" name="i-heroicons-banknotes-solid" />
+        button.
       </p>
       <br />
       <p>
@@ -451,33 +499,34 @@ if (loggedIn.value && process.client) {
   </UModal>
   <!-- BUDGET MODAL -->
   <UModal :ui="{ container: 'items-center' }" v-model="showEditBudget">
-      <UCard>
-        <template #header>
-          <div class="flex min-w-0 justify-between">
-            <p class="text-2xl my-4">Current Budget: ${{ totalBudget }}</p>
-            <UButton
-              @click="showEditBudget = false"
-              variant="link"
-              color="white"
-              size="xl"
-              icon="i-heroicons-x-mark-solid"
-              class="text-gray-600 hover:text-gray-900"
-            />
-          </div>
-        </template>
-        <URange v-model="totalBudget" name="range" :max="5000" />
-        <UInput
-          type="number"
-          v-model="totalBudget"
-          class="my-4"
-          :ui="{ base: 'text-center flex justify-center' }"
-        >    
-        </UInput>
-        <template #footer>
-          <UButton block label="Submit" @click="setBudget()" />
-        </template>
-      </UCard>
-    </UModal>
+    <UCard>
+      <template #header>
+        <div class="flex min-w-0 justify-between">
+          <p class="text-2xl my-4">Current Budget: ${{ totalBudget }}</p>
+          <UButton
+            @click="showEditBudget = false"
+            variant="link"
+            color="white"
+            size="xl"
+            icon="i-heroicons-x-mark-solid"
+            class="text-gray-600 hover:text-gray-900"
+          />
+        </div>
+      </template>
+      <URange v-model="totalBudget" name="range" :max="5000" />
+      <UInput
+        type="number"
+        v-model="totalBudget"
+        class="my-4"
+        :ui="{ base: 'text-center flex justify-center' }"
+        v-on:change="validateBudget"
+      >
+      </UInput>
+      <template #footer>
+        <UButton block label="Submit" @click="setBudget()" />
+      </template>
+    </UCard>
+  </UModal>
 </template>
 
 <style>

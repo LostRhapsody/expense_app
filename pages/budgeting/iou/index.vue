@@ -192,7 +192,7 @@ if (loggedIn.value && process.client) {
 </script>
 
 <template>
-  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1"
     ><UBreadcrumb :ui="{ li: 'text-black' }" :links="links"
   /></BreadcrumbHTML>
   <UButton
@@ -210,54 +210,54 @@ if (loggedIn.value && process.client) {
       width="25"
     />
   </UButton>
+  <div class="text-center my-4">
+    <h1 class="text-3xl">IOUs</h1>
+  </div>
   <!-- List of IOUs -->
-  <div class="grid grid-cols-2 gap-4">
-    <div v-if="showIouList">
-      <div v-for="(iou, index) in iouArray">
-        <div v-if="iou.borrowed" class="m-2">
-          <UChip
-            size="3xl"
-            :text="'$' + iou.amount"
-            class="w-full my-4"
+  <div v-if="showIouList" class="grid grid-cols-2 gap-4">
+    <div v-for="(iou, index) in iouArray">
+      <div v-if="iou.borrowed" class="m-2">
+        <UChip
+          size="3xl"
+          :text="'$' + iou.amount"
+          class="w-full my-4"
+          color="red"
+        >
+          <UButton
+            @click="togglePayModal(index)"
             color="red"
+            class="w-full block text-start"
+            variant="outline"
           >
-            <UButton
-              @click="togglePayModal(index)"
-              color="red"
-              class="w-full block text-start"
-              variant="outline"
-            >
-              <span>{{ iou.name }}</span
-              ><br />
-              <span>Borrow</span>
-              <br />
-              <span>{{  iou.date }}</span>
-            </UButton>
-          </UChip>
-        </div>
-        <div v-else class="m-2">
-          <UChip size="3xl" :text="'$' + iou.amount" class="w-full my-4">
-            <UButton
-              @click="togglePayModal(index)"
-              class="w-full block text-start"
-              variant="outline"
-            >
-              <span>{{ iou.name }}</span
-              ><br />
-              <span>Lent</span>
-              <br />
-              <span>{{  iou.date }}</span>
-            </UButton>
-          </UChip>
-        </div>
+            <span>{{ iou.name }}</span
+            ><br />
+            <span>Borrow</span>
+            <br />
+            <span>{{ iou.date }}</span>
+          </UButton>
+        </UChip>
+      </div>
+      <div v-else class="m-2">
+        <UChip size="3xl" :text="'$' + iou.amount" class="w-full my-4">
+          <UButton
+            @click="togglePayModal(index)"
+            class="w-full block text-start"
+            variant="outline"
+          >
+            <span>{{ iou.name }}</span
+            ><br />
+            <span>Lent</span>
+            <br />
+            <span>{{ iou.date }}</span>
+          </UButton>
+        </UChip>
       </div>
     </div>
-    <div v-else>
-      <p>No IOUs to display.</p>
-    </div>
+  </div>
+  <div v-else>
+    <p>No IOUs to display.</p>
   </div>
   <div class="text-center">
-    <!-- @click="createIOU" -->
     <UButton
       class="mx-auto my-4 rounded-full h-28 w-28 justify-center text-3xl"
       @click="createIou"
@@ -323,12 +323,14 @@ if (loggedIn.value && process.client) {
       <div class="p-4">
         <!-- IOU for who -->
         <div class="grid grid-cols-3 gap-4 my-2">
-          <p v-if="currentIOU.borrowed">Pay back:</p>
-          <p v-else>Due from:</p>
+          <!-- This stopped working. Big sad. -->
+          <!-- <p v-if="currentIOU.borrowed">Pay back:</p>
+          <p v-else>Due from:</p> -->
+          <p>Name:</p>
           <UInput
             class="col-span-2"
             type="string"
-            placeholder="Name"
+            placeholder="Money Please"
             v-model="currentIOU.name"
           />
         </div>
@@ -405,7 +407,8 @@ if (loggedIn.value && process.client) {
       </p>
       <br />
       <p>
-        Always pay back your debts! <span class="text-primary">O(∩_∩)O</span>
+        Always pay back your debts!
+        <span class="text-primary"><br />(╯°□°）╯︵ ┻━┻</span>
       </p>
       <UDivider class="my-2" />
     </UCard>

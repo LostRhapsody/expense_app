@@ -28,7 +28,7 @@ const breadCrumbs = getBreadcrumbs([
 
 <template>
   <BreadcrumbHTML
-  class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+  class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1"
 ><UBreadcrumb :ui="{ li: 'text-black' }" :links="breadCrumbs" /></BreadcrumbHTML>
   <div class="text-center">
     <BudgieTitle/>

@@ -89,6 +89,14 @@ const links = [
       to: "/budgeting/iou",
       isTitle: false,
     },
+    {
+      label: "Savings Goals",
+      icon: "i-heroicons-trophy-solid",
+      id: "Goals",
+      desc: "Track your long or shortterm savings goals.",
+      to: "/budgeting/goals",
+      isTitle: false,
+    },
   ],
 ];
 
@@ -352,7 +360,7 @@ onMounted(async () => {
     <!-- main -->
     <UCard class="my-4 cardBody">
       <template #header>
-        <div class="flex min-w-0 w-full justify-between items-center">
+        <div class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2">
           <!-- button to display a user's avatar when logged in, will log you out -->
           <UButton
             v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
@@ -381,7 +389,21 @@ onMounted(async () => {
               icon="i-heroicons-user-circle-solid"
             />
           </UButton>
-          <UButton @click="isNavOpen = true" icon="i-heroicons-bars-3" />
+          <strong
+            ><span class="text-lg text-primary"
+              >Budgie
+              <img
+                alt="An icon of a budgie, which is a kind of bird."
+                class="inline-block text-primary"
+                src="/edited_budgie.svg"
+                height="25"
+                width="25" /></span
+          ></strong>
+
+          <!--  Nav Button -->
+          <div class="text-end">
+            <UButton class="rounded-full w-min" @click="isNavOpen = true" icon="i-heroicons-bars-3" />
+          </div>
         </div>
 
         <!-- Slideover user preferences -->

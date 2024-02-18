@@ -159,18 +159,6 @@ async function getRecords() {
 }
 
 /**
- * utility function to numbers format to US currency
- * @param num number value to format as currency
- * @returns num formated as US currency
- */
-function formatCurrency(num: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(num);
-}
-
-/**
  * Updates the total value of past tallies
  * Also formats the display value and the ratio
  */
@@ -442,7 +430,7 @@ const links = getBreadcrumbs([
 
 <template>
   <input class="hidden" :value="isDark" :change="colorUpdate()" />
-  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1"
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1"
     ><UBreadcrumb :ui="{ li: 'text-black' }" :links="links"
   /></BreadcrumbHTML>
   <div class="flex flex-col mx-auto justify-center">

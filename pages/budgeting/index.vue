@@ -16,6 +16,13 @@ const links = [
     desc: "Track lending and borrowing.",
     to: "/budgeting/iou",
   },
+  {
+    label: "Saving Goals",
+    icon: "i-heroicons-trophy-solid",
+    id: "goals",
+    desc: "Track your short and longterm savings goals.",
+    to: "/budgeting/goals",
+  },
 ];
 const breadCrumbs = getBreadcrumbs([
   {
@@ -28,7 +35,7 @@ const breadCrumbs = getBreadcrumbs([
 
 <template>
   <BreadcrumbHTML
-  class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1">
+  class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1">
   <UBreadcrumb 
   :ui="{ li: 'text-black' }"
   :links="breadCrumbs" /></BreadcrumbHTML>

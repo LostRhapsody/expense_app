@@ -160,7 +160,7 @@ const links = getBreadcrumbs([
 </script>
 
 <template>
-  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-700/50 rounded-full p-1 "
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1 "
     ><UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links"
   /></BreadcrumbHTML>
   <UButton
