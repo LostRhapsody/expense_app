@@ -433,6 +433,21 @@ const links = getBreadcrumbs([
   <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1"
     ><UBreadcrumb :ui="{ li: 'text-black' }" :links="links"
   /></BreadcrumbHTML>
+  <UButton
+    @click="showExplanation = !showExplanation"
+    class="justify-center w-full mx-auto text-xl my-2"
+    icon="i-heroicons-information-circle-solid"
+    variant="outline"
+  >
+    How to use
+    <img
+      alt="An icon of a budgie, which is a kind of bird."
+      class="inline-block text-primary"
+      src="/edited_budgie.svg"
+      height="25"
+      width="25"
+    />
+  </UButton>
   <div class="flex flex-col mx-auto justify-center">
     <!--  audio for clicker -->
     <audio
@@ -586,7 +601,7 @@ const links = getBreadcrumbs([
     <UDivider label="CONTROLS" />
 
     <!-- ROW 1 -->
-    <div class="grid grid-cols-3 gap-8 mx-10 my-4">
+    <div class="grid grid-cols-2 gap-8 mx-10 my-4">
       <!-- show tallies list -->
       <UButton
         @click="showList = true"
@@ -599,20 +614,9 @@ const links = getBreadcrumbs([
         class="justify-center"
         @click="updateUserArray('add')"
       />
-      <!-- reset count -->
-      <UButton
-        @click="showAlert = !showAlert"
-        class="justify-center"
-        icon="i-heroicons-arrow-path-solid"
-      ></UButton>
-
-      <!-- ROW 2 -->
-      <!-- Show Explanation button -->
-      <UButton
-        @click="showExplanation = !showExplanation"
-        class="justify-center"
-        icon="i-heroicons-information-circle-solid"
-      />
+    </div>
+    <!-- ROW 2 -->
+    <div class="grid grid-cols-3 gap-8 mx-10 my-4">
       <!-- Decrement button -->
       <UButton @click="decrement" class="justify-center"
         >-{{ incrementBy }}</UButton
@@ -623,6 +627,12 @@ const links = getBreadcrumbs([
         icon="i-heroicons-cog-6-tooth-solid"
         class="justify-center"
       />
+      <!-- reset count -->
+      <UButton
+        @click="showAlert = !showAlert"
+        class="justify-center"
+        icon="i-heroicons-arrow-path-solid"
+      ></UButton>
     </div>
 
     <!-- Reset alert -->
