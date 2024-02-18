@@ -8,6 +8,7 @@ const toast = useToast();
 const showExplanation = ref(false);
 const editOpen = ref(false);
 const showEditBudget = ref(false);
+const waitingForResponse = ref(true);
 
 // user data
 const { status, data, signIn, signOut } = useAuth();
@@ -37,6 +38,10 @@ const totalComputedBudget = computed(() => {
 // used budget
 const usedBudget = computed(() => {
   let budgetUsed = 0;
+
+  if(envelopeArray.value === null ||
+  envelopeArray.value === undefined) return 0;
+
   envelopeArray.value.forEach((envelope) => {
     budgetUsed += envelope.budget;
   });
@@ -161,6 +166,9 @@ async function getEnvelopeArray() {
   const getEnvelopeResponse = await $fetch("/api/budgeting/getEnvelope", {
     method: "post",
     body: { key: key + "Envelope" },
+    onResponse(){
+      waitingForResponse.value = false;
+    }
   });
   if (
     getEnvelopeResponse === null ||
@@ -171,7 +179,7 @@ async function getEnvelopeArray() {
   } else if (getEnvelopeResponse.error) {
     toast.add({ title: "Error: " + getEnvelopeResponse.message });
   } else {
-    envelopeArray.value = getEnvelopeResponse.envelopeArray;
+    envelopeArray.value = getEnvelopeResponse.envelopeArray;        
   }
 }
 
@@ -269,11 +277,11 @@ function deleteEnvelope() {
 function validateEnvelope() {
   let validIOU = true;
   if (openEnvelope.name.length <= 0) {
-    alert("Please enter a name for the IOU record.");
+    alert("Please enter a name for the envelope.");
     validIOU = false;
   }
   if (openEnvelope.budget <= 0 && validIOU) {
-    alert("Please enter a positive budget for the IOU record.");
+    alert("Please enter a positive budget for the envelope.");
     validIOU = false;
   }
 
@@ -333,7 +341,16 @@ if (loggedIn.value && process.client) {
       class="text-center col-span-2 p-3"
     />
   </div>
-  <div v-if="envelopeArray.length > 0" class="grid grid-cols-2">
+  <div v-if="waitingForResponse" class="grid grid-cols-2">
+    <!-- skeleton envelopes -->
+    <div class="flex justify-center">
+      <USkeleton class="h-[170px] w-[116px]" />
+    </div>
+    <div class="flex justify-center mb-4">
+      <USkeleton class="h-[170px] w-[116px]" />
+    </div>
+  </div>
+  <div v-else-if="envelopeArray !== null && envelopeArray !== undefined" class="grid grid-cols-2">
     <!-- envelopes -->
     <div class="envelopeContainer" v-for="(envelope, index) in envelopeArray">
       <div
@@ -372,14 +389,8 @@ if (loggedIn.value && process.client) {
       </div>
     </div>
   </div>
-  <div v-else v-if="loggedIn" class="grid grid-cols-2">
-    <!-- skeleton envelopes -->
-    <div class="flex justify-center">
-      <USkeleton class="h-[170px] w-[116px]" />
-    </div>
-    <div class="flex justify-center mb-4">
-      <USkeleton class="h-[170px] w-[116px]" />
-    </div>
+  <div v-else>
+    <p>No envelopes created yet.</p>
   </div>
   <div class="text-center">
     <UButton
