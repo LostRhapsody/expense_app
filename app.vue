@@ -98,6 +98,14 @@ const links = [
       to: "/budgeting/goals",
       isTitle: false,
     },
+    {
+    label: "Checkbook",
+    icon: "i-heroicons-rectangle-stack-solid",
+    id: "checkbook",
+    desc: "Record expenses and income",
+    to: "/budgeting/checkbook",
+    isTitle: false,
+  },
   ],
 ];
 

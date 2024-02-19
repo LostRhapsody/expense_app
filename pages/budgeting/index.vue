@@ -23,6 +23,13 @@ const links = [
     desc: "Track your short and longterm savings goals.",
     to: "/budgeting/goals",
   },
+  {
+    label: "Checkbook",
+    icon: "i-heroicons-rectangle-stack-solid",
+    id: "checkbook",
+    desc: "Record expenses and income",
+    to: "/budgeting/checkbook",
+  },
 ];
 const breadCrumbs = getBreadcrumbs([
   {

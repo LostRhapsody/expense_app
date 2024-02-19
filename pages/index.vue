@@ -34,6 +34,12 @@ const favoriteLinks = ref([
       url: "/budgeting/goals",
       icon: "i-heroicons-trophy-solid",
     },    
+    {
+      label: "Checkbook",
+      toggled: false,
+      url: "/budgeting/checkbook",
+      icon: "i-heroicons-rectangle-stack-solid",
+    },    
   ],
 ]);
 

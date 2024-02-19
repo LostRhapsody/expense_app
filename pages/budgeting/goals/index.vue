@@ -632,7 +632,7 @@ if (loggedIn.value && process.client) {
         >
         </UInput>
       </div>
-      <em class="text-gray-400">State and end dates are optional</em>
+      <em class="text-gray-400">Start and end dates are optional</em>
       <template #footer>
         <UButton block label="Save Goal" @click="saveGoal" />
         <UButton
