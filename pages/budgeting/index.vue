@@ -6,28 +6,28 @@ const links = [
     label: "Envelopes",
     icon: "i-heroicons-envelope-solid",
     id: "Envelopes",
-    desc: "Create digital envelopes to help categorize spending habits.",
+    content: "Create digital envelopes to help categorize spending habits.",
     to: "/budgeting/envelopes",
   },
   {
     label: "IOUs",
     icon: "i-heroicons-user-solid",
     id: "IOUs",
-    desc: "Track lending and borrowing.",
+    content: "Track lending and borrowing.",
     to: "/budgeting/iou",
   },
   {
     label: "Saving Goals",
     icon: "i-heroicons-trophy-solid",
     id: "goals",
-    desc: "Track your short and longterm savings goals.",
+    content: "Track your short and longterm savings goals.",
     to: "/budgeting/goals",
   },
   {
     label: "Checkbook",
     icon: "i-heroicons-rectangle-stack-solid",
     id: "checkbook",
-    desc: "Record expenses and income",
+    content: "Record expenses and income",
     to: "/budgeting/checkbook",
   },
 ];
@@ -48,7 +48,6 @@ const breadCrumbs = getBreadcrumbs([
   :links="breadCrumbs" /></BreadcrumbHTML>
   <div class="text-center">
     <BudgieTitle/>
-    <p>Easy to use tools to help manage your budget🧾</p>
-    <GroupLinks :links="links" label="All budgeting tools" />
+    <GroupLinks :links="links" />
   </div>
 </template>

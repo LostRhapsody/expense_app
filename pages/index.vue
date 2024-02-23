@@ -92,6 +92,23 @@ async function getFavorites() {
   });
 }
 
+const links = [
+  {
+    label: "Grocery",
+    icon: "i-heroicons-envelope-solid",
+    id: "grocery",
+    content: "Tools to save money while you shop.",
+    to: "/grocery",
+  },
+  {
+    label: "Budgeting",
+    icon: "i-heroicons-user-solid",
+    id: "ious",
+    content: "Balance your checkbook, budget with envelopes, and more.",
+    to: "/budgeting",
+  }
+];
+
 if(loggedIn.value && process.client){
   getFavorites();
 }
@@ -100,9 +117,8 @@ if(loggedIn.value && process.client){
 <template>
   <div class="text-center">
     <BudgieTitle />
-    <p class="flex items-center justify-center">
-      Use the <UIcon name="i-heroicons-bars-3" class="mx-1" /> to navigate.
-    </p>
+    <GroupLinks :links="links" />
+    
     <UDivider label="Favorites" class="mt-8" />
     <div class="m-2 p-1"> 
 
@@ -130,6 +146,7 @@ if(loggedIn.value && process.client){
       <p class="mb-4">No pages added to favorites.</p>
     </div>
   </div>
+
   <UModal :ui="{ container: 'items-center' }" v-model="showAddFaveModal">
     <UCard>
       <template #header>
@@ -148,7 +165,7 @@ if(loggedIn.value && process.client){
       <p>Toggle the pages below for quick access to them on the homepage.</p>
       <div v-for="link in favoriteLinks[0]">
         <p
-          class="m-2 p-1 ring-1 ring-gray-300 rounded flex items-center justify-between"
+          class="m-2 my-4 p-1 ring-1 ring-gray-300 dark:ring-gray-800 rounded flex items-center justify-between"
         >
           {{ link.label }}
           <UToggle v-model="link.toggled"  v-on:blur="setFavorites" />

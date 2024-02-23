@@ -15,7 +15,7 @@ export default defineNuxtConfig({
     AUTH_NAMESPACE:process.env.AUTH_NAMESPACE
     }
   },
-  devtools: { enabled: false },
+  devtools: { enabled: true },
   modules: [
     '@nuxt/ui',
     '@sidebase/nuxt-auth',

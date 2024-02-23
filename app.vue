@@ -34,7 +34,7 @@ const isThemeModalOpen = ref(false);
 const isConfirmClearUserDataOpen = ref(false);
 
 const links = [
-  [
+  // [
     {
       label: "Home",
       icon: "i-heroicons-home-modern-solid",
@@ -42,8 +42,8 @@ const links = [
       id: "home",
       isTitle: false,
     },
-  ],
-  [
+  // ],
+  // [
     {
       label: "Grocery",
       desc: "Tools to save you money while you shop.",
@@ -66,8 +66,8 @@ const links = [
       desc: "Quickly convert common weights and prices",
       isTitle: false,
     },
-  ],
-  [
+  // ],
+  // [
     {
       label: "Budgeting",
       to: "/budgeting",
@@ -106,7 +106,7 @@ const links = [
     to: "/budgeting/checkbook",
     isTitle: false,
   },
-  ],
+  // ],
 ];
 
 ////// Themes //////////////////////
@@ -536,6 +536,7 @@ onMounted(async () => {
                 />
               </div>
             </template>
+            <!-- <GroupLinks :links="links" label="All budgeting tools" /> -->
             <UVerticalNavigation
               :links="links"
               @click="isNavOpen = false"
@@ -562,6 +563,7 @@ onMounted(async () => {
                 </div>
               </template>
             </UVerticalNavigation>
+            
           </UCard>
         </USlideover>
       </template>
