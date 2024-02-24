@@ -34,79 +34,73 @@ const isThemeModalOpen = ref(false);
 const isConfirmClearUserDataOpen = ref(false);
 
 const links = [
-  // [
-    {
-      label: "Home",
-      icon: "i-heroicons-home-modern-solid",
-      to: "/",
-      id: "home",
-      isTitle: false,
-    },
-  // ],
-  // [
-    {
-      label: "Grocery",
-      desc: "Tools to save you money while you shop.",
-      to: "/grocery",
-      isTitle: true,
-    },
-    {
-      label: "Clicker",
-      icon: "i-heroicons-shopping-bag-solid",
-      to: "/grocery/clicker",
-      id: "Clicker",
-      desc: "Easily track your grocery limit while you shop",
-      isTitle: false,
-    },
-    {
-      label: "Converter",
-      icon: "i-heroicons-arrows-up-down-solid",
-      to: "/grocery/converter",
-      id: "Converter",
-      desc: "Quickly convert common weights and prices",
-      isTitle: false,
-    },
-  // ],
-  // [
-    {
-      label: "Budgeting",
-      to: "/budgeting",
-      desc: "Balance your checkbook, create digital envelopes, and more budgeting tools.",
-      isTitle: true,
-    },
-    {
-      label: "Envelopes",
-      icon: "i-heroicons-envelope-solid",
-      id: "Envelopes",
-      desc: "Create digital envelopes to help categorize spending habits.",
-      to: "/budgeting/envelopes",
-      isTitle: false,
-    },
-    {
-      label: "IOUs",
-      icon: "i-heroicons-user-solid",
-      id: "IOUs",
-      desc: "Track debts, credit, IOUs, etc.",
-      to: "/budgeting/iou",
-      isTitle: false,
-    },
-    {
-      label: "Savings Goals",
-      icon: "i-heroicons-trophy-solid",
-      id: "Goals",
-      desc: "Track your long or shortterm savings goals.",
-      to: "/budgeting/goals",
-      isTitle: false,
-    },
-    {
+  {
+    label: "Home",
+    icon: "i-heroicons-home-modern-solid",
+    to: "/",
+    id: "home",
+    isTitle: false,
+  },
+  {
+    label: "Grocery",
+    content: "Tools to save you money while you shop.",
+    to: "/grocery",
+    isTitle: true,
+  },
+  {
+    label: "Clicker",
+    icon: "i-heroicons-shopping-bag-solid",
+    to: "/grocery/clicker",
+    id: "Clicker",
+    content: "Easily track your grocery limit while you shop",
+    isTitle: false,
+  },
+  {
+    label: "Converter",
+    icon: "i-heroicons-arrows-up-down-solid",
+    to: "/grocery/converter",
+    id: "Converter",
+    content: "Quickly convert common weights and prices",
+    isTitle: false,
+  },
+  {
+    label: "Budgeting",
+    to: "/budgeting",
+    content: "Balance your checkbook, create digital envelopes, and more budgeting tools.",
+    isTitle: true,
+  },
+  {
+    label: "Envelopes",
+    icon: "i-heroicons-envelope-solid",
+    id: "Envelopes",
+    content: "Create digital envelopes to help categorize spending habits.",
+    to: "/budgeting/envelopes",
+    isTitle: false,
+  },
+  {
+    label: "IOUs",
+    icon: "i-heroicons-user-solid",
+    id: "IOUs",
+    content: "Track debts, credit, IOUs, etc.",
+    to: "/budgeting/iou",
+    isTitle: false,
+  },
+  {
+    label: "Savings Goals",
+    icon: "i-heroicons-trophy-solid",
+    id: "Goals",
+    content: "Track your long or shortterm savings goals.",
+    to: "/budgeting/goals",
+    isTitle: false,
+  },
+  {
     label: "Checkbook",
     icon: "i-heroicons-rectangle-stack-solid",
     id: "checkbook",
-    desc: "Record expenses and income",
+    content: "Record expenses and income",
     to: "/budgeting/checkbook",
     isTitle: false,
   },
-  // ],
 ];
 
 ////// Themes //////////////////////
@@ -368,7 +362,6 @@ async function clearUserData() {
 // These events happen AFTER app is mounted (DOM is loaded)
 onMounted(async () => {
   await nextTick();
-
   /**
    * keybind listeners
    * Not currently used... this is a mobile app after all
@@ -392,178 +385,136 @@ onMounted(async () => {
     <!-- main -->
     <UCard class="my-4 cardBody">
       <template #header>
-        <div
-          class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2"
-        >
+        <div class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2">
           <!-- button to display a user's avatar when logged in, will log you out -->
-          <UButton
-            v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
-            @click="isPrefrencesOpen = true"
-            variant="ghost"
-          >
+          <UButton v-if="loggedIn && userAvatar !== null && userAvatar !== ''" @click="isPrefrencesOpen = true"
+            variant="ghost">
             <UAvatar class="ring-2 ring-primary" :src="userAvatar" />
           </UButton>
 
           <!-- button that displays normal user icon when logged in, will log you out -->
-          <UButton
-            variant="ghost"
-            v-else-if="loggedIn"
-            @click="isPrefrencesOpen = true"
-          >
-            <UAvatar
-              class="ring-2 ring-primary"
-              icon="i-heroicons-user-circle-solid"
-            />
+          <UButton variant="ghost" v-else-if="loggedIn" @click="isPrefrencesOpen = true">
+            <UAvatar class="ring-2 ring-primary" icon="i-heroicons-user-circle-solid" />
           </UButton>
 
           <!-- button that displays normal user icon when logged out, will log you in -->
           <UButton variant="ghost" v-else @click="isPrefrencesOpen = true">
-            <UAvatar
-              class="ring-2 ring-gray-500"
-              icon="i-heroicons-user-circle-solid"
-            />
+            <UAvatar class="ring-2 ring-gray-500" icon="i-heroicons-user-circle-solid" />
           </UButton>
-          <strong
-            ><ULink to="/" class="text-lg text-primary"
-              >Budgie
-              <img
-                alt="An icon of a budgie, which is a kind of bird."
-                class="inline-block text-primary"
-                src="/edited_budgie.svg"
-                height="25"
-                width="25" /></ULink
-          ></strong>
+
+          <strong>
+            <ULink to="/" class="justify-center flex text-lg text-primary">Budgie
+              <img alt="An icon of a budgie, which is a kind of bird." class="inline-block text-primary"
+                src="/edited_budgie.svg" height="25" width="25" />
+            </ULink>
+          </strong>
 
           <!--  Nav Button -->
           <div class="text-end">
-            <UButton
-              class="rounded-full w-min"
-              @click="isNavOpen = true"
-              icon="i-heroicons-bars-3"
-            />
+            <UButton class="rounded-full w-min" @click="isNavOpen = true" icon="i-heroicons-bars-3" />
           </div>
         </div>
 
         <!-- Slideover user preferences -->
         <USlideover v-model="isPrefrencesOpen" :overlay="true" side="left">
-          <UCard
-            class="flex flex-col flex-1 cardBody"
-            :ui="{
-              body: { base: 'flex-1' },
-              ring: '',
-              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-            }"
-          >
+          <UCard class="flex flex-col flex-1 cardBody" :ui="{
+            body: { base: 'flex-1' },
+            ring: '',
+            divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+          }">
             <template #header>
               <div class="flex items-center justify-between">
-                <h3
-                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-                >
+                <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
                   Preferences
                 </h3>
-                <UButton
-                  color="gray"
-                  variant="ghost"
-                  icon="i-heroicons-x-mark-20-solid"
-                  class="my-1"
-                  @click="isPrefrencesOpen = false"
-                />
+                <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="my-1"
+                  @click="isPrefrencesOpen = false" />
               </div>
             </template>
             <div class="grid grid-cols-1 gap-4">
-              <UButton
-                v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
-                @click="handleSignOut"
-                variant="ghost"
-              >
+              <UButton v-if="loggedIn && userAvatar !== null && userAvatar !== ''" @click="handleSignOut" variant="ghost">
                 <UAvatar class="ring-2 ring-primary" :src="userAvatar" />Sign
                 Out
               </UButton>
 
               <!-- button that displays normal user icon when logged in, will log you out -->
-              <UButton
-                variant="ghost"
-                v-else-if="loggedIn"
-                @click="handleSignOut"
-              >
-                <UAvatar
-                  class="ring-2 ring-primary"
-                  icon="i-heroicons-user-circle-solid"
-                />Sign Out
+              <UButton variant="ghost" v-else-if="loggedIn" @click="handleSignOut">
+                <UAvatar class="ring-2 ring-primary" icon="i-heroicons-user-circle-solid" />Sign Out
               </UButton>
 
               <!-- button that displays normal user icon when logged out, will log you in -->
               <UButton variant="ghost" v-else @click="handleSignIn">
-                <UAvatar
-                  class="ring-2 ring-gray-500"
-                  icon="i-heroicons-user-circle-solid"
-                />Sign In
+                <UAvatar class="ring-2 ring-gray-500" icon="i-heroicons-user-circle-solid" />Sign In
               </UButton>
 
               <UButton label="Select Theme" @click="openThemeModal" />
-              <UButton
-                label="Clear User Data"
-                color="red"
-                @click="isConfirmClearUserDataOpen = true"
-              />
+              <UButton label="Clear User Data" color="red" @click="isConfirmClearUserDataOpen = true" />
             </div>
           </UCard>
         </USlideover>
 
         <!-- Slideover navigation -->
         <USlideover v-model="isNavOpen" :overlay="true">
-          <UCard
-            class="flex flex-col flex-1 cardBody"
-            :ui="{
-              body: { base: 'flex-1' },
-              ring: '',
-              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-            }"
-          >
+          <UCard class="flex flex-col flex-1 cardBody" :ui="{
+            body: { base: 'flex-1' },
+            ring: '',
+            divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+          }">
             <template #header>
               <div class="flex items-center justify-between">
-                <h3
-                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-                >
+                <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
                   Navigation
                 </h3>
-                <UButton
-                  color="gray"
-                  variant="ghost"
-                  icon="i-heroicons-x-mark-20-solid"
-                  class="my-1"
-                  @click="isNavOpen = false"
-                />
+                <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="my-1"
+                  @click="isNavOpen = false" />
               </div>
             </template>
-            <!-- <GroupLinks :links="links" label="All budgeting tools" /> -->
-            <UVerticalNavigation
-              :links="links"
-              @click="isNavOpen = false"
-              :ui="{
-                active: 'dark:before:bg-gray-600/25 before:bg-gray-300/25',
-              }"
-            >
-              <template #default="{ link }">
-                <div
-                  v-if="link.isTitle"
-                  class="text-center w-full my-4 ring-2 dark:ring-gray-800 ring-gray-200 rounded p-2"
-                >
-                  <p
-                    class="text-xl dark:border-gray-800 ring-gray-200 border-b-2 mb-2 !hover:color-red"
-                  >
-                    {{ link.label }}
-                  </p>
-                  <em>{{ link.desc }}</em>
-                </div>
-                <div v-else class="flex flex-col">
-                  <strong class="text-lg dark:text-white text-black">
-                    <p>{{ link.label }}</p>
-                  </strong>
+            <!-- This is identical to groupLinks.vue -->
+            <!-- I just can't close the nav using that component -->
+            <!-- so keep them in sync! -->
+            <UAccordion :items="links" :ui="{ wrapper: 'flex flex-col w-full' }">
+              <template #default="{ item, index, open }">
+                <div>
+                  <!-- PAGES -->
+                  <UButton color="gray" variant="ghost"
+                    class="border rounded-full my-2 border-gray-200 dark:border-gray-800 w-full"
+                    :class="(item.isTitle) ? 'hidden' : ''" :ui="{ rounded: 'rounded-none', padding: { sm: 'p-3' } }">
+                    <template #leading>
+                      <ULink :to="item.to" @click="isNavOpen = false">
+                        <div
+                          class="w-6 h-6 rounded-full bg-primary-500 dark:bg-primary-400 flex items-center justify-center -my-1">
+                          <UIcon :name="item.icon" class="w-4 h-4 text-white dark:text-gray-900" />
+                        </div>
+                      </ULink>
+                    </template>
+
+                    <ULink :to="item.to" @click="isNavOpen = false">
+                      <span class="truncate">{{ item.label }}</span>
+                    </ULink>
+
+                    <template #trailing>
+                      <UIcon v-if="item.content" name="i-heroicons-chevron-right-20-solid"
+                        class="w-5 h-5 ms-auto transform transition-transform duration-200"
+                        :class="[open && 'rotate-90']" />
+                    </template>
+                  </UButton>
+                  <!-- TITLES -->
+                  <UButton color="gray" variant="ghost"
+                    class="border-t my-4 border-gray-300 dark:border-gray-700 w-full text-xl"
+                    :class="(item.isTitle) ? '' : 'hidden'" :ui="{ rounded: 'rounded-none', padding: { sm: 'p-3' } }">
+                    <ULink :to="item.to" @click="isNavOpen = false">
+                      <span class="truncate">{{ item.label }}</span>
+                    </ULink>
+
+                    <template #trailing>
+                      <UIcon v-if="item.content" name="i-heroicons-chevron-right-20-solid"
+                        class="w-5 h-5 ms-auto transform transition-transform duration-200"
+                        :class="[open && 'rotate-90']" />
+                    </template>
+                  </UButton>
                 </div>
               </template>
-            </UVerticalNavigation>
-            
+            </UAccordion>
           </UCard>
         </USlideover>
       </template>
@@ -574,46 +525,25 @@ onMounted(async () => {
         <div class="flex flex-row justify-between min-w-0 items-center">
           <h2 class="text-center"><em>Made with 💖 for Sarah-Jayne</em></h2>
           <ClientOnly>
-            <UButton
-              id="darkModeButton"
-              :icon="
-                isDark
-                  ? 'i-heroicons-moon-20-solid'
-                  : 'i-heroicons-sun-20-solid'
-              "
-              color="gray"
-              variant="ghost"
-              aria-label="Theme"
-              @click="isDark = !isDark"
-            />
+            <UButton id="darkModeButton" :icon="isDark
+              ? 'i-heroicons-moon-20-solid'
+              : 'i-heroicons-sun-20-solid'
+              " color="gray" variant="ghost" aria-label="Theme" @click="isDark = !isDark" />
           </ClientOnly>
         </div>
         <div class="flex flex-row justify-between min-w-0 items-center">
           <h2>
-            <ULink
-              class="dark:text-primary-400 text-primary-600"
-              to="mailto:evan.robertson77@gmail.com"
-              >Contact</ULink
-            >
+            <ULink class="dark:text-primary-400 text-primary-600" to="mailto:evan.robertson77@gmail.com">Contact</ULink>
           </h2>
         </div>
       </template>
       <UNotifications />
     </UCard>
     <UModal :ui="{ container: 'items-center' }" v-model="isThemeModalOpen">
-      <UCommandPalette
-        v-model="themeSelected"
-        nullable
-        :autoselect="false"
-        :groups="[{ key: 'themes', commands: themes }]"
-        @update:model-value="onThemeSelect"
-        ref="themePalett"
-      />
+      <UCommandPalette v-model="themeSelected" nullable :autoselect="false"
+        :groups="[{ key: 'themes', commands: themes }]" @update:model-value="onThemeSelect" ref="themePalett" />
     </UModal>
-    <UModal
-      :ui="{ container: 'items-center' }"
-      v-model="isConfirmClearUserDataOpen"
-    >
+    <UModal :ui="{ container: 'items-center' }" v-model="isConfirmClearUserDataOpen">
       <div class="p-4">
         <p class="text-xl text-red-500"><strong>Confirm clear user data?</strong></p>
         <UDivider class="my-2" />
@@ -621,20 +551,12 @@ onMounted(async () => {
           This includes all your previous grocery trips, envelopes, favorites,
           current theme, savings goals, IOUs, and anything Budgie stores on your
           behalf.
-        </p>        
+        </p>
         <div class="text-center">
-          
-          <UButton
-          label="No, I want to keepy my data in Budgie"
-          @click="isConfirmClearUserDataOpen = false"
-          class="w-3/4 my-2"
-          />
-          <UButton
-          label="Yes, delete all my Budgie data"
-          @click="clearUserData"
-          class="w-3/4 my-2"
-          color="red"
-          />
+
+          <UButton label="No, I want to keepy my data in Budgie" @click="isConfirmClearUserDataOpen = false"
+            class="w-3/4 my-2" />
+          <UButton label="Yes, delete all my Budgie data" @click="clearUserData" class="w-3/4 my-2" color="red" />
         </div>
       </div>
     </UModal>
