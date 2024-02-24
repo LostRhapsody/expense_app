@@ -56,10 +56,15 @@ const taxRate = ref(0.13);
 const taxEstimate = ref(0);
 
 // Grab the date
-const currentDate = getCurrentDate();
+const currentDate = getCurrentDate('ymd');
 
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
+
+
+const sidebar = [{
+  "label": "settings",
+}]
 
 /**
  * Updates the user's saved budget
@@ -430,106 +435,54 @@ const links = getBreadcrumbs([
 
 <template>
   <input class="hidden" :value="isDark" :change="colorUpdate()" />
-  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1"
-    ><UBreadcrumb :ui="{ li: 'text-black' }" :links="links"
-  /></BreadcrumbHTML>
-  <UButton
-    @click="showExplanation = !showExplanation"
-    class="justify-center w-full mx-auto text-xl my-2"
-    icon="i-heroicons-information-circle-solid"
-    variant="outline"
-  >
+  <BreadcrumbHTML class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1">
+    <UBreadcrumb :ui="{ li: 'text-black' }" :links="links" />
+  </BreadcrumbHTML>
+  <UButton @click="showExplanation = !showExplanation" class="justify-center w-full mx-auto text-xl my-2"
+    icon="i-heroicons-information-circle-solid" variant="outline">
     How to use
-    <img
-      alt="An icon of a budgie, which is a kind of bird."
-      class="inline-block text-primary"
-      src="/edited_budgie.svg"
-      height="25"
-      width="25"
-    />
+    <img alt="An icon of a budgie, which is a kind of bird." class="inline-block text-primary" src="/edited_budgie.svg"
+      height="25" width="25" />
   </UButton>
   <div class="flex flex-col mx-auto justify-center">
     <!--  audio for clicker -->
-    <audio
-      pause
-      id="clicker"
-      src="/click_short.mp3"
-      ref="audioPlayer"
-      @timeupdate="onPlaying"
-    >
+    <audio pause id="clicker" src="/click_short.mp3" ref="audioPlayer" @timeupdate="onPlaying">
       Your browser does not support the <code>audio</code> element.
     </audio>
-    <audio
-      pause
-      id="clicker2"
-      src="/click_short.mp3"
-      ref="audioPlayer"
-      @timeupdate="onPlaying"
-    >
+    <audio pause id="clicker2" src="/click_short.mp3" ref="audioPlayer" @timeupdate="onPlaying">
       Your browser does not support the <code>audio</code> element.
     </audio>
-    <audio
-      pause
-      id="clicker3"
-      src="/click_short.mp3"
-      ref="audioPlayer"
-      @timeupdate="onPlaying"
-    >
+    <audio pause id="clicker3" src="/click_short.mp3" ref="audioPlayer" @timeupdate="onPlaying">
       Your browser does not support the <code>audio</code> element.
     </audio>
 
     <!-- Left slideout for list of counters -->
-    <USlideover
-      v-model="showList"
-      :overlay="true"
-      :side="'left'"
-      class="overflow-auto"
-    >
-      <UCard
-        class="flex flex-col flex-1"
-        :ui="{
-          body: { base: 'flex-1' },
-          ring: '',
-          divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-        }"
-      >
+    <USlideover v-model="showList" :overlay="true" :side="'left'" class="overflow-auto">
+      <UCard class="flex flex-col flex-1" :ui="{
+        body: { base: 'flex-1' },
+        ring: '',
+        divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+      }">
         <template #header>
           <div class="flex items-center justify-between">
-            <h3
-              class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-            >
+            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
               Past Tallies
             </h3>
-            <UButton
-              color="gray"
-              variant="ghost"
-              icon="i-heroicons-x-mark-20-solid"
-              class="-my-1"
-              @click="showList = false"
-            />
+            <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
+              @click="showList = false" />
           </div>
         </template>
 
         <p class="text-xl flex items-center">
           Current budget: ${{ budget }}
-          <UButton
-            @click="(showEditBudget = true), (showList = false)"
-            color="white"
-            :padded="false"
-            icon="i-heroicons-cog-6-tooth-solid"
-            class="ml-2 hover:bg-gray-300 dark:hover:bg-gray-700"
-            size="xl"
-          />
+          <UButton @click="(showEditBudget = true), (showList = false)" color="white" :padded="false"
+            icon="i-heroicons-cog-6-tooth-solid" class="ml-2 hover:bg-gray-300 dark:hover:bg-gray-700" size="xl" />
         </p>
         <hr class="my-2" />
         <!-- Past tallies list -->
         <ol>
-          <li
-            v-if="showTallies"
-            v-for="(item, index) in userArray"
-            :key="item.id"
-            class="text-lg my-4 flex justify-around w-full dark:border-gray-800 border-gray-200 border-solid border-2 py-1 rounded-lg dark:hover:bg-gray-700 hover:bg-gray-100"
-          >
+          <li v-if="showTallies" v-for="(item, index) in userArray" :key="item.id"
+            class="text-lg my-4 flex justify-around w-full dark:border-gray-800 border-gray-200 border-solid border-2 py-1 rounded-lg dark:hover:bg-gray-700 hover:bg-gray-100">
             <div class="flex flex-col w-full">
               <div class="flex flex-row justify-between mx-8 text-xl">
                 <p>
@@ -538,10 +491,7 @@ const links = getBreadcrumbs([
                 <em class="text-neutral-500">{{
                   item.date ? item.date : "No date"
                 }}</em>
-                <UButton
-                  @click="deleteItem(index)"
-                  icon="i-heroicons-x-circle-solid"
-                >
+                <UButton @click="deleteItem(index)" icon="i-heroicons-x-circle-solid">
                 </UButton>
               </div>
               <div class="flex flex-row mx-8 my-2">
@@ -552,10 +502,8 @@ const links = getBreadcrumbs([
               }}</em>
             </div>
           </li>
-          <li
-            v-else
-            class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700"
-          >
+          <li v-else
+            class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700">
             No past tallies
           </li>
         </ol>
@@ -569,87 +517,66 @@ const links = getBreadcrumbs([
     </USlideover>
 
     <!-- clicker -->
+    <div class="grid grid-cols-3">
+      <div class="border border-gray-200 dark:border-gray-800 p-2 h-full rounded-full">
+          <UAccordion :items="sidebar">
+            <template #default="{ item, index, open }">
+              <UButton icon="i-heroicons-bars-3" />
+            </template>
+            <template #item="{ item }">
+              <div class="flex flex-col">
+
+                <!-- show list -->
+                <UButton @click="showList = true" icon="i-heroicons-bars-3" class="rounded-full my-3" />
+                <!-- show settings -->
+                <UButton @click="showSettings = true" icon="i-heroicons-cog-6-tooth-solid" class="rounded-full my-3" />
+                <!-- reset counter -->
+                <UButton @click="resetCounter" icon="i-heroicons-arrow-path-solid" class="rounded-full my-3" />
+              </div>
+            </template>
+          </UAccordion>
+        </div>
+      <UButton @click="increment" class="mx-auto my-12 rounded-full h-28 w-28 justify-center text-3xl">+{{ incrementBy }}
+      </UButton>
+      <div class="flex flex-col p-2 justify-around h-48">
+
+<!-- quick switch clicker -->
+<UButton @click="adjustIncrement" variant="outline" icon="i-heroicons-arrows-up-down" />
+<!-- decrement -->
+<UButton @click="decrement" variant="outline" class="justify-center">-{{ incrementBy }}</UButton>
+</div>
+    </div>
     <div class="relative text-center">
-      <UButton
-        @click="increment"
-        class="mx-auto my-12 rounded-full h-28 w-28 justify-center text-3xl"
-        >+{{ incrementBy }}</UButton
-      >
-      <div class="absolute quickswitch">
-        <!-- quick switch clicker -->
-        <UButton
-          @click="adjustIncrement"
-          variant="outline"
-          icon="i-heroicons-arrows-up-down"
-        />
+      
+      <div class="absolute rightsidebar">
+        
+      </div>
+      <div class="">
+        
       </div>
     </div>
 
     <!-- Total Tracker -->
-    <UDivider label="TOTAL" />
     <div class="my-4">
       <p class="text-center text-3xl counterText">${{ count }}</p>
-      <p
-        v-if="showTaxEstimate"
-        class="text-center dark:text-gray-400 text-gray-600"
-      >
+      <p v-if="showTaxEstimate" class="text-center dark:text-gray-400 text-gray-600">
         After tax: ${{ taxEstimate + count }}
       </p>
     </div>
 
-    <!-- Controls -->
-    <UDivider label="CONTROLS" />
-
-    <!-- ROW 1 -->
-    <div class="grid grid-cols-2 gap-8 mx-10 my-4">
-      <!-- show tallies list -->
-      <UButton
-        @click="showList = true"
-        class="justify-center"
-        icon="i-heroicons-banknotes-solid"
-      ></UButton>
-      <!-- submit count -->
-      <UButton
-        label="Submit"
-        class="justify-center"
-        @click="updateUserArray('add')"
-      />
-    </div>
-    <!-- ROW 2 -->
-    <div class="grid grid-cols-3 gap-8 mx-10 my-4">
-      <!-- Decrement button -->
-      <UButton @click="decrement" class="justify-center"
-        >-{{ incrementBy }}</UButton
-      >
-      <!-- Settings button -->
-      <UButton
-        @click="showSettings = true"
-        icon="i-heroicons-cog-6-tooth-solid"
-        class="justify-center"
-      />
-      <!-- reset count -->
-      <UButton
-        @click="showAlert = !showAlert"
-        class="justify-center"
-        icon="i-heroicons-arrow-path-solid"
-      ></UButton>
-    </div>
+    <!-- submit count -->
+    <UButton label="Save trip" class="justify-center my-8" @click="updateUserArray('add')" />
 
     <!-- Reset alert -->
-    <UAlert
-      v-if="showAlert"
-      :actions="[
-        { variant: 'solid', label: 'Cancel', click: hideAlert },
-        {
-          variant: 'outline',
-          color: 'primary',
-          label: 'Reset',
-          click: resetCounter,
-        },
-      ]"
-      title="Confirm Reset"
-      class="my-4"
-    />
+    <UAlert v-if="showAlert" :actions="[
+      { variant: 'solid', label: 'Cancel', click: hideAlert },
+      {
+        variant: 'outline',
+        color: 'primary',
+        label: 'Reset',
+        click: resetCounter,
+      },
+    ]" title="Confirm Reset" class="my-4" />
 
     <!-- EXPLANATION -->
     <UModal :ui="{ container: 'items-center' }" v-model="showExplanation">
@@ -657,21 +584,13 @@ const links = getBreadcrumbs([
         <template #header>
           <div class="flex min-w-0 justify-between">
             <p class="text-2xl">Information</p>
-            <UButton
-              @click="showExplanation = false"
-              variant="link"
-              color="white"
-              size="xl"
-              icon="i-heroicons-x-mark-solid"
-              class="text-gray-600 hover:text-gray-900"
-            />
+            <UButton @click="showExplanation = false" variant="link" color="white" size="xl"
+              icon="i-heroicons-x-mark-solid" class="text-gray-600 hover:text-gray-900" />
           </div>
         </template>
         <p>
-          <strong
-            >Easily keep track of your spending and budget while grocery
-            shopping.</strong
-          >
+          <strong>Easily keep track of your spending and budget while grocery
+            shopping.</strong>
         </p>
         <br />
         <p class="text-sm">
@@ -682,17 +601,13 @@ const links = getBreadcrumbs([
         <p class="text-sm">
           Click <span class="text-primary">Submit</span> to keep track of all
           your grocery trips. Be sure to sign in
-          <em
-            >(secured with
-            <ULink class="text-primary" to="https://oauth.net/2/">0Auth</ULink
-            >)</em
-          >
+          <em>(secured with
+            <ULink class="text-primary" to="https://oauth.net/2/">0Auth</ULink>)
+          </em>
           to save your submissions.
         </p>
         <br />
-        <p
-          class="text-sm grid grid-cols-3 gap-x-4 border-gray-700 border-2 rounded-lg p-2"
-        >
+        <p class="text-sm grid grid-cols-3 gap-x-4 border-gray-700 border-2 rounded-lg p-2">
           <span class="col-span-2">View past submissions</span>
           <UIcon class="text-primary" name="i-heroicons-banknotes-solid" />
           <span class="col-span-2">Change the counter with</span>
@@ -712,23 +627,12 @@ const links = getBreadcrumbs([
         <template #header>
           <div class="flex min-w-0 justify-between">
             <p class="text-2xl my-4">Current Budget: ${{ budget }}</p>
-            <UButton
-              @click="showEditBudget = false"
-              variant="link"
-              color="white"
-              size="xl"
-              icon="i-heroicons-x-mark-solid"
-              class="text-gray-600 hover:text-gray-900"
-            />
+            <UButton @click="showEditBudget = false" variant="link" color="white" size="xl"
+              icon="i-heroicons-x-mark-solid" class="text-gray-600 hover:text-gray-900" />
           </div>
         </template>
         <URange v-model="budget" name="range" :max="500" />
-        <UInput
-          type="number"
-          v-model="budget"
-          class="my-4"
-          :ui="{ base: 'text-center flex justify-center' }"
-        >
+        <UInput type="number" v-model="budget" class="my-4" :ui="{ base: 'text-center flex justify-center' }">
         </UInput>
         <template #footer>
           <UButton block label="Submit" @click="setBudget()" />
@@ -742,14 +646,8 @@ const links = getBreadcrumbs([
         <template #header>
           <div class="flex min-w-0 justify-between">
             <p class="text-2xl">Settings</p>
-            <UButton
-              @click="showSettings = false"
-              variant="link"
-              color="white"
-              size="xl"
-              icon="i-heroicons-x-mark-solid"
-              class="text-gray-600 hover:text-gray-900"
-            />
+            <UButton @click="showSettings = false" variant="link" color="white" size="xl" icon="i-heroicons-x-mark-solid"
+              class="text-gray-600 hover:text-gray-900" />
           </div>
         </template>
 
@@ -757,26 +655,14 @@ const links = getBreadcrumbs([
           <!-- INCREMENT COUNT BY -->
           <div class="grid grid-cols-3 gap-4">
             <p class="col-span-2">Increment the count by:</p>
-            <UInput
-              type="number"
-              v-model="incrementBy"
-              v-on:blur="incrementBy = verifyNumber(incrementBy, false)"
-            />
+            <UInput type="number" v-model="incrementBy" v-on:blur="incrementBy = verifyNumber(incrementBy, false)" />
           </div>
 
           <!-- TAX RATE -->
           <div class="grid grid-cols-3 gap-4 my-2">
             <p class="col-span-2">Tax rate:</p>
-            <UInput
-              type="number"
-              v-model="taxRate"
-              v-on:blur="taxRate = verifyNumber(taxRate, true)"
-            >
-              <template #trailing
-                ><span class="text-xs text-gray-500"
-                  >%{{ taxRate * 100 }}</span
-                ></template
-              >
+            <UInput type="number" v-model="taxRate" v-on:blur="taxRate = verifyNumber(taxRate, true)">
+              <template #trailing><span class="text-xs text-gray-500">%{{ taxRate * 100 }}</span></template>
             </UInput>
           </div>
 
@@ -795,11 +681,22 @@ const links = getBreadcrumbs([
 li {
   list-style-type: none;
 }
+
 .counterText {
   color: v-bind(color);
 }
+
 .quickswitch {
   left: 81%;
   bottom: 41%;
+}
+
+.rightsidebar {
+  left: 80%;
+  bottom: 5%;
+}
+
+.leftsidebar {
+  bottom: 5%;
 }
 </style>
