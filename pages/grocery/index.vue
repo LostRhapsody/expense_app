@@ -16,6 +16,13 @@ const links = [
     id: "Converter",
     content: "Quickly convert common weights and prices",
   },
+  {
+    label: "List",
+    icon: "i-heroicons-list-bullet",
+    to: "/grocery/list",
+    id: "List",
+    content: "Create and manage grocery lists",
+  },
 ];
 const breadCrumbs = getBreadcrumbs([
   {

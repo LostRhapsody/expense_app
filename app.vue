@@ -64,6 +64,14 @@ const links = [
     isTitle: false,
   },
   {
+    label: "List",
+    icon: "i-heroicons-list-bullet",
+    to: "/grocery/list",
+    id: "List",
+    content: "Create and manage grocery lists",
+    isTitle: false,
+  },
+  {
     label: "Budgeting",
     to: "/budgeting",
     content: "Balance your checkbook, create digital envelopes, and more budgeting tools.",
@@ -432,7 +440,7 @@ onMounted(async () => {
         </div>
 
         <!-- Slideover user preferences -->
-        <USlideover v-model="isPrefrencesOpen" :overlay="true" side="left">
+        <USlideover v-model="isPrefrencesOpen" :overlay="true" side="left" class="overflow-auto">
           <UCard class="flex flex-col flex-1 cardBody" :ui="{
             body: { base: 'flex-1' },
             ring: '',
@@ -470,7 +478,7 @@ onMounted(async () => {
         </USlideover>
 
         <!-- Slideover navigation -->
-        <USlideover v-model="isNavOpen" :overlay="true">
+        <USlideover v-model="isNavOpen" :overlay="true" class="overflow-auto">
           <UCard class="flex flex-col flex-1 cardBody" :ui="{
             body: { base: 'flex-1' },
             ring: '',
