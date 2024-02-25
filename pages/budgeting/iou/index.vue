@@ -6,15 +6,21 @@ const toast = useToast();
 const showExplanation = ref(false);
 const showPayIOU = ref(false);
 const showEditIOU = ref(false);
-const showIouList = ref(false);
 
 // user data
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 
 // list of IOU records
-let iouArray: any[] = [];
+const iouArray = ref([]);
+
 let currentIOU = {};
+const currentIndex = ref(0);
+
+// if 1 or more IOUs exist, set to true
+const showIouList = computed(() => {
+  return iouArray.value.length > 0;
+});
 
 const links = getBreadcrumbs([
   {
@@ -35,12 +41,15 @@ const links = getBreadcrumbs([
  */
 async function setIouArray() {
   const key = localStorage.getItem("uuid");
+  if(key === null) {
+    return;
+  }
   const setIouResponse = await $fetch("/api/budgeting/setIou", {
     method: "post",
     body: {
       key: key + "IOU",
       value: {
-        iouReponseArray: iouArray,
+        iouReponseArray: iouArray.value,
       },
     },
   });
@@ -58,7 +67,9 @@ async function setIouArray() {
  */
 async function getIouArray() {
   const key = localStorage.getItem("uuid");
-
+  if(key === null) {
+    return;
+  }
   const getIouResponse = await $fetch("/api/budgeting/getIou", {
     method: "post",
     body: { key: key + "IOU" },
@@ -73,10 +84,8 @@ async function getIouArray() {
   } else if (getIouResponse.error) {
     toast.add({ title: "Error: " + getIouResponse.message });
   } else {
-    iouArray = getIouResponse.iouReponseArray;
-    if (iouArray !== null && iouArray !== undefined && iouArray.length > 0)
-      showIouList.value = true;
-  }
+    iouArray.value = getIouResponse.iouReponseArray;
+    }
 }
 
 /**
@@ -84,43 +93,72 @@ async function getIouArray() {
  * @param index index of the current IOU
  */
 function togglePayModal(index: number) {
-  showPayIOU.value = true;
-  currentIOU = iouArray[index];
-  currentIOU.index = index;
+  // show the box
+  showPayIOU.value = true;  
+  // set the current index/iou
+  currentIndex.value = index;
 }
 
 /**
  * deletes an IOU from the array
  */
 function deleteIOU() {
+
   // hide pay/edit modals
   showPayIOU.value = false;
   showEditIOU.value = false;
 
   // if array is zero, there's nothing to delete
-  if (iouArray.length === 0) return;
+  if (iouArray.value.length === 0) return;
 
-  iouArray.splice(currentIOU.index, 1);
-  setIouArray();
+  iouArray.value.splice(currentIndex.value, 1);
+
+  currentIndex.value = 0;
+
+  // if we emptied the array, hide the list
+  // if(iouArray.value === null || iouArray.value === undefined){
+  //   showIouList.value = false;
+  // }
+
+  if(loggedIn.value){
+    setIouArray();
+  }  
+
 }
 
 /**
  * create an IOU object
  */
 function createIou() {
+  // if array does not exist, instantiate with new empty object
+  if(iouArray.value === null || iouArray.value === undefined){
+    iouArray.value = [
+      {
+        name:"",
+        borrowed:true,
+        amount:0,
+        date:getCurrentDate('ymd'),
+      },
+    ];
+    // show the list now that something exists
+    // showIouList.value = true
+  // if array exists, push new empty object
+  } else {
+    iouArray.value.push({
+      name:"",
+        borrowed:true,
+        amount:0,
+        date:getCurrentDate('ymd'),
+    });
+    
+  }
+
+  // this always works, as we just created an array above, so it will always
+  // have a min length of 1
+  currentIndex.value = iouArray.value.length -1;;
+
   showEditIOU.value = true;
 
-  // set the current IOU object to a blank object
-  currentIOU.name = "";
-  currentIOU.borrowed = true;
-  currentIOU.amount = 0;
-  currentIOU.date = getCurrentDate("ymd");
-  if (iouArray === undefined || iouArray === null) {
-    currentIOU.index = 0;
-  } else {
-    // index 1 will be array element [0], so we don't have to add +1 to the length
-    currentIOU.index = iouArray.length;
-  }
 }
 
 /**
@@ -128,59 +166,20 @@ function createIou() {
  */
 function validateIOU() {
   let validIOU = true;
-  if (currentIOU.name.length <= 0) {
+  if (iouArray.value[currentIndex.value].name.length <= 0) {
     alert("Please enter a name for the IOU record.");
     validIOU = false;
   }
-  if (currentIOU.amount <= 0 && validIOU) {
+  if (iouArray.value[currentIndex.value].amount <= 0 && validIOU) {
     alert("Please enter a positive amount for the IOU record.");
     validIOU = false;
   }
-  if (currentIOU.date.length <= 0 && validIOU) {
+  if (iouArray.value[currentIndex.value].date.length <= 0 && validIOU) {
     alert("Please enter a due date for the IOU record.");
     validIOU = false;
   }
 
   return validIOU;
-}
-
-/**
- * Updates the array of IOUs with the current IOU being edited
- */
-function updateIOUArray() {
-  if (!validateIOU()) return;
-
-  // if array doesn't exist, create it and the object
-  if (iouArray === undefined || iouArray === null) {
-    iouArray = [
-      {
-        name: currentIOU.name,
-        borrowed: currentIOU.borrowed,
-        amount: currentIOU.amount,
-        date: currentIOU.date,
-      },
-    ];
-  } else {
-    // if the index is greater than or equal to the length, it is a new element
-    if (currentIOU.index >= iouArray.length) {
-      // push the current values onto the array
-      iouArray.push(currentIOU);
-      showIouList.value = true;
-    } else {
-      // otherwise, we have to update the correct element
-      // need to -1 because the length is one greater than the element index
-      iouArray[currentIOU.index] = {
-        name: currentIOU.name,
-        amount: currentIOU.amount,
-        borrowed: currentIOU.borrowed,
-        date: currentIOU.date,
-      };
-      showIouList.value = true;
-    }
-  }
-
-  showEditIOU.value = false;
-  setIouArray();
 }
 
 /**
@@ -229,7 +228,7 @@ if (loggedIn.value && process.client) {
             class="w-full block text-start"
             variant="outline"
           >
-            <span>{{ iou.name }}</span
+            <span class="break-words">{{ iou.name }}</span
             ><br />
             <span>Borrow</span>
             <br />
@@ -244,7 +243,7 @@ if (loggedIn.value && process.client) {
             class="w-full block text-start"
             variant="outline"
           >
-            <span>{{ iou.name }}</span
+            <span class="break-words">{{ iou.name }}</span
             ><br />
             <span>Lent</span>
             <br />
@@ -265,11 +264,11 @@ if (loggedIn.value && process.client) {
     >
   </div>
   <!-- Pay IOU modal -->
-  <UModal :ui="{ container: 'items-center' }" v-model="showPayIOU">
+  <UModal :ui="{ container: 'items-center' }" v-model="showPayIOU" v-if="iouArray[currentIndex]">
     <UCard>
       <template #header>
         <div class="flex min-w-0 justify-between items-center">
-          IOU: {{ currentIOU.name }}
+          IOU: {{ iouArray[currentIndex].name }}
           <UButton
             @click="showPayIOU = false"
             variant="link"
@@ -281,11 +280,11 @@ if (loggedIn.value && process.client) {
         </div>
       </template>
       <p>
-        Has The amount of ${{ currentIOU.amount }} been
-        <span v-if="currentIOU.borrowed">paid to</span
-        ><span v-else>received from</span> {{ currentIOU.name }}?
+        Has The amount of ${{ iouArray[currentIndex].amount }} been
+        <span v-if="iouArray[currentIndex].borrowed">paid to</span
+        ><span v-else>received from</span> {{ iouArray[currentIndex].name }}?
       </p>
-      <p>Due: {{ currentIOU.date }}</p>
+      <p>Due: {{ iouArray[currentIndex].date }}</p>
       <template #footer>
         <div class="grid grid-cols-3 gap-3">
           <UButton
@@ -315,6 +314,7 @@ if (loggedIn.value && process.client) {
     :ui="{ container: 'items-center' }"
     v-model="showEditIOU"
     prevent-close
+    v-if="iouArray[currentIndex]"
   >
     <UCard>
       <template #header>
@@ -324,21 +324,21 @@ if (loggedIn.value && process.client) {
         <!-- IOU for who -->
         <div class="grid grid-cols-3 gap-4 my-2">
           <!-- This stopped working. Big sad. -->
-          <!-- <p v-if="currentIOU.borrowed">Pay back:</p>
+          <!-- <p v-if="iouArray[currentIndex].borrowed">Pay back:</p>
           <p v-else>Due from:</p> -->
           <p>Name:</p>
           <UInput
             class="col-span-2"
             type="string"
             placeholder="Money Please"
-            v-model="currentIOU.name"
+            v-model="iouArray[currentIndex].name"
           />
         </div>
 
         <!-- Borrowed -->
         <div class="grid grid-cols-3 gap-4 my-2">
           <p>Borrowed:</p>
-          <UCheckbox class="col-span-2" v-model="currentIOU.borrowed" />
+          <UCheckbox class="col-span-2" v-model="iouArray[currentIndex].borrowed" />
         </div>
 
         <!-- IOU Amount -->
@@ -348,7 +348,7 @@ if (loggedIn.value && process.client) {
             class="col-span-2"
             type="number"
             placeholder="0.00"
-            v-model="currentIOU.amount"
+            v-model="iouArray[currentIndex].amount"
           >
             <template #leading> $ </template>
           </UInput>
@@ -357,13 +357,13 @@ if (loggedIn.value && process.client) {
         <!-- IOU Date -->
         <div class="grid grid-cols-3 gap-4 my-2">
           <p>Due Date:</p>
-          <UInput class="col-span-2" type="date" v-model="currentIOU.date" />
+          <UInput class="col-span-2" type="date" v-model="iouArray[currentIndex].date" />
         </div>
       </div>
       <template #footer>
         <div class="grid grid-cols-2 gap-3">
           <UButton
-            @click="updateIOUArray"
+            @click="showEditIOU = false, setIouArray()"
             label="Submit"
             class="justify-center"
           />
