@@ -25,6 +25,7 @@ const currentEntry = ref({});
 // entries in the checkbook select input
 const checkbookOptions = computed(() => {
   let newCheckbooks = [];
+  if(allCheckbooks.value === null || allCheckbooks.value === undefined) return;
   allCheckbooks.value.forEach((book, index) => {
     newCheckbooks.push({
       label: book.name,
@@ -74,55 +75,58 @@ const transactionTypes = ["Credit", "Deposit"];
  * save's the checkbook to the DB
  * @param key the key used to retrieve this value
  */
-// async function setCheckbookArray() {
-//   const key = localStorage.getItem("uuid");
-//   const setCheckbookResponse = await $fetch("/api/budgeting/setCheckbook", {
-//     method: "post",
-//     body: {
-//       key: key + "checkbook",
-//       value: {
-//         checkbookResponseArray: checkbook.value,
-//       },
-//     },
-//   });
+async function setCheckbookArray() {
+  const key = localStorage.getItem("uuid");
+  if(key === null) return;
+  const setCheckbookResponse = await $fetch("/api/budgeting/setCheckbook", {
+    method: "post",
+    body: {
+      key: key + "checkbook",
+      value: {
+        checkbookResponseArray: allCheckbooks.value,
+      },
+    },
+  });
 
-//   if (setCheckbookResponse === null || setCheckbookResponse === undefined) {
-//     toast.add({ title: "Error: invalid response from server" });
-//   } else if (setCheckbookResponse.error) {
-//     toast.add({ title: "Error: " + setCheckbookResponse.message });
-//   }
-// }
+  if (setCheckbookResponse === null || setCheckbookResponse === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (setCheckbookResponse.error) {
+    toast.add({ title: "Error: " + setCheckbookResponse.message });
+  }
+}
 
-// /**
-//  * Get's the user's saved checkbook entries
-//  * @param key the key used to retrieve this value
-//  */
-// async function getCheckbookArray() {
-//   const key = localStorage.getItem("uuid");
+/**
+ * Get's the user's saved checkbook entries
+ * @param key the key used to retrieve this value
+ */
+async function getCheckbookArray() {
+  const key = localStorage.getItem("uuid");
+  if(key === null) return;
+  const getCheckbookResponse = await $fetch("/api/budgeting/getCheckbook", {
+    method: "post",
+    body: { key: key + "checkbook" },
+  });
 
-//   const getCheckbookResponse = await $fetch("/api/budgeting/getCheckbook", {
-//     method: "post",
-//     body: { key: key + "checkbook" },
-//   });
-
-//   if (
-//     getCheckbookResponse === null ||
-//     getCheckbookResponse === undefined ||
-//     getCheckbookResponse.length > 0
-//   ) {
-//     toast.add({ title: "Error: invalid response from server" });
-//   } else if (getCheckbookResponse.error) {
-//     toast.add({ title: "Error: " + getCheckbookResponse.message });
-//   } else {
-//     checkbook.value = getCheckbookResponse.checkbookResponseArray;
-//     if (
-//       checkbook.value !== null &&
-//       checkbook.value !== undefined &&
-//       checkbook.value.length > 0
-//     )
-//       showEntriesList.value = true;
-//   }
-// }
+  if (
+    getCheckbookResponse === null ||
+    getCheckbookResponse === undefined ||
+    getCheckbookResponse.length > 0
+  ) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (getCheckbookResponse.error) {
+    toast.add({ title: "Error: " + getCheckbookResponse.message });
+  } else {
+    allCheckbooks.value = getCheckbookResponse.checkbookResponseArray;
+    currentBook.value = allCheckbooks.value.length - 1;
+    selectedCheckbook.value = allCheckbooks.value[currentBook.value].name;
+    if (
+      allCheckbooks.value !== null &&
+      allCheckbooks.value !== undefined &&
+      allCheckbooks.value.length > 0
+    )
+      showEntriesList.value = true;
+  }
+}
 
 /**
  * Edit entry modal open
@@ -160,8 +164,9 @@ function saveEntry() {
 
   // empty current entry
   currentEntry.value = {};
-
-  // setCheckbookArray();
+  if(loggedIn.value){
+    setCheckbookArray();
+  }
 }
 
 /**
@@ -203,6 +208,11 @@ function deleteEntry() {
     entry.id = entryId;
     entryId++;
   });
+
+  if(loggedIn.value){
+    setCheckbookArray();
+  }
+
 }
 
 /**
@@ -263,7 +273,7 @@ function createCheckbook() {
       {
         // empty checkbook array
         data: [],
-        name: "Book",
+        name: "New Book",
         startAmount: 0,
         endAmount: 0,
       },
@@ -272,7 +282,7 @@ function createCheckbook() {
     allCheckbooks.value.push({
       // empty checkbook array
       data: [],
-      name: "Book",
+      name: "New Book",
       startAmount: 0,
       endAmount: 0,
     });
@@ -295,6 +305,10 @@ function saveCheckbook(){
 
   calcEndAmount();
 
+  if(loggedIn.value){
+    setCheckbookArray();
+  }
+
 }
 
 /**
@@ -312,6 +326,11 @@ function deleteCheckbook() {
   document.getElementById("checkbookInput").value = "";
   
   currentBook.value = 0;
+
+  if(loggedIn.value){
+    setCheckbookArray();
+  }
+
 }
 
 /**
@@ -322,7 +341,7 @@ function changeBook(book) {
 }
 
 if (loggedIn.value && process.client) {
-  // getCheckbookArray();
+  getCheckbookArray();
 }
 </script>
 <template>
