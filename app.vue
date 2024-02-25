@@ -302,7 +302,7 @@ async function setTheme(theme: string) {
     return;
   }
 
-  await useFetch("/api/user/setTheme", {
+  await $Fetch("/api/user/setTheme", {
     method: "post",
     body: {
       key: key + "Theme",
@@ -496,7 +496,7 @@ onMounted(async () => {
                     class="border rounded-full my-2 border-gray-200 dark:border-gray-800 w-full"
                     :class="(item.isTitle) ? 'hidden' : ''" :ui="{ rounded: 'rounded-none', padding: { sm: 'p-3' } }">
                     <template #leading>
-                      <ULink :to="item.to" @click="isNavOpen = false">
+                      <ULink :to="item.to" @click="isNavOpen = false" v-if="item.icon">
                         <div
                           class="w-6 h-6 rounded-full bg-primary-500 dark:bg-primary-400 flex items-center justify-center -my-1">
                           <UIcon :name="item.icon" class="w-4 h-4 text-white dark:text-gray-900" />

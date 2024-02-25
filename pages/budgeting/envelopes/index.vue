@@ -302,6 +302,8 @@ function getEnvelopeRatio(amount: number, total: number) {
 if (loggedIn.value && process.client) {
   getEnvelopeArray();
   getBudget();
+} else {
+  waitingForResponse.value = false;
 }
 </script>
 
