@@ -517,57 +517,41 @@ const links = getBreadcrumbs([
     </USlideover>
 
     <!-- clicker -->
-    <div class="grid grid-cols-3">
-      <div class="border border-gray-200 dark:border-gray-800 p-2 h-full rounded-full">
-          <UAccordion :items="sidebar">
-            <template #default="{ item, index, open }">
-              <UButton icon="i-heroicons-bars-3" />
-            </template>
-            <template #item="{ item }">
-              <div class="flex flex-col">
-
-                <!-- show list -->
-                <UButton @click="showList = true" icon="i-heroicons-bars-3" class="rounded-full my-3" />
-                <!-- show settings -->
-                <UButton @click="showSettings = true" icon="i-heroicons-cog-6-tooth-solid" class="rounded-full my-3" />
-                <!-- reset counter -->
-                <UButton @click="resetCounter" icon="i-heroicons-arrow-path-solid" class="rounded-full my-3" />
-              </div>
-            </template>
-          </UAccordion>
-        </div>
-      <UButton @click="increment" class="mx-auto my-12 rounded-full h-28 w-28 justify-center text-3xl">+{{ incrementBy }}
-      </UButton>
-      <div class="flex flex-col p-2 justify-around h-48">
-
-<!-- quick switch clicker -->
-<UButton @click="adjustIncrement" variant="outline" icon="i-heroicons-arrows-up-down" />
-<!-- decrement -->
-<UButton @click="decrement" variant="outline" class="justify-center">-{{ incrementBy }}</UButton>
-</div>
-    </div>
-    <div class="relative text-center">
-      
-      <div class="absolute rightsidebar">
-        
+    <div class="grid grid-cols-5">
+      <div>
+        <UAccordion :items="sidebar" class="border border-gray-200 dark:border-gray-800 rounded-full p-3">
+          <template #default="{ item, index, open }">
+            <UButton icon="i-heroicons-bars-3" class="rounded-full justify-center" />
+          </template>
+          <template #item="{ item }">
+            <div class="flex flex-col justify-evenly">
+              <!-- show list -->
+              <UButton @click="showList = true" icon="i-heroicons-banknotes-solid"
+                class="rounded-full my-3 justify-center" />
+              <!-- show settings -->
+              <UButton @click="showSettings = true" icon="i-heroicons-cog-6-tooth-solid"
+                class="rounded-full my-3 justify-center" />
+              <!-- reset counter -->
+              <UButton @click="showAlert = true" icon="i-heroicons-arrow-path-solid"
+                class="rounded-full mt-3 justify-center" />
+            </div>
+          </template>
+        </UAccordion>
       </div>
-      <div class="">
-        
+      <UButton @click="increment" class="col-span-3 mx-auto my-12 rounded-full h-28 w-28 justify-center text-3xl">+{{
+        incrementBy }}
+      </UButton>
+      <div class="flex flex-col p-3 justify-evenly">
+        <!-- quick switch clicker -->
+        <UButton @click="adjustIncrement" variant="outline" icon="i-heroicons-arrows-up-down" class="justify-center rounded-full" />
+        <!-- decrement -->
+        <UButton @click="decrement" variant="outline" class="justify-center rounded-full">-{{ incrementBy }}</UButton>
       </div>
     </div>
 
     <!-- Total Tracker -->
     <div class="my-4">
-      <p class="text-center text-3xl counterText">${{ count }}</p>
-      <p v-if="showTaxEstimate" class="text-center dark:text-gray-400 text-gray-600">
-        After tax: ${{ taxEstimate + count }}
-      </p>
-    </div>
-
-    <!-- submit count -->
-    <UButton label="Save trip" class="justify-center my-8" @click="updateUserArray('add')" />
-
-    <!-- Reset alert -->
+      <!-- Reset alert -->
     <UAlert v-if="showAlert" :actions="[
       { variant: 'solid', label: 'Cancel', click: hideAlert },
       {
@@ -577,6 +561,14 @@ const links = getBreadcrumbs([
         click: resetCounter,
       },
     ]" title="Confirm Reset" class="my-4" />
+      <p class="text-center text-3xl counterText">${{ count }}</p>
+      <p v-if="showTaxEstimate" class="text-center dark:text-gray-400 text-gray-600">
+        After tax: ${{ taxEstimate + count }}
+      </p>
+    </div>
+
+    <!-- submit count -->
+    <UButton label="Save grocery trip" class="justify-center my-8" @click="updateUserArray('add')" />
 
     <!-- EXPLANATION -->
     <UModal :ui="{ container: 'items-center' }" v-model="showExplanation">
@@ -698,5 +690,4 @@ li {
 
 .leftsidebar {
   bottom: 5%;
-}
-</style>
+}</style>
