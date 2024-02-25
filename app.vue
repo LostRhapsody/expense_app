@@ -159,6 +159,13 @@ if (loggedIn.value) {
       setClientTheme();
     }
   }
+} else {
+  if (process.client) {
+    console.log("running set client theme");
+    
+    // bro we still gotta try lol
+    setClientTheme();
+  }
 }
 
 /**
@@ -217,23 +224,32 @@ async function setClientTheme() {
   } else {
     // if theme is Default, don't set a link tag
     if (theme !== "Default") {
-      useHead({
-        link: [
-          {
-            rel: "stylesheet",
-            href: "/themes/" + theme,
-            id: "themeStylesheet",
-          },
-        ],
-      });
+
+      // remove if it exists so we never have 2 elements with matching ID
+      removeThemeTag();
+
+      // create a new link tag for the theme
+      const themeTag = document.createElement("link");
+      themeTag.href = "/themes/" + theme;
+      themeTag.id = "themeStylesheet";
+      themeTag.rel = "stylesheet";
+      document.head.appendChild(themeTag);
+      
     } else {
-      // just remove it lol
-      let themeTag = document.getElementById("themeStylesheet");
-      if (themeTag !== null && themeTag !== undefined) {
-        // clear the tag
-        themeTag.href = "";
-      }
+      // just remove it to reset theme to default
+      removeThemeTag();
     }
+  }
+}
+
+/**
+ * Removes the link tag containing the theme stylesheet
+ */
+function removeThemeTag() {
+  // just remove it lol
+  let themeTag = document.getElementById("themeStylesheet");
+  if (themeTag !== null && themeTag !== undefined) {
+    themeTag.remove();
   }
 }
 
