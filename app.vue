@@ -31,7 +31,9 @@ const isDark = computed({
 const isNavOpen = ref(false);
 const isPrefrencesOpen = ref(false);
 const isThemeModalOpen = ref(false);
+const isSettingsModalOpen = ref(false);
 const isConfirmClearUserDataOpen = ref(false);
+const currentSettingMenu = ref("display");
 
 const links = [
    {
@@ -309,6 +311,26 @@ function openThemeModal() {
    isPrefrencesOpen.value = false;
 }
 
+/**
+ * Opens the settings modal, closes the preferences slideout
+ */
+function openSettingsModal(){
+   isSettingsModalOpen.value = true;
+   isPrefrencesOpen.value = false;
+}
+
+/**
+ * determines which settings menu to display
+ * @param menu the settings menu to show
+ */
+function toggleSettingsDisplay(menu:string){
+   currentSettingMenu.value = menu;
+}
+
+/**
+ * Called when a theme is selected
+ * @param option the theme passed in, optional
+ */
 function onThemeSelect(option: themeType) {
    // leave if this was not a real selection
    if (option === null || option === undefined) {
@@ -503,6 +525,7 @@ onMounted(async () => {
                         <UAvatar class="ring-2 ring-gray-500" icon="i-heroicons-user-circle-solid" />Sign In
                      </UButton>
 
+                     <UButton label="Settings" icon="i-heroicons-cog-6-tooth-solid" @click="openSettingsModal" />
                      <UButton label="Select Theme" @click="openThemeModal" />
                      <UButton label="Clear User Data" color="red" @click="isConfirmClearUserDataOpen = true" />
                   </div>
@@ -601,6 +624,25 @@ onMounted(async () => {
       <UModal :ui="{ container: 'items-center' }" v-model="isThemeModalOpen">
          <UCommandPalette v-model="themeSelected" nullable :autoselect="false"
             :groups="[{ key: 'themes', commands: themes }]" @update:model-value="onThemeSelect" ref="themePalett" />
+      </UModal>
+      <UModal :ui="{ container: 'items-center' }" v-model="isSettingsModalOpen">
+      <div class="grid grid-cols-8 dark:bg-gray-800 bg-gray-300 px-2 h-[90vh] gap-2">
+         <div class="col-span-3 border-r dark:border-gray-700 border-gray-400 flex-col flex">
+            <UButton icon="i-heroicons-arrow-left" @click="isSettingsModalOpen = false" variant="ghost" class="pl-0" />
+            <p class="text-xl">Settings</p>
+            <UButton label="Display" class="pl-0 my-2" :ui="{color:{gray:'text-gray-400'}}" color="gray" variant="ghost" @click="toggleSettingsDisplay('display')" />
+            <UButton label="Tools"   class="pl-0 my-2" :ui="{color:{gray:'text-gray-400'}}" color="gray" variant="ghost"   @click="toggleSettingsDisplay('tools')" />
+            <UButton label="Data"    class="pl-0 my-2" :ui="{color:{gray:'text-gray-400'}}" color="gray" variant="ghost"    @click="toggleSettingsDisplay('data')" />
+         </div>
+         <div class="col-span-5" v-if="currentSettingMenu === 'display'">
+            <p class="text-xl my-8">Display</p>
+            <p class="text-sm dark:text-gray-400">Manage your display settings</p>
+            <hr class="my-4 border-gray-600" />
+            <p class="text-lg"><strong>Theme</strong></p>
+            <UCommandPalette v-model="themeSelected" nullable :autoselect="false"
+            :groups="[{ key: 'themes', commands: themes }]" @update:model-value="onThemeSelect" ref="themePalett" placeholder="Search themes" />
+         </div>
+      </div>         
       </UModal>
       <UModal :ui="{ container: 'items-center' }" v-model="isConfirmClearUserDataOpen">
          <div class="p-4">
