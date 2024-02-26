@@ -12,6 +12,7 @@ const toast = useToast();
 const showExplanation = ref(false);
 
 const showEditScreen = ref(false);
+const showShoppingScreen = ref(false);
 
 const showEditItem = ref(false);
 
@@ -20,6 +21,7 @@ const currentList = ref(0);
 const currentItem = ref(0);
 
 const list = ref([]);
+const selectedItems = ref([]);
 
 // show/hide the list
 const showList = computed(() => {
@@ -42,12 +44,50 @@ const links = getBreadcrumbs([
    },
 ]);
 
+const q = ref('')
+
+/**
+ * Computed value to sort the shopping list table
+ */
+const filteredRows = computed(() => {
+  if (!q.value) {
+    return list.value[currentList.value].items
+  }
+
+  return list.value[currentList.value].items.filter((item) => {
+    return Object.values(item).some((value) => {
+      return String(value).toLowerCase().includes(q.value.toLowerCase())
+    })
+  })
+})
+
+const columns = [{
+   key:"name", label:"Name", sortable:true
+},{
+   key:"price",label:"Price", sortable:true
+},{
+   key:"quantity",label:"Quantity", sortable:true
+},{
+   key:"department",label:"Dept.", sortable:true
+}
+];
+
+
 /**
  * Shows the edit screen for the selected list
  * @param index the index of the current list
  */
 function showEdit(index: number) {
    showEditScreen.value = true;
+   currentList.value = index;
+}
+
+/**
+ * Shows the shop screen for the selected list
+ * @param index the index of the current list
+ */
+ function showShop(index: number) {
+   showShoppingScreen.value = true;
    currentList.value = index;
 }
 
@@ -155,6 +195,23 @@ function getLists() {
    }
 }
 
+/**
+ * Select listener to select items in shopping list
+ * @param row current row
+ */
+function select (row) {
+  let selected = selectedItems.value[currentList.value].items;
+  if(selected === undefined){
+   selected = [];
+  }
+  const index = selected.findIndex((item) => item === row.id)
+  if (index === -1) {
+   selected.push(row)
+  } else {
+   selected.splice(index, 1)
+  }
+}
+
 getLists();
 </script>
 
@@ -178,8 +235,8 @@ getLists();
                :rows="1" autoresize :maxrows="3" :padded="false" @change="setLists" />
             <UButton icon="i-heroicons-x-mark" variant="ghost" color="red" @click="deleteList(index)" />
          </div>
-         <UButton label="Edit List" class="w-full my-2" icon="i-heroicons-pencil-solid" @click="showEdit(index)" />
-         <UButton label="Shop List" class="w-full my-2" icon="i-heroicons-shopping-cart-solid" />
+         <UButton label="Edit list" class="w-full my-2" icon="i-heroicons-pencil-solid" @click="showEdit(index)" />
+         <UButton label="Shop this list" class="w-full my-2" icon="i-heroicons-shopping-cart-solid" @click="showShop(index)" />
       </div>
    </div>
    <div v-else>
@@ -218,6 +275,29 @@ getLists();
       <UButton v-else label="Add item" @click="newItem(-1)" class="w-full text-xl justify-center my-4" />
 
       <UButton label="Close List" @click="showEditScreen = false" class="w-full text-xl justify-center my-4" />
+   </div>
+
+   <!-- The shopping screen/overlay -->
+   <div v-if="showShoppingScreen"
+      class="h-full fixed w-full top-0 right-0 left-0 bottom-0 z-10 bg-white dark:bg-black p-4 border border-white dark:border-black rounded-lg overflow-auto">
+      <p class="text-xl">{{ list[currentList].name }} List</p>
+      <UDivider />
+      
+      <!-- <div v-for="(item, index) in list[currentList].items" v-if="showItems">
+
+      </div> -->
+      
+      <!-- <UButton v-else label="Add item" @click="newItem(-1)" class="w-full text-xl justify-center my-4" /> -->
+
+      <UTable :rows="list[currentList].items"
+      :columns="columns"
+      v-model="selectedItems[currentList].items"
+      @select="select"
+      :empty-state="{icon: 'i-heroicons-shopping-cart-solid', label: 'No items added to shopping list.'}"
+      >
+      </UTable>
+
+      <UButton label="Leave shopping mode" @click="showShoppingScreen = false" class="w-full text-xl justify-center my-4" />
    </div>
 
    <!-- Edit item modal -->
