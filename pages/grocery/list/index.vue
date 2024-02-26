@@ -21,7 +21,6 @@ const currentList = ref(0);
 const currentItem = ref(0);
 
 const list = ref([]);
-const selectedItems = ref([]);
 
 // show/hide the list
 const showList = computed(() => {
@@ -30,8 +29,8 @@ const showList = computed(() => {
 });
 
 const showItems = computed(() => {
-   let currentListItems = list.value[currentList.value].items;
    if (list.value === null || list.value === undefined) return;
+   let currentListItems = list.value[currentList.value].items;
    return currentListItems.length > 0;
 });
 
@@ -44,29 +43,30 @@ const links = getBreadcrumbs([
    },
 ]);
 
-const q = ref('')
+// const q = ref('')
 
-/**
- * Computed value to sort the shopping list table
- */
-const filteredRows = computed(() => {
-  if (!q.value) {
-    return list.value[currentList.value].items
-  }
+// /**
+//  * Computed value to sort the shopping list table
+//  */
+// const filteredRows = computed(() => {
+//   if (!q.value) {
+//     return list.value[currentList.value].items
+//   }
 
-  return list.value[currentList.value].items.filter((item) => {
-    return Object.values(item).some((value) => {
-      return String(value).toLowerCase().includes(q.value.toLowerCase())
-    })
-  })
-})
+//   return list.value[currentList.value].items.filter((item) => {
+//     return Object.values(item).some((value) => {
+//       return String(value).toLowerCase().includes(q.value.toLowerCase())
+//     })
+//   })
+// })
 
-const columns = [{
+const columns = [
+{
+   key:"quantity",label:"Quantity", sortable:true
+},{
    key:"name", label:"Name", sortable:true
 },{
    key:"price",label:"Price", sortable:true
-},{
-   key:"quantity",label:"Quantity", sortable:true
 },{
    key:"department",label:"Dept.", sortable:true
 }
@@ -200,19 +200,40 @@ function getLists() {
  * @param row current row
  */
 function select (row) {
-  let selected = selectedItems.value[currentList.value].items;
-  if(selected === undefined){
-   selected = [];
-  }
-  const index = selected.findIndex((item) => item === row.id)
+   let items = [
+      {
+         name: "",
+         price: 0,
+         quantity: 1,
+         department: "",
+         id: "0"
+      }
+   ];
+
+   if(list.value[currentList.value].selectedItems === undefined){
+      list.value[currentList.value].selectedItems = items;
+   } 
+
+  let selected = list.value[currentList.value].selectedItems;
+
+//   if(selected === undefined){
+//    console.log("idk man");
+//    return;
+//   }
+
+  const index = selected.findIndex((item) => item === row.id);
+  //if not found in array
   if (index === -1) {
    selected.push(row)
+  // if found in array
   } else {
    selected.splice(index, 1)
   }
 }
 
-getLists();
+if(process.client){
+   getLists();
+}
 </script>
 
 <template>
@@ -236,7 +257,11 @@ getLists();
             <UButton icon="i-heroicons-x-mark" variant="ghost" color="red" @click="deleteList(index)" />
          </div>
          <UButton label="Edit list" class="w-full my-2" icon="i-heroicons-pencil-solid" @click="showEdit(index)" />
-         <UButton label="Shop this list" class="w-full my-2" icon="i-heroicons-shopping-cart-solid" @click="showShop(index)" />
+         <UButton label="Shop this list" class="w-full my-2" icon="i-heroicons-shopping-cart-solid" @click="showShop(index)">
+            <template #trailing>
+               <UIcon name="i-heroicons-arrow-right" />
+            </template>
+         </UButton>
       </div>
    </div>
    <div v-else>
@@ -269,12 +294,12 @@ getLists();
                class="inline-block">
             </UInput>
             <UButton class="border-l border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-               icon="i-heroicons-x-mark" name="Delete item" variant="ghost" @click="deleteItem(index)" />
+               icon="i-heroicons-x-mark" color="red" name="Delete item" variant="ghost" @click="deleteItem(index)" />
          </div>
       </div>
-      <UButton v-else label="Add item" @click="newItem(-1)" class="w-full text-xl justify-center my-4" />
+      <UButton label="Add item" @click="newItem(-1)" class="w-full text-xl justify-center my-4" />
 
-      <UButton label="Close List" @click="showEditScreen = false" class="w-full text-xl justify-center my-4" />
+      <UButton label="Close List" color="red" @click="showEditScreen = false" class="w-full text-xl justify-center my-4" />
    </div>
 
    <!-- The shopping screen/overlay -->
@@ -289,12 +314,33 @@ getLists();
       
       <!-- <UButton v-else label="Add item" @click="newItem(-1)" class="w-full text-xl justify-center my-4" /> -->
 
-      <UTable :rows="list[currentList].items"
+      <UTable 
+      :rows="list[currentList].items"
       :columns="columns"
-      v-model="selectedItems[currentList].items"
       @select="select"
       :empty-state="{icon: 'i-heroicons-shopping-cart-solid', label: 'No items added to shopping list.'}"
+      :ui="{
+         th:{
+            base:'hidden'
+         },
+         td:{
+            base:'border-0'
+         },
+         tr:{
+            base:'w-full grid grid-cols-4'
+         },
+         tbody:'divide-y-0'
+      }"
       >
+      <template #name-data="row">
+         <span class="text-white">{{ row.row.name }}</span>
+      </template>
+      <template #price-data="row">
+         ${{ row.row.price }}
+      </template>
+      <template #quantity-data="row">
+         {{ row.row.quantity }}x
+      </template>
       </UTable>
 
       <UButton label="Leave shopping mode" @click="showShoppingScreen = false" class="w-full text-xl justify-center my-4" />
