@@ -524,7 +524,7 @@ const links = getBreadcrumbs([
             <UButton icon="i-heroicons-bars-3" class="rounded-full justify-center" />
           </template>
           <template #item="{ item }">
-            <div class="flex flex-col justify-evenly">
+            <div class="flex flex-col">
               <!-- show list -->
               <UButton @click="showList = true" icon="i-heroicons-banknotes-solid"
                 class="rounded-full my-3 justify-center" />
@@ -541,11 +541,11 @@ const links = getBreadcrumbs([
       <UButton @click="increment" class="col-span-3 mx-auto my-12 rounded-full h-28 w-28 justify-center text-3xl">+{{
         incrementBy }}
       </UButton>
-      <div class="flex flex-col p-3 justify-evenly">
+      <div class="flex flex-col p-3">
         <!-- quick switch clicker -->
-        <UButton @click="adjustIncrement" variant="outline" icon="i-heroicons-arrows-up-down" class="justify-center rounded-full" />
+        <UButton @click="adjustIncrement" variant="outline" icon="i-heroicons-arrows-up-down" class="justify-center rounded-full mb-4" />
         <!-- decrement -->
-        <UButton @click="decrement" variant="outline" class="justify-center rounded-full">-{{ incrementBy }}</UButton>
+        <UButton @click="decrement" variant="outline" class="justify-center rounded-full my-7">-{{ incrementBy }}</UButton>
       </div>
     </div>
 

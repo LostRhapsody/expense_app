@@ -142,6 +142,11 @@ useHead({
          rel: "apple-touch-icon",
          href: "/apple-touch-icon-180x180.png",
       },
+      {
+         rel:"mask-icon",
+         href:"/maskable-icon-512x512.png",
+         color:"#FFFFFF"
+      }
    ]
 })
 
@@ -198,7 +203,7 @@ async function setClientTheme() {
       await getTheme(currentUUID);
    } else {
       // if theme is Default, don't set a link tag
-      if (theme !== "Default") {
+      if (theme !== "Default" && theme !== null) {
 
          // remove if it exists so we never have 2 elements with matching ID
          removeThemeTag();
@@ -401,8 +406,6 @@ if (loggedIn.value) {
    }
 } else {
    if (process.client) {
-      console.log("running set client theme");
-
       // bro we still gotta try lol
       setClientTheme();
    }

@@ -13,14 +13,13 @@ const showExplanation = ref(false);
 
 const showEditScreen = ref(false);
 
+const showEditItem = ref(false);
+
 const currentList = ref(0);
 
-const list = ref([
-   {
-      name: "Walmart",
-      items: [{ name: "", id: "0" }],
-   }
-]);
+const currentItem = ref(0);
+
+const list = ref([]);
 
 // show/hide the list
 const showList = computed(() => {
@@ -55,23 +54,28 @@ function showEdit(index: number) {
 /**
  * Adds a new item to the current list
  */
-async function newItem() {
+async function newItem(index: number) {
    let emptyItem = {
       name: "",
       price: 0,
       quantity: 1,
+      department: "",
       id: "0"
    };
    let currentListItems = list.value[currentList.value].items;
    if (currentListItems === null || currentListItems === undefined) {
-      emptyItem.id = "0";
-      currentListItems = [emptyItem]
+      currentListItems = [emptyItem];
    } else {
+      // if we're editing any field besides the last one
+      if (index + 1 !== currentListItems.length && index !== -1) return;
       emptyItem.id = currentListItems.length.toString();
       currentListItems.push(emptyItem);
    }
    await nextTick();
    document.getElementById(emptyItem.id)?.focus();
+
+   // store in cache
+   setLists();
 
 }
 
@@ -83,23 +87,75 @@ function deleteItem(index: number) {
    let currentListItems = list.value[currentList.value].items;
    if (currentListItems === null || currentListItems === undefined) return;
 
-   currentListItems.splice(index - 1, 1);
+   currentListItems.splice(index, 1);
+   setLists();
+}
+
+/**
+ * Opens the edit item modal and set's the current item we're editing
+ */
+
+function editItem(index: number) {
+   currentItem.value = index;
+   showEditItem.value = true;
+   setLists();
 }
 
 /**
  * Creates a new list
  */
-function newList(){
+function newList() {
    let emptyList = {
-      name:"",
-      items:[]
+      name: "New list",
+      items: [{
+         name: "",
+         price: 0,
+         quantity: 1,
+         department: "",
+         id: "0"
+      }]
    };
-   if(list.value === null || list.value === undefined){
+   if (list.value === null || list.value === undefined) {
       list.value = [emptyList];
    } else {
       list.value.push(emptyList);
    }
+   setLists();
 }
+
+/**
+ * Deletes a list
+ */
+function deleteList(index: number) {
+   let thisList = list.value;
+   if (thisList === null || thisList === undefined) return;
+
+   thisList.splice(index, 1);
+   setLists();
+}
+
+/**
+ * set's a user's lists in cache
+ */
+function setLists() {
+   console.log("setting lists");
+
+   localStorage.setItem("lists", JSON.stringify(list.value));
+}
+
+/**
+ * get the user's shopping lists
+ */
+function getLists() {
+   const storedList = JSON.parse(localStorage.getItem("lists"));
+
+   // if the stored list was not empty, set it
+   if (storedList !== null && storedList !== undefined) {
+      list.value = storedList;
+   }
+}
+
+getLists();
 </script>
 
 <template>
@@ -116,10 +172,14 @@ function newList(){
    <!-- The list -->
    <div v-if="showList">
       <div v-for="(item, index) in list"
-         class="w-full text-center items-center flex-col border border-gray-300/25 dark:border-gray-800/25 rounded-lg text-xl flex bg-gray-300/25 dark:bg-gray-800/50">
-         <UInput v-model="item.name" type="text" />
-         <UButton label="Edit List" class="w-1/2 my-2" icon="i-heroicons-pencil-solid" @click="showEdit(index)" />
-         <UButton label="Shop List" class="w-1/2 my-2" icon="i-heroicons-shopping-cart-solid" />
+         class="p-2 my-2 w-full text-center items-center flex-col border border-gray-300/25 dark:border-gray-800/25 rounded-lg text-xl flex bg-gray-300/25 dark:bg-gray-800/50">
+         <div class="flex">
+            <UTextarea :ui="{ size: { xl: 'text-2xl' } }" class="w-full" size="xl" v-model="item.name" variant="none"
+               :rows="1" autoresize :maxrows="3" :padded="false" @change="setLists" />
+            <UButton icon="i-heroicons-x-mark" variant="ghost" color="red" @click="deleteList(index)" />
+         </div>
+         <UButton label="Edit List" class="w-full my-2" icon="i-heroicons-pencil-solid" @click="showEdit(index)" />
+         <UButton label="Shop List" class="w-full my-2" icon="i-heroicons-shopping-cart-solid" />
       </div>
    </div>
    <div v-else>
@@ -135,24 +195,52 @@ function newList(){
 
    <!-- The edit screen/overlay -->
    <div v-if="showEditScreen"
-      class="h-full fixed w-full top-0 right-0 left-0 bottom-0 z-10 bg-white dark:bg-black p-4 border border-white dark:border-black rounded-lg">
-      <p>Add items to your list here.</p>
-      <p>Start typing, and hit enter to add a new item.</p>
+      class="h-full fixed w-full top-0 right-0 left-0 bottom-0 z-10 bg-white dark:bg-black p-4 border border-white dark:border-black rounded-lg overflow-auto">
+      <p class="text-xl">{{ list[currentList].name }} List</p>
+      <UDivider />
+      <p><em>Start typing and hit enter to add a new item.</em></p>
+      <p><em>Click
+            <UIcon name="i-heroicons-pencil-solid" /> to edit an item and
+            <UIcon name="i-heroicons-x-mark" /> to delete it.
+         </em></p>
       <!-- Inputs for items -->
       <div v-for="(item, index) in list[currentList].items" v-if="showItems">
          <div class="items-center flex border border-gray-300 dark:border-gray-800 rounded-lg justify-between my-2">
             <UButton class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-               icon="i-heroicons-pencil-solid" name="Edit item" variant="ghost" @click="EditItem(index)" />
-            <UInput :id="item.id" v-model="item.name" type="text" @change="newItem()" class="inline-block">
+               icon="i-heroicons-pencil-solid" name="Edit item" variant="ghost" @click="editItem(index)" />
+            <UInput :id="item.id" v-model="item.name" type="text" @change="newItem(index), setLists()"
+               class="inline-block">
             </UInput>
             <UButton class="border-l border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
                icon="i-heroicons-x-mark" name="Delete item" variant="ghost" @click="deleteItem(index)" />
          </div>
       </div>
-      <UButton v-else label="Add item" @click="newItem()" class="w-full text-xl justify-center my-4" />
+      <UButton v-else label="Add item" @click="newItem(-1)" class="w-full text-xl justify-center my-4" />
 
       <UButton label="Close List" @click="showEditScreen = false" class="w-full text-xl justify-center my-4" />
    </div>
+
+   <!-- Edit item modal -->
+   <UModal :ui="{ container: 'items-center' }" v-model="showEditItem" prevent-close>
+      <UCard>
+         <template #header>
+            <div class="flex justify-between">Item:
+               <UInput v-model="list[currentList].items[currentItem].name" type="text" />
+            </div>
+         </template>
+         <div class="flex justify-between my-2">Price:
+            <UInput v-model="list[currentList].items[currentItem].price" type="number" />
+         </div>
+         <div class="flex justify-between my-2">Quantity:
+            <UInput v-model="list[currentList].items[currentItem].quantity" type="number" />
+         </div>
+         <div class="flex justify-between my-2">Department:
+            <UInput v-model="list[currentList].items[currentItem].department" type="text" />
+         </div>
+         <UButton class="w-full justify-center my-2" type="submit" label="submit"
+            @click="showEditItem = false, setLists()" />
+      </UCard>
+   </UModal>
 
    <!-- EXPLANATION -->
    <UModal :ui="{ container: 'items-center' }" v-model="showExplanation">
@@ -165,18 +253,16 @@ function newList(){
             </div>
          </template>
          <p>
-            <strong>Easily convert common weight units and costs per item while grocery
-               shopping.</strong>
+            <strong>Create shopping lists for different stores.</strong>
          </p>
          <br />
          <p class="text-sm">
-            Ever try and compare two items sold by weight that are measured in
-            different units? I have. This tool attempts to solve that.
+            Click the "+" button to add a new list and "Edit List" to add/remove/edit items on the list.
          </p>
          <br />
          <p class="text-sm">
-            Choose your units of measurement, enter the weight, and enter the cost
-            per unit of measurement.
+            Click "Shop this List" to enter "Shopping mode". This screen makes it easier to view, sort, and check off the
+            items in your list.
          </p>
       </UCard>
    </UModal>
