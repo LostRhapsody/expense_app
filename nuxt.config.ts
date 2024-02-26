@@ -28,7 +28,7 @@ export default defineNuxtConfig({
          short_name: "BE",
          start_url: "/",
          description:"Simple tools to help your budget",
-         theme_color:"green",
+         theme_color:"#4ADE80",
          background_color:"black",
          screenshots:[{
                src:"/screenshot-wide.png",
