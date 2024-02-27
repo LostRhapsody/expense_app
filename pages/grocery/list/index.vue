@@ -245,7 +245,10 @@ async function select(row) {
  */
 function filterSelectedItems(){
    let filteredItems:any[] = [];
-
+   if(list.value[currentList.value] === undefined || list.value[currentList.value] === null){
+      filteredRows.value = filteredItems;
+      return;
+   }
    list.value[currentList.value].items.forEach((item) => {
       if (!item.selected) {
          filteredItems.push(item);
@@ -404,7 +407,7 @@ if (process.client) {
       v-if="showShoppingScreen"
       class="h-full fixed w-full top-0 right-0 left-0 bottom-0 z-10 bg-white dark:bg-black p-4 border border-white dark:border-black rounded-lg overflow-auto"
    >
-      <p class="text-xl">{{ list[currentList].name }} List</p>
+      <p class="text-xl">{{ list[currentList].name }}</p>
       <UDivider />
 
       <!-- Table of items on list -->
