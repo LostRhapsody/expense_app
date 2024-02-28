@@ -20,6 +20,7 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
+    "@formkit/drag-and-drop": "^0.0.22",
     "@nuxt/ui": "^2.13.0",
     "@vercel/kv": "^1.0.1",
     "@vite-pwa/assets-generator": "^0.2.4",
