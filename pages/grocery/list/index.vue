@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
-import draggable from 'vuedraggable';
 
 // auth
 const { status, data, signIn, signOut } = useAuth();
@@ -23,6 +22,14 @@ const currentItem = ref(0);
 
 const list = ref([]);
 
+const dragList = [
+   { name: "John", id: 0 },
+   { name: "Joao", id: 1 },
+   { name: "Jean", id: 2 }
+];
+
+const drag = false;
+
 // show/hide the list
 const showList = computed(() => {
    if (list.value === null || list.value === undefined) return;
@@ -34,6 +41,10 @@ const showItems = computed(() => {
    let currentListItems = list.value[currentList.value].items;
    return currentListItems.length > 0;
 });
+
+
+// this arrow function outputs the input to console
+const log = (input:any) => console.log(input);
 
 const selectedItemsAccordion = ref([
    {
@@ -372,11 +383,12 @@ onMounted(async () => {
             if (event.target.localName === "input") {
                // using the ID from the event target, we can find the index of the item in the list
                let index = list.value[currentList.value].items.findIndex(
-                  (item) => item.id === event.target.id
+                  (item) => item.id === event.target.id                  
                );
                // if the index is not the last item in the list, we don't want to add a new item
-               if (index + 1 === list.value[currentList.value].items.length)
+               if (index + 1 === list.value[currentList.value].items.length){
                   newItem(-1);
+               }
             }
 
             // if our target is a text area, we want to prevent new lines from being
@@ -505,19 +517,8 @@ onMounted(async () => {
          </em>
       </p>
 
-      <!-- Inputs for items -->
-      <draggable 
-      :list="list[currentList].items"
-      item-key="list[currentList].items.id"
-      class="list-group"
-      ghost-class="ghost"
-      @start="dragging = true"
-      @end="dragging = false"
-      >
-      <!-- v-for="(item, index) in list[currentList].items" v-if="showItems" :key="item.id" -->
-
-         <template #item="{item,index}">
-         <div class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2">
+         <div v-for="(item, index) in list[currentList].items" v-if="showItems" :key="item.id"
+         class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2">
             <UButton
                class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
                icon="i-heroicons-chevron-up-down"
@@ -537,6 +538,7 @@ onMounted(async () => {
                @change="setLists(),filterSelectedItems()"
                class="inline-block col-span-5 mx-2"
                :class="{ linethrough: item.selected }"
+               :id="item.id"
             >
             </UInput>
             <UButton
@@ -548,8 +550,6 @@ onMounted(async () => {
                @click="deleteItem(index)"
             />
             </div>
-         </template>
-      </draggable>
       <UButton
          label="Add item"
          @click="newItem(-1)"
