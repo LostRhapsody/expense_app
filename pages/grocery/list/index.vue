@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
-
-// <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
-// <!-- Switch to vue.draggable -->
-import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
+import draggable from 'vuedraggable';
 
 // auth
 const { status, data, signIn, signOut } = useAuth();
@@ -37,10 +34,6 @@ const showItems = computed(() => {
    let currentListItems = list.value[currentList.value].items;
    return currentListItems.length > 0;
 });
-
-// <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
-// <!-- Switch to vue.draggable -->
-const [parent, dragItems] = useDragAndDrop([]);
 
 const selectedItemsAccordion = ref([
    {
@@ -118,12 +111,6 @@ function showEdit(index: number) {
    showEditScreen.value = true;
    currentList.value = index;
 
-   // first clear out list
-   dragItems.value = [];
-   list.value[currentList.value].items.forEach((item) => {
-      pushToDragList(item);
-   });
-
    // update the shopping list
    filterSelectedItems();
 }
@@ -138,27 +125,6 @@ function showShop(index: number) {
    // update the shopping list
    filterSelectedItems();
 }
-
-/**
- * Adds an item onto the draggable item list
- * @param item item added to the list
- */
-const pushToDragList = (item: any) => {
-   // <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
-   // <!-- Switch to vue.draggable -->
-   dragItems.value.push(item);
-};
-
-/**
- * When the drag and drop list is updated, we want to sync the list of items
- */
-const syncDragAndItems = () => {
-   console.log("DID THIS CHANGE?!!?");
-   
-   list.value[currentList.value].items = dragItems.value;
-   setLists();
-   filterSelectedItems();
-};
 
 /**
  * Adds a new item to the current list
@@ -181,9 +147,6 @@ async function newItem(index: number) {
       emptyItem.id = uuidv4();
       currentListItems.push(emptyItem);
    }
-
-   // update the list of draggable items
-   pushToDragList(emptyItem);
 
    await nextTick();
    document.getElementById(emptyItem.id)?.focus();
@@ -543,13 +506,18 @@ onMounted(async () => {
       </p>
 
       <!-- Inputs for items -->
-      <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
-      <!-- Switch to vue.draggable -->
-      <ul ref="parent">
-      <li v-for="(item, index) in dragItems" v-if="showItems" :key="item.id">
-         <div
-            class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2"
-         >
+      <draggable 
+      :list="list[currentList].items"
+      item-key="list[currentList].items.id"
+      class="list-group"
+      ghost-class="ghost"
+      @start="dragging = true"
+      @end="dragging = false"
+      >
+      <!-- v-for="(item, index) in list[currentList].items" v-if="showItems" :key="item.id" -->
+
+         <template #item="{item,index}">
+         <div class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2">
             <UButton
                class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
                icon="i-heroicons-chevron-up-down"
@@ -564,7 +532,6 @@ onMounted(async () => {
                @click="editItem(index)"
             />
             <UInput
-               :id="item.id"
                v-model="item.name"
                type="text"
                @change="setLists(),filterSelectedItems()"
@@ -580,9 +547,9 @@ onMounted(async () => {
                variant="ghost"
                @click="deleteItem(index)"
             />
-         </div>
-      </li>
-      </ul>
+            </div>
+         </template>
+      </draggable>
       <UButton
          label="Add item"
          @click="newItem(-1)"
@@ -636,8 +603,8 @@ onMounted(async () => {
             </span>
             <span v-else>&nbsp;&nbsp;</span>
             <span
-               class="text-white"
                :class="{ linethrough: row.row.selected }"
+               class="text-black dark:text-white"
                >{{ row.row.name }}</span
             >
          </template>

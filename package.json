@@ -20,7 +20,6 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
-    "@formkit/drag-and-drop": "^0.0.22",
     "@nuxt/ui": "^2.13.0",
     "@vercel/kv": "^1.0.1",
     "@vite-pwa/assets-generator": "^0.2.4",
@@ -28,6 +27,8 @@
     "convert": "^4.14.1",
     "converter": "^0.0.5",
     "next-auth": "4.21.1",
-    "uuid": "^9.0.1"
+    "sortablejs": "1.14.0",
+    "uuid": "^9.0.1",
+    "vuedraggable": "4.1.0"
   }
 }
