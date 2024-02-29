@@ -438,8 +438,6 @@ onMounted(async () => {
    await nextTick();
    /**
     * keybind listeners
-    * Not currently used... this is a mobile app after all
-    * Keeping it for reference as a possible use
     */
    window.addEventListener(
       "keydown",

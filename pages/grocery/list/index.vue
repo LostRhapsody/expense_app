@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
+
+// <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
+// <!-- Switch to vue.draggable -->
 import { useDragAndDrop } from "@formkit/drag-and-drop/vue";
 
 // auth
@@ -35,8 +38,9 @@ const showItems = computed(() => {
    return currentListItems.length > 0;
 });
 
-const [parent, dragItems] = 
-useDragAndDrop([]);
+// <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
+// <!-- Switch to vue.draggable -->
+const [parent, dragItems] = useDragAndDrop([]);
 
 const selectedItemsAccordion = ref([
    {
@@ -98,6 +102,12 @@ const departments = [
    "Checkout",
    "Bulk Food",
    "Pharmacy",
+   "Hardware", 
+   "Tools", 
+   "Toiletries", 
+   "Garden", 
+   "Home and Kitchen",
+   "Condiments"
 ];
 
 /**
@@ -107,7 +117,15 @@ const departments = [
 function showEdit(index: number) {
    showEditScreen.value = true;
    currentList.value = index;
-   dragItems.value.push(...list.value[currentList.value].items);
+
+   // first clear out list
+   dragItems.value = [];
+   list.value[currentList.value].items.forEach((item) => {
+      pushToDragList(item);
+   });
+
+   // update the shopping list
+   filterSelectedItems();
 }
 
 /**
@@ -117,7 +135,30 @@ function showEdit(index: number) {
 function showShop(index: number) {
    showShoppingScreen.value = true;
    currentList.value = index;
+   // update the shopping list
+   filterSelectedItems();
 }
+
+/**
+ * Adds an item onto the draggable item list
+ * @param item item added to the list
+ */
+const pushToDragList = (item: any) => {
+   // <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
+   // <!-- Switch to vue.draggable -->
+   dragItems.value.push(item);
+};
+
+/**
+ * When the drag and drop list is updated, we want to sync the list of items
+ */
+const syncDragAndItems = () => {
+   console.log("DID THIS CHANGE?!!?");
+   
+   list.value[currentList.value].items = dragItems.value;
+   setLists();
+   filterSelectedItems();
+};
 
 /**
  * Adds a new item to the current list
@@ -140,6 +181,10 @@ async function newItem(index: number) {
       emptyItem.id = uuidv4();
       currentListItems.push(emptyItem);
    }
+
+   // update the list of draggable items
+   pushToDragList(emptyItem);
+
    await nextTick();
    document.getElementById(emptyItem.id)?.focus();
 
@@ -189,11 +234,11 @@ function deleteSelectedItems() {
       list.value[currentList.value].selectedItems === undefined ||
       list.value[currentList.value].selectedItems === null
    )
-      return;      
+      return;
 
    // empty the array
    list.value[currentList.value].selectedItems = [];
-   let shallowItemsCopy:any[] = [];
+   let shallowItemsCopy: any[] = [];
 
    // remove the selected items from the items array
    list.value[currentList.value].items.forEach((item, index) => {
@@ -203,19 +248,23 @@ function deleteSelectedItems() {
       }
    });
    // set all items to the copy
-   list.value[currentList.value].items  = shallowItemsCopy;
+   list.value[currentList.value].items = shallowItemsCopy;
    setLists();
 }
 /**
  * Opens the edit item modal and set's the current item we're editing
  */
 
-function editItem(index: number) {
+async function editItem(index: number) {
    currentItem.value = index;
    showEditItem.value = true;
    setLists();
    // update the shopping list
    filterSelectedItems();
+   // wait for modal to show up then focus on submit button
+   // this is just to preven the keyboard from popping up
+   await nextTick();
+   document.getElementById("submitEditItem")?.focus();
 }
 
 /**
@@ -265,7 +314,7 @@ function getLists() {
    // if the stored list was not empty, set it
    if (storedList !== null && storedList !== undefined) {
       list.value = storedList;
-   }   
+   }
 }
 
 /**
@@ -327,6 +376,7 @@ function filterSelectedItems() {
       return;
    }
    list.value[currentList.value].items.forEach((item) => {
+      
       // filter out any items that don't have a name, we don't need these.
       if (item.name === "" || item.name === undefined || item.name === null)
          return;
@@ -335,7 +385,7 @@ function filterSelectedItems() {
       }
    });
 
-   filteredRows.value = filteredItems;   
+   filteredRows.value = filteredItems;
 }
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -344,6 +394,59 @@ if (process.client) {
    getLists();
    filterSelectedItems();
 }
+
+onMounted(async () => {
+   await nextTick();
+   /**
+    * keybind listeners
+    */
+   window.addEventListener("keydown", (event) => {
+      switch (event.code) {
+         case "Enter":
+            // if we're editing an input field, it's likely going to be one of our
+            // list items. We add a new one when we're hitting enter on the last item
+            // in the list.
+            if (event.target.localName === "input") {
+               // using the ID from the event target, we can find the index of the item in the list
+               let index = list.value[currentList.value].items.findIndex(
+                  (item) => item.id === event.target.id
+               );
+               // if the index is not the last item in the list, we don't want to add a new item
+               if (index + 1 === list.value[currentList.value].items.length)
+                  newItem(-1);
+            }
+
+            // if our target is a text area, we want to prevent new lines from being
+            // added so prevent the default action.
+
+            // NOTE for future Evan: this means all "enter" key presses will have to be
+            // controlled manually, more or less.
+
+            if (event.target.localName === "textarea") {
+               event.preventDefault();
+            }
+            // if the target id is "editItemName" we want to focus on the next field
+            if (event.target.id === "editItemName") {
+               document.getElementById("editItemPrice")?.focus();
+            }
+            // if the target id is "editItemPrice" we want to focus on the next field
+            if (event.target.id === "editItemPrice") {
+               document.getElementById("editItemQuantity")?.focus();
+            }
+            // if the target id is "editItemQuantity" we want to focus on the next field
+            if (event.target.id === "editItemQuantity") {
+               document.getElementById("editItemDepartment")?.focus();
+            }
+            // if the target id is "editItemDepartment" we want to focus on the submit button
+            if (event.target.id === "editItemDepartment") {
+               document.getElementById("submitEditItem")?.focus();
+            }
+            break;
+         default:
+            break;
+      }
+   });
+});
 </script>
 
 <template>
@@ -374,7 +477,7 @@ if (process.client) {
          v-for="(item, index) in list"
          class="p-2 my-2 w-full text-center items-center flex-col border border-gray-300/25 dark:border-gray-800/25 rounded-lg text-xl flex bg-gray-300/25 dark:bg-gray-800/50"
       >
-         <div class="flex">
+         <div class="flex w-full">
             <UTextarea
                :ui="{ size: { xl: 'text-2xl' } }"
                class="w-full"
@@ -433,32 +536,24 @@ if (process.client) {
       <p><em>Start typing and hit enter to add a new item.</em></p>
       <p>
          <em
-            >Drag <UIcon name="i-heroicons-chevron-up-down" /> to re-order an item.<br/>Click <UIcon name="i-heroicons-pencil-solid" /> to edit an item and
-            <UIcon name="i-heroicons-x-mark" /> to delete it.
+            >Drag <UIcon name="i-heroicons-chevron-up-down" /> to re-order an
+            item.<br />Click <UIcon name="i-heroicons-pencil-solid" /> to edit
+            an item and <UIcon name="i-heroicons-x-mark" /> to delete it.
          </em>
       </p>
 
-      <hr class="my-12">
-
-      <p>WIP: This is the list of items from below! It's sortable up here. The goal is to make the list down there sortable.</p>
-      <br />
-      <ul ref="parent">
-         <li v-for="item in dragItems" :key="item.id">
-            {{ item.name }}
-         </li>
-      </ul>
-
-      <hr class="my-12">
-
       <!-- Inputs for items -->
-      <div v-for="(item, index) in list[currentList].items" v-if="showItems">
+      <!-- IMPORTANT - currently using the drag and drop lib from formkit. Don't. -->
+      <!-- Switch to vue.draggable -->
+      <ul ref="parent">
+      <li v-for="(item, index) in dragItems" v-if="showItems" :key="item.id">
          <div
-            class="items-center flex border border-gray-300 dark:border-gray-800 rounded-lg justify-between my-2"
+            class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2"
          >
             <UButton
                class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
                icon="i-heroicons-chevron-up-down"
-               name="Edit item"
+               name="Reorder item"
                variant="ghost"
             />
             <UButton
@@ -472,8 +567,8 @@ if (process.client) {
                :id="item.id"
                v-model="item.name"
                type="text"
-               @change="newItem(index), setLists()"
-               class="inline-block"
+               @change="setLists(),filterSelectedItems()"
+               class="inline-block col-span-5 mx-2"
                :class="{ linethrough: item.selected }"
             >
             </UInput>
@@ -486,7 +581,8 @@ if (process.client) {
                @click="deleteItem(index)"
             />
          </div>
-      </div>
+      </li>
+      </ul>
       <UButton
          label="Add item"
          @click="newItem(-1)"
@@ -617,9 +713,16 @@ if (process.client) {
                   >
                </template>
                <template #price-data="row">
-                  <span :class="{ linethrough: row.row.selected }"
-                     >${{ row.row.price }}</span
+                  <span
+                     v-if="row.row.price > 0"
+                     :class="{ linethrough: row.row.selected }"
                   >
+                     $<span v-if="row.row.quantity > 0">{{
+                        row.row.price * row.row.quantity
+                     }}</span>
+                     <span v-else>{{ row.row.price }}</span>
+                  </span>
+                  <span v-else>&nbsp;</span>
                </template>
                <template #selected-data="row">
                   <span v-if="row.row.selected">
@@ -695,6 +798,7 @@ if (process.client) {
                   :maxrows="3"
                   :padded="false"
                   @change="setLists"
+                  id="editItemName"
                />
             </UFormGroup>
          </template>
@@ -703,6 +807,7 @@ if (process.client) {
                <UInput
                   v-model="list[currentList].items[currentItem].price"
                   type="number"
+                  id="editItemPrice"
                >
                   <template #leading>$</template>
                   <template #trailing>ea</template>
@@ -712,12 +817,14 @@ if (process.client) {
                <UInput
                   v-model="list[currentList].items[currentItem].quantity"
                   type="number"
+                  id="editItemQuantity"
                />
             </UFormGroup>
             <UFormGroup label="Department">
                <USelect
                   v-model="list[currentList].items[currentItem].department"
                   :options="departments"
+                  id="editItemDepartment"
                />
             </UFormGroup>
          </div>
@@ -726,7 +833,8 @@ if (process.client) {
                class="w-full justify-center my-2"
                type="submit"
                label="submit"
-               @click="(showEditItem = false), setLists()"
+               @click="(showEditItem = false), setLists(),filterSelectedItems()"
+               id="submitEditItem"
             />
          </template>
       </UCard>
