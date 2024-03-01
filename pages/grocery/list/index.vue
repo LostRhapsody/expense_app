@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
+import { createApp } from 'vue'
+import { plugin as Slicksort } from "vue-slicksort";
+import { SlickList, SlickItem } from 'vue-slicksort';
+
+const app = createApp({});
+
+app.use(Slicksort);
 
 // auth
 const { status, data, signIn, signOut } = useAuth();
@@ -21,14 +28,6 @@ const currentList = ref(0);
 const currentItem = ref(0);
 
 const list = ref([]);
-
-const dragList = [
-   { name: "John", id: 0 },
-   { name: "Joao", id: 1 },
-   { name: "Jean", id: 2 }
-];
-
-const drag = false;
 
 // show/hide the list
 const showList = computed(() => {
@@ -146,7 +145,7 @@ async function newItem(index: number) {
       price: 0,
       quantity: 0,
       department: "",
-      id: "0",
+      id: uuidv4(),
       selected: false,
    };
    let currentListItems = list.value[currentList.value].items;
@@ -155,7 +154,6 @@ async function newItem(index: number) {
    } else {
       // if we're editing any field besides the last one
       if (index + 1 !== currentListItems.length && index !== -1) return;
-      emptyItem.id = uuidv4();
       currentListItems.push(emptyItem);
    }
 
@@ -232,9 +230,7 @@ function deleteSelectedItems() {
 async function editItem(index: number) {
    currentItem.value = index;
    showEditItem.value = true;
-   setLists();
-   // update the shopping list
-   filterSelectedItems();
+
    // wait for modal to show up then focus on submit button
    // this is just to preven the keyboard from popping up
    await nextTick();
@@ -277,6 +273,30 @@ function deleteList(index: number) {
  */
 function setLists() {
    localStorage.setItem("lists", JSON.stringify(list.value));
+}
+
+/**
+ * Fired after an item is dragged, re-order's the list in the current position
+ */
+async function reOrderListItems(event: any){
+   let oldIndex = event.oldIndex;
+   let newIndex = event.newIndex;
+   let itemList = list.value[currentList.value].items;
+   if(oldIndex === newIndex) return;
+
+   // check if the new index is out of bounds or not.
+   // We hope this doesn't happen, ever, but if it does
+   // it will prevent overflow errors.
+   if (newIndex >= itemList.length) {
+      var k = newIndex - itemList.length + 1;
+      while (k--) {
+         // TODO - push empty items instead of undefined
+         itemList.push(undefined);
+      }
+   }
+   await nextTick();
+   itemList.splice(newIndex, 0, itemList.splice(oldIndex, 1)[0]);
+   setLists();
 }
 
 /**
@@ -517,7 +537,17 @@ onMounted(async () => {
          </em>
       </p>
 
-         <div v-for="(item, index) in list[currentList].items" v-if="showItems" :key="item.id"
+         <SlickList 
+         @sort-end="reOrderListItems($event)"
+         axis="y" v-model:list="list[currentList].items">
+            <SlickItem 
+            v-for="(item, index) in list[currentList].items" :key="list[currentList].items.id" :index="index" @click="setLists()">               
+               <span
+               >{{ item.name }}</span>
+            </SlickItem>
+         </SlickList>
+
+         <div v-for="(item, index) in list[currentList].items" v-if="showItems" :key="list[currentList].items.id"
          class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2">
             <UButton
                class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
