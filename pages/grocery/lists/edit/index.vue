@@ -29,12 +29,12 @@ const links = getBreadcrumbs([
    {
       name: "",
       icon: "i-heroicons-list-bullet",
-      url: "/grocery/list",
+      url: "/grocery/lists",
    },
    {
       name: "",
       icon: "i-heroicons-pencil-solid",
-      url: "/grocery/list/edit",
+      url: "/grocery/lists/edit",
    },
 ]);
 
@@ -178,7 +178,15 @@ onMounted(async () => {
     * keybind listeners
     */
    window.addEventListener("keydown", (event) => {
-      switch (event.code) {
+      let key;
+      // I hate this, but on mobile it's key, and on desktop it's both, but
+      // code is the recommended way to get the key code. So we have to check both.
+      if(event.code === "" || event.code === undefined){
+         key = event.key
+      } else {
+         key = event.code;
+      }
+      switch (key) {
          case "Enter":
             // if we're editing an input field, it's likely going to be one of our
             // list items. We add a new one when we're hitting enter on the last item
@@ -312,7 +320,7 @@ if (process.client) {
       label="Finished editing"
       icon="i-heroicons-arrow-left"
       color="red"
-      to="/grocery/list"
+      to="/grocery/lists"
       class="w-full text-xl justify-center my-4"
    />
    <!-- Edit item modal -->

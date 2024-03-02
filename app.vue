@@ -95,7 +95,7 @@ const links = [
    {
       label: "List",
       icon: "i-heroicons-list-bullet",
-      to: "/grocery/list",
+      to: "/grocery/lists",
       id: "List",
       content: "Create and manage grocery lists",
       isTitle: false,
@@ -484,7 +484,7 @@ onMounted(async () => {
 <template>
    <NuxtPwaManifest />
    <!-- main -->
-   <UContainer class="max-w-xl">
+   <UContainer class="max-w-xl mb-24">
       <!-- Nav bar and profile -->
       <div
          class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2 my-4"
@@ -867,7 +867,7 @@ onMounted(async () => {
    </UContainer>
 
    <!-- Bottom bar navigation -->
-   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center" :ui="{base:'max-w-18 min-w-18'}">
+   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center bg-white dark-nav-bg" :ui="{base:'max-w-18 min-w-18'}">
       <template #default="{ link }">
          <span class=""></span>
       </template>
@@ -883,9 +883,11 @@ onMounted(async () => {
       </template>
    </UHorizontalNavigation>
 </template>
-
 <style>
 .custom-nav-links a::before {
    background-color: transparent !important;
+}
+.dark .dark-nav-bg {
+   background-color: #121212;
 }
 </style>

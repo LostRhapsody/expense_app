@@ -19,7 +19,7 @@ const links = [
   {
     label: "List",
     icon: "i-heroicons-list-bullet",
-    to: "/grocery/list",
+    to: "/grocery/lists",
     id: "List",
     content: "Create and manage grocery lists",
   },

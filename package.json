@@ -26,6 +26,7 @@
     "@vite-pwa/nuxt": "^0.5.0",
     "convert": "^4.14.1",
     "converter": "^0.0.5",
+    "localtunnel": "^2.0.2",
     "next-auth": "4.21.1",
     "sortablejs": "1.14.0",
     "uuid": "^9.0.1",
