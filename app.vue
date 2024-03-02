@@ -35,6 +35,33 @@ const isSettingsModalOpen = ref(false);
 const isConfirmClearUserDataOpen = ref(false);
 const currentSettingMenu = ref("display");
 
+const navBarLinks = [
+   {
+      label: "Home",
+      icon: "i-heroicons-home-modern-solid",
+      to: "/",
+      id: "home",
+   },
+   {
+      label: "Grocery",
+      icon: "i-heroicons-shopping-bag-solid",
+      to: "/grocery",
+      id: "home",
+   },
+   {
+      label: "Budget",
+      icon: "i-heroicons-currency-dollar-solid",
+      to: "/budgeting",
+      id: "home",
+   },
+   {
+      label: "More",
+      icon: "i-heroicons-ellipsis-horizontal",
+      to: "/more",
+      id: "more",
+   },
+];
+
 const links = [
    {
       label: "Home",
@@ -76,7 +103,8 @@ const links = [
    {
       label: "Budgeting",
       to: "/budgeting",
-      content: "Balance your checkbook, create digital envelopes, and more budgeting tools.",
+      content:
+         "Balance your checkbook, create digital envelopes, and more budgeting tools.",
       isTitle: true,
    },
    {
@@ -132,25 +160,25 @@ useHead({
       {
          rel: "icon",
          href: "/favicon.ico",
-         sizes: "48x48"
+         sizes: "48x48",
       },
       {
          rel: "icon",
          href: "/favicon.svg",
          sizes: "any",
-         type: "image/svg+xml"
+         type: "image/svg+xml",
       },
       {
          rel: "apple-touch-icon",
          href: "/apple-touch-icon-180x180.png",
       },
       {
-         rel:"mask-icon",
-         href:"/maskable-icon-512x512.png",
-         color:"#FFFFFF"
-      }
-   ]
-})
+         rel: "mask-icon",
+         href: "/maskable-icon-512x512.png",
+         color: "#FFFFFF",
+      },
+   ],
+});
 
 /**
  * Posts an email to the backend, stores UUID in cache to verify requests
@@ -206,7 +234,6 @@ async function setClientTheme() {
    } else {
       // if theme is Default, don't set a link tag
       if (theme !== "Default" && theme !== null) {
-
          // remove if it exists so we never have 2 elements with matching ID
          removeThemeTag();
 
@@ -216,7 +243,6 @@ async function setClientTheme() {
          themeTag.id = "themeStylesheet";
          themeTag.rel = "stylesheet";
          document.head.appendChild(themeTag);
-
       } else {
          // just remove it to reset theme to default
          removeThemeTag();
@@ -241,7 +267,7 @@ function removeThemeTag() {
  */
 async function getTheme(key: string) {
    // if no UUID is set, just set theme to default
-   if(key === null || key === undefined){
+   if (key === null || key === undefined) {
       localStorage.setItem("budgie_theme", "Default");
       getThemeCallback();
    }
@@ -284,14 +310,14 @@ async function setTheme(theme: string) {
 
    localStorage.setItem("budgie_theme", theme);
 
-   // if key is null, we're offline/not logged in 
+   // if key is null, we're offline/not logged in
    // so just set the theme on the client and dip
    if (key === null) {
       setClientTheme();
       return;
    }
 
-   await $Fetch("/api/user/setTheme", {
+   await $fetch("/api/user/setTheme", {
       method: "post",
       body: {
          key: key + "Theme",
@@ -314,7 +340,7 @@ function openThemeModal() {
 /**
  * Opens the settings modal, closes the preferences slideout
  */
-function openSettingsModal(){
+function openSettingsModal() {
    isSettingsModalOpen.value = true;
    isPrefrencesOpen.value = false;
 }
@@ -323,7 +349,7 @@ function openSettingsModal(){
  * determines which settings menu to display
  * @param menu the settings menu to show
  */
-function toggleSettingsDisplay(menu:string){
+function toggleSettingsDisplay(menu: string) {
    currentSettingMenu.value = menu;
 }
 
@@ -344,7 +370,11 @@ function onThemeSelect(option: themeType) {
       return;
    }
 
-   if (option.path !== null && option.path !== undefined && option.path !== "") {
+   if (
+      option.path !== null &&
+      option.path !== undefined &&
+      option.path !== ""
+   ) {
       setTheme(option.path);
       isThemeModalOpen.value = false;
       return;
@@ -439,227 +469,419 @@ onMounted(async () => {
    /**
     * keybind listeners
     */
-   window.addEventListener(
-      "keydown",
-      (event) => {
-         switch (event.code) {
-            case "BracketRight":
-               isNavOpen.value = true;
-               break;
-            default:
-               break;
-         }
-      });
+   window.addEventListener("keydown", (event) => {
+      switch (event.code) {
+         case "BracketRight":
+            isNavOpen.value = true;
+            break;
+         default:
+            break;
+      }
+   });
 });
 </script>
 
 <template>
    <NuxtPwaManifest />
+   <!-- main -->
    <UContainer class="max-w-xl">
-      <!-- main -->
-      <UCard class="my-4 cardBody">
-         <template #header>
-            <div
-               class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2">
-               <!-- button to display a user's avatar when logged in, will log you out -->
-               <UButton v-if="loggedIn && userAvatar !== null && userAvatar !== ''" @click="isPrefrencesOpen = true"
-                  variant="ghost">
-                  <UAvatar class="ring-2 ring-primary" :src="userAvatar" />
+      <!-- Nav bar and profile -->
+      <div
+         class="min-w-0 w-full grid grid-cols-3 items-center dark:bg-gray-800/50 bg-primary-100/50 rounded-full p-2 my-4"
+      >
+         <!-- button to display a user's avatar when logged in, will log you out -->
+         <UButton
+            v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
+            @click="isPrefrencesOpen = true"
+            variant="ghost"
+         >
+            <UAvatar class="ring-2 ring-primary" :src="userAvatar" />
+         </UButton>
+
+         <!-- button that displays normal user icon when logged in, will log you out -->
+         <UButton
+            variant="ghost"
+            v-else-if="loggedIn"
+            @click="isPrefrencesOpen = true"
+         >
+            <UAvatar
+               class="ring-2 ring-primary"
+               icon="i-heroicons-user-circle-solid"
+            />
+         </UButton>
+
+         <!-- button that displays normal user icon when logged out, will log you in -->
+         <UButton variant="ghost" v-else @click="isPrefrencesOpen = true">
+            <UAvatar
+               class="ring-2 ring-gray-500"
+               icon="i-heroicons-user-circle-solid"
+            />
+         </UButton>
+
+         <strong>
+            <ULink to="/" class="justify-center flex text-lg text-primary"
+               >Budgie
+               <img
+                  alt="An icon of a budgie, which is a kind of bird."
+                  class="inline-block text-primary"
+                  src="/edited_budgie.svg"
+                  height="25"
+                  width="25"
+               />
+            </ULink>
+         </strong>
+
+         <!--  Nav Button -->
+         <div class="text-end">
+            <UButton
+               class="rounded-full w-min"
+               @click="isNavOpen = true"
+               icon="i-heroicons-bars-3"
+            />
+         </div>
+      </div>
+
+      <!-- Slideover user preferences -->
+      <USlideover
+         v-model="isPrefrencesOpen"
+         :overlay="true"
+         side="left"
+         class="overflow-auto"
+      >
+         <UCard
+            class="flex flex-col flex-1 cardBody"
+            :ui="{
+               body: { base: 'flex-1' },
+               ring: '',
+               divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+            }"
+         >
+            <template #header>
+               <div class="flex items-center justify-between">
+                  <h3
+                     class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+                  >
+                     Preferences
+                  </h3>
+                  <UButton
+                     color="gray"
+                     variant="ghost"
+                     icon="i-heroicons-x-mark-20-solid"
+                     class="my-1"
+                     @click="isPrefrencesOpen = false"
+                  />
+               </div>
+            </template>
+            <div class="grid grid-cols-1 gap-4">
+               <div class="flex flex-row justify-between">
+               <UButton
+                  v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
+                  @click="handleSignOut"
+                  variant="ghost"
+               >
+                  <UAvatar class="ring-2 ring-primary" :src="userAvatar" />Sign
+                  Out
                </UButton>
 
                <!-- button that displays normal user icon when logged in, will log you out -->
-               <UButton variant="ghost" v-else-if="loggedIn" @click="isPrefrencesOpen = true">
-                  <UAvatar class="ring-2 ring-primary" icon="i-heroicons-user-circle-solid" />
+               <UButton
+                  variant="ghost"
+                  v-else-if="loggedIn"
+                  @click="handleSignOut"
+               >
+                  <UAvatar
+                     class="ring-2 ring-primary"
+                     icon="i-heroicons-user-circle-solid"
+                  />Sign Out
                </UButton>
 
                <!-- button that displays normal user icon when logged out, will log you in -->
-               <UButton variant="ghost" v-else @click="isPrefrencesOpen = true">
-                  <UAvatar class="ring-2 ring-gray-500" icon="i-heroicons-user-circle-solid" />
+               <UButton variant="ghost" v-else @click="handleSignIn">
+                  <UAvatar
+                     class="ring-2 ring-gray-500"
+                     icon="i-heroicons-user-circle-solid"
+                  />Sign In
                </UButton>
 
-               <strong>
-                  <ULink to="/" class="justify-center flex text-lg text-primary">Budgie
-                     <img alt="An icon of a budgie, which is a kind of bird." class="inline-block text-primary"
-                        src="/edited_budgie.svg" height="25" width="25" />
-                  </ULink>
-               </strong>
-
-               <!--  Nav Button -->
-               <div class="text-end">
-                  <UButton class="rounded-full w-min" @click="isNavOpen = true" icon="i-heroicons-bars-3" />
-               </div>
-            </div>
-
-            <!-- Slideover user preferences -->
-            <USlideover v-model="isPrefrencesOpen" :overlay="true" side="left" class="overflow-auto">
-               <UCard class="flex flex-col flex-1 cardBody" :ui="{
-                  body: { base: 'flex-1' },
-                  ring: '',
-                  divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-               }">
-                  <template #header>
-                     <div class="flex items-center justify-between">
-                        <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-                           Preferences
-                        </h3>
-                        <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="my-1"
-                           @click="isPrefrencesOpen = false" />
-                     </div>
-                  </template>
-                  <div class="grid grid-cols-1 gap-4">
-                     <UButton v-if="loggedIn && userAvatar !== null && userAvatar !== ''" @click="handleSignOut"
-                        variant="ghost">
-                        <UAvatar class="ring-2 ring-primary" :src="userAvatar" />Sign
-                        Out
-                     </UButton>
-
-                     <!-- button that displays normal user icon when logged in, will log you out -->
-                     <UButton variant="ghost" v-else-if="loggedIn" @click="handleSignOut">
-                        <UAvatar class="ring-2 ring-primary" icon="i-heroicons-user-circle-solid" />Sign Out
-                     </UButton>
-
-                     <!-- button that displays normal user icon when logged out, will log you in -->
-                     <UButton variant="ghost" v-else @click="handleSignIn">
-                        <UAvatar class="ring-2 ring-gray-500" icon="i-heroicons-user-circle-solid" />Sign In
-                     </UButton>
-
-                     <UButton label="Settings" icon="i-heroicons-cog-6-tooth-solid" @click="openSettingsModal" />
-                     <UButton label="Select Theme" @click="openThemeModal" />
-                     <UButton label="Clear User Data" color="red" @click="isConfirmClearUserDataOpen = true" />
-                  </div>
-               </UCard>
-            </USlideover>
-
-            <!-- Slideover navigation -->
-            <USlideover v-model="isNavOpen" :overlay="true" class="overflow-auto">
-               <UCard class="flex flex-col flex-1 cardBody" :ui="{
-                  body: { base: 'flex-1' },
-                  ring: '',
-                  divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-               }">
-                  <template #header>
-                     <div class="flex items-center justify-between">
-                        <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-                           Navigation
-                        </h3>
-                        <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="my-1"
-                           @click="isNavOpen = false" />
-                     </div>
-                  </template>
-                  <!-- This is identical to groupLinks.vue -->
-                  <!-- I just can't close the nav using that component -->
-                  <!-- so keep them in sync! -->
-                  <UAccordion :items="links" :ui="{ wrapper: 'flex flex-col w-full' }">
-                     <template #default="{ item, index, open }">
-                        <div>
-                           <!-- PAGES -->
-                           <UButton color="gray" variant="ghost"
-                              class="border rounded-full my-2 border-gray-200 dark:border-gray-800 w-full"
-                              :class="(item.isTitle) ? 'hidden' : ''"
-                              :ui="{ rounded: 'rounded-none', padding: { sm: 'p-3' } }">
-                              <template #leading>
-                                 <ULink :to="item.to" @click="isNavOpen = false" v-if="item.icon">
-                                    <div
-                                       class="w-6 h-6 rounded-full bg-primary-500 dark:bg-primary-400 flex items-center justify-center -my-1">
-                                       <UIcon :name="item.icon" class="w-4 h-4 text-white dark:text-gray-900" />
-                                    </div>
-                                 </ULink>
-                              </template>
-
-                              <ULink :to="item.to" @click="isNavOpen = false">
-                                 <span class="truncate">{{ item.label }}</span>
-                              </ULink>
-
-                              <template #trailing>
-                                 <UIcon v-if="item.content" name="i-heroicons-chevron-right-20-solid"
-                                    class="w-5 h-5 ms-auto transform transition-transform duration-200"
-                                    :class="[open && 'rotate-90']" />
-                              </template>
-                           </UButton>
-                           <!-- TITLES -->
-                           <UButton color="gray" variant="ghost"
-                              class="border-t my-4 border-gray-300 dark:border-gray-700 w-full text-xl"
-                              :class="(item.isTitle) ? '' : 'hidden'"
-                              :ui="{ rounded: 'rounded-none', padding: { sm: 'p-3' } }">
-                              <ULink :to="item.to" @click="isNavOpen = false">
-                                 <span class="truncate">{{ item.label }}</span>
-                              </ULink>
-
-                              <template #trailing>
-                                 <UIcon v-if="item.content" name="i-heroicons-chevron-right-20-solid"
-                                    class="w-5 h-5 ms-auto transform transition-transform duration-200"
-                                    :class="[open && 'rotate-90']" />
-                              </template>
-                           </UButton>
-                        </div>
-                     </template>
-                  </UAccordion>
-               </UCard>
-            </USlideover>
-         </template>
-
-         <NuxtPage />
-
-         <template #footer>
-            <div class="flex flex-row justify-between min-w-0 items-center">
-               <h2 class="text-center"><em>Made with 💖 for Sarah-Jayne</em></h2>
                <ClientOnly>
-                  <UButton id="darkModeButton" :icon="isDark
-                     ? 'i-heroicons-moon-20-solid'
-                     : 'i-heroicons-sun-20-solid'
-                     " color="gray" variant="ghost" aria-label="Theme" @click="isDark = !isDark" />
+                  <UButton
+                     id="darkModeButton"
+                     :icon="
+                        isDark
+                           ? 'i-heroicons-moon-20-solid'
+                           : 'i-heroicons-sun-20-solid'
+                     "
+                     color="gray"
+                     variant="ghost"
+                     aria-label="Theme"
+                     @click="isDark = !isDark"
+                  />
                </ClientOnly>
+               </div>
+
+               <UButton
+                  label="Settings"
+                  icon="i-heroicons-cog-6-tooth-solid"
+                  @click="openSettingsModal"
+               />
+               <UButton
+                  label="Clear User Data"
+                  color="red"
+                  @click="isConfirmClearUserDataOpen = true"
+               />
             </div>
-            <div class="flex flex-row justify-between min-w-0 items-center">
-               <h2>
-                  <ULink class="dark:text-primary-400 text-primary-600" to="mailto:evan.robertson77@gmail.com">Contact
-                  </ULink>
-               </h2>
-            </div>
-         </template>
-         <UNotifications />
-      </UCard>
-      <UModal :ui="{ container: 'items-center' }" v-model="isThemeModalOpen">
-         <UCommandPalette v-model="themeSelected" nullable :autoselect="false"
-            :groups="[{ key: 'themes', commands: themes }]" @update:model-value="onThemeSelect" ref="themePalett" />
-      </UModal>
+         </UCard>
+      </USlideover>
+
+      <!-- Slideover navigation -->
+      <USlideover v-model="isNavOpen" :overlay="true" class="overflow-auto">
+         <UCard
+            class="flex flex-col flex-1 cardBody"
+            :ui="{
+               body: { base: 'flex-1' },
+               ring: '',
+               divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+            }"
+         >
+            <template #header>
+               <div class="flex items-center justify-between">
+                  <h3
+                     class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+                  >
+                     Navigation
+                  </h3>
+                  <UButton
+                     color="gray"
+                     variant="ghost"
+                     icon="i-heroicons-x-mark-20-solid"
+                     class="my-1"
+                     @click="isNavOpen = false"
+                  />
+               </div>
+            </template>
+            <!-- This is identical to groupLinks.vue -->
+            <!-- I just can't close the nav using that component -->
+            <!-- so keep them in sync! -->
+            <UAccordion
+               :items="links"
+               :ui="{ wrapper: 'flex flex-col w-full' }"
+            >
+               <template #default="{ item, index, open }">
+                  <div>
+                     <!-- PAGES -->
+                     <UButton
+                        color="gray"
+                        variant="ghost"
+                        class="border rounded-full my-2 border-gray-200 dark:border-gray-800 w-full"
+                        :class="item.isTitle ? 'hidden' : ''"
+                        :ui="{
+                           rounded: 'rounded-none',
+                           padding: { sm: 'p-3' },
+                        }"
+                     >
+                        <template #leading>
+                           <ULink
+                              :to="item.to"
+                              @click="isNavOpen = false"
+                              v-if="item.icon"
+                           >
+                              <div
+                                 class="w-6 h-6 rounded-full bg-primary-500 dark:bg-primary-400 flex items-center justify-center -my-1"
+                              >
+                                 <UIcon
+                                    :name="item.icon"
+                                    class="w-4 h-4 text-white dark:text-gray-900"
+                                 />
+                              </div>
+                           </ULink>
+                        </template>
+
+                        <ULink :to="item.to" @click="isNavOpen = false">
+                           <span class="truncate">{{ item.label }}</span>
+                        </ULink>
+
+                        <template #trailing>
+                           <UIcon
+                              v-if="item.content"
+                              name="i-heroicons-chevron-right-20-solid"
+                              class="w-5 h-5 ms-auto transform transition-transform duration-200"
+                              :class="[open && 'rotate-90']"
+                           />
+                        </template>
+                     </UButton>
+                     <!-- TITLES -->
+                     <UButton
+                        color="gray"
+                        variant="ghost"
+                        class="border-t my-4 border-gray-300 dark:border-gray-700 w-full text-xl"
+                        :class="item.isTitle ? '' : 'hidden'"
+                        :ui="{
+                           rounded: 'rounded-none',
+                           padding: { sm: 'p-3' },
+                        }"
+                     >
+                        <ULink :to="item.to" @click="isNavOpen = false">
+                           <span class="truncate">{{ item.label }}</span>
+                        </ULink>
+
+                        <template #trailing>
+                           <UIcon
+                              v-if="item.content"
+                              name="i-heroicons-chevron-right-20-solid"
+                              class="w-5 h-5 ms-auto transform transition-transform duration-200"
+                              :class="[open && 'rotate-90']"
+                           />
+                        </template>
+                     </UButton>
+                  </div>
+               </template>
+            </UAccordion>
+         </UCard>
+      </USlideover>
+
+      <!-- Current page -->
+      <NuxtPage />
+      
+      <!-- Commented out till I find out where to put this -->
+      <!-- <div class="fixed bottom-0">
+         <div class="flex flex-row justify-between min-w-0 items-center">
+            <h2 class="text-center"><em>Made with 💖 for Sarah-Jayne</em></h2>
+            <ClientOnly>
+               <UButton
+                  id="darkModeButton"
+                  :icon="
+                     isDark
+                        ? 'i-heroicons-moon-20-solid'
+                        : 'i-heroicons-sun-20-solid'
+                  "
+                  color="gray"
+                  variant="ghost"
+                  aria-label="Theme"
+                  @click="isDark = !isDark"
+               />
+            </ClientOnly>
+         </div>
+         <div class="flex flex-row justify-between min-w-0 items-center">
+            <h2>
+               <ULink
+                  class="dark:text-primary-400 text-primary-600"
+                  to="mailto:evan.robertson77@gmail.com"
+                  >Contact
+               </ULink>
+            </h2>
+         </div>
+      </div> -->
+
+      <!-- For toast notifications -->
+      <UNotifications />
+
+      <!-- Settings modal! -->
       <UModal :ui="{ container: 'items-center' }" v-model="isSettingsModalOpen">
-      <div class="grid grid-cols-8 dark:bg-gray-800 bg-gray-300 px-2 h-[90vh] gap-2">
-         <div class="col-span-3 border-r dark:border-gray-700 border-gray-400 flex-col flex">
-            <UButton icon="i-heroicons-arrow-left" @click="isSettingsModalOpen = false" variant="ghost" class="pl-0" />
-            <p class="text-xl">Settings</p>
-            <UButton label="Display" class="pl-0 my-2" :ui="{color:{gray:'text-gray-400'}}" color="gray" variant="ghost" @click="toggleSettingsDisplay('display')" />
-            <UButton label="Tools"   class="pl-0 my-2" :ui="{color:{gray:'text-gray-400'}}" color="gray" variant="ghost"   @click="toggleSettingsDisplay('tools')" />
-            <UButton label="Data"    class="pl-0 my-2" :ui="{color:{gray:'text-gray-400'}}" color="gray" variant="ghost"    @click="toggleSettingsDisplay('data')" />
+         <div
+            class="grid grid-cols-8 dark:bg-gray-800 bg-gray-300 px-2 h-[90vh] gap-2"
+         >
+            <div
+               class="col-span-3 border-r dark:border-gray-700 border-gray-400 flex-col flex"
+            >
+               <UButton
+                  icon="i-heroicons-arrow-left"
+                  @click="isSettingsModalOpen = false"
+                  variant="ghost"
+                  class="pl-0"
+               />
+               <p class="text-xl">Settings</p>
+               <UButton
+                  label="Display"
+                  class="pl-0 my-2"
+                  :ui="{ color: { gray: 'text-gray-400' } }"
+                  color="gray"
+                  variant="ghost"
+                  @click="toggleSettingsDisplay('display')"
+               />
+               <UButton
+                  label="Tools"
+                  class="pl-0 my-2"
+                  :ui="{ color: { gray: 'text-gray-400' } }"
+                  color="gray"
+                  variant="ghost"
+                  @click="toggleSettingsDisplay('tools')"
+               />
+               <UButton
+                  label="Data"
+                  class="pl-0 my-2"
+                  :ui="{ color: { gray: 'text-gray-400' } }"
+                  color="gray"
+                  variant="ghost"
+                  @click="toggleSettingsDisplay('data')"
+               />
+            </div>
+            <div class="col-span-5" v-if="currentSettingMenu === 'display'">
+               <p class="text-xl my-8">Display</p>
+               <p class="text-sm dark:text-gray-400">
+                  Manage your display settings
+               </p>
+               <hr class="my-4 border-gray-600" />
+               <p class="text-lg"><strong>Theme</strong></p>
+               <UCommandPalette
+                  v-model="themeSelected"
+                  nullable
+                  :autoselect="false"
+                  :groups="[{ key: 'themes', commands: themes }]"
+                  @update:model-value="onThemeSelect"
+                  ref="themePalett"
+                  placeholder="Search themes"
+               />
+            </div>
          </div>
-         <div class="col-span-5" v-if="currentSettingMenu === 'display'">
-            <p class="text-xl my-8">Display</p>
-            <p class="text-sm dark:text-gray-400">Manage your display settings</p>
-            <hr class="my-4 border-gray-600" />
-            <p class="text-lg"><strong>Theme</strong></p>
-            <UCommandPalette v-model="themeSelected" nullable :autoselect="false"
-            :groups="[{ key: 'themes', commands: themes }]" @update:model-value="onThemeSelect" ref="themePalett" placeholder="Search themes" />
-         </div>
-      </div>         
       </UModal>
-      <UModal :ui="{ container: 'items-center' }" v-model="isConfirmClearUserDataOpen">
+      <UModal
+         :ui="{ container: 'items-center' }"
+         v-model="isConfirmClearUserDataOpen"
+      >
          <div class="p-4">
-            <p class="text-xl text-red-500"><strong>Confirm clear user data?</strong></p>
+            <p class="text-xl text-red-500">
+               <strong>Confirm clear user data?</strong>
+            </p>
             <UDivider class="my-2" />
             <p>
-               This includes all your previous grocery trips, envelopes, favorites,
-               current theme, savings goals, IOUs, and anything Budgie stores on your
-               behalf.
+               This includes all your previous grocery trips, envelopes,
+               favorites, current theme, savings goals, IOUs, and anything
+               Budgie stores on your behalf.
             </p>
             <div class="text-center">
-
-               <UButton label="No, I want to keepy my data in Budgie" @click="isConfirmClearUserDataOpen = false"
-                  class="w-3/4 my-2" />
-               <UButton label="Yes, delete all my Budgie data" @click="clearUserData" class="w-3/4 my-2" color="red" />
+               <UButton
+                  label="No, I want to keepy my data in Budgie"
+                  @click="isConfirmClearUserDataOpen = false"
+                  class="w-3/4 my-2"
+               />
+               <UButton
+                  label="Yes, delete all my Budgie data"
+                  @click="clearUserData"
+                  class="w-3/4 my-2"
+                  color="red"
+               />
             </div>
          </div>
       </UModal>
+      <!-- End main container -->
    </UContainer>
+
+   <!-- Bottom bar navigation -->
+   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center" :ui="{base:'max-w-18 min-w-18'}">
+      <template #default="{ link }">
+         <span class=""></span>
+      </template>
+      <template #icon="{ link, isActive }">
+         <div class="flex flex-col items-center mx-1">
+            <UIcon
+               :name="link.icon"
+               class="w-6 h-6"
+               :class="isActive ? 'text-primary-500' : 'text-gray-400'"
+            />
+            {{ link.label }}
+         </div>
+      </template>
+   </UHorizontalNavigation>
 </template>
 
 <style>

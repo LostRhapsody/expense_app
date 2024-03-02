@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
-import { SlickList, SlickItem, DragHandle } from "vue-slicksort";
 
 // auth
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
-
-// For notifications
-const toast = useToast();
 
 // show/hide things
 const showExplanation = ref(false);
@@ -103,6 +99,15 @@ const departments = [
    "Condiments",
 ];
 
+
+/**
+ * returns the link with query params to edit a list
+ * @param index the list we're editing
+ */
+function targetList(index){
+   return "/grocery/list/edit?listId=" + index;
+}
+
 /**
  * Shows the edit screen for the selected list
  * @param index the index of the current list
@@ -151,7 +156,7 @@ async function newItem(index: number) {
    document.getElementById(emptyItem.id)?.focus();
 
    // store in cache
-   setLists();
+   setLists(list.value);
    // update the shopping list
    filterSelectedItems();
 }
@@ -176,7 +181,7 @@ function deleteItem(itemIndex: number) {
    // remove from items array
    currentListItems.splice(itemIndex, 1);
 
-   setLists();
+   setLists(list.value);
    // update the shopping list
    filterSelectedItems();
 }
@@ -211,8 +216,9 @@ function deleteSelectedItems() {
    });
    // set all items to the copy
    list.value[currentList.value].items = shallowItemsCopy;
-   setLists();
+   setLists(list.value);
 }
+
 /**
  * Opens the edit item modal and set's the current item we're editing
  */
@@ -235,12 +241,12 @@ function newList() {
       name: "New list",
       items: [],
    };
-   if (list.value === null || list.value === undefined) {
+   if (list.value === null || list.value === undefined || list.value.length === 0 || list.value.length === undefined) {
       list.value = [emptyList];
    } else {
       list.value.push(emptyList);
    }
-   setLists();
+   setLists(list.value);
    // update the shopping list
    filterSelectedItems();
 }
@@ -253,16 +259,9 @@ function deleteList(index: number) {
    if (thisList === null || thisList === undefined) return;
 
    thisList.splice(index, 1);
-   setLists();
+   setLists(list.value);
    // update the shopping list
    filterSelectedItems();
-}
-
-/**
- * set's a user's lists in cache
- */
-function setLists() {
-   localStorage.setItem("lists", JSON.stringify(list.value));
 }
 
 /**
@@ -271,21 +270,9 @@ function setLists() {
  */
 function sortTheList(event) {
    list.value[currentList.value].items = event;
-   setLists();
+   setLists(list.value);
    // update the shopping list
    filterSelectedItems();
-}
-
-/**
- * get the user's shopping lists
- */
-function getLists() {
-   const storedList = JSON.parse(localStorage.getItem("lists"));
-
-   // if the stored list was not empty, set it
-   if (storedList !== null && storedList !== undefined) {
-      list.value = storedList;
-   }
 }
 
 /**
@@ -331,7 +318,7 @@ async function select(row) {
       await delay(2000);
       filterSelectedItems();
    }
-   setLists();
+   setLists(list.value);
 }
 
 /**
@@ -339,6 +326,7 @@ async function select(row) {
  */
 function filterSelectedItems() {
    let filteredItems: any[] = [];
+   if(list.value === null || list.value === undefined) return;
    if (
       list.value[currentList.value] === undefined ||
       list.value[currentList.value] === null
@@ -361,7 +349,7 @@ function filterSelectedItems() {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 if (process.client) {
-   getLists();
+   list.value = getLists();
    filterSelectedItems();
 }
 
@@ -459,7 +447,7 @@ onMounted(async () => {
                autoresize
                :maxrows="3"
                :padded="false"
-               @change="setLists"
+               @change="setLists(list)"
             />
             <UButton
                icon="i-heroicons-x-mark"
@@ -472,8 +460,8 @@ onMounted(async () => {
             label="Edit list"
             class="w-full my-2"
             icon="i-heroicons-pencil-solid"
-            @click="showEdit(index)"
-         />
+            :to="targetList(index)"
+            />
          <UButton
             label="Shop this list"
             class="w-full my-2"
@@ -495,89 +483,7 @@ onMounted(async () => {
       <div class="absolute addItem">
          <UButton icon="i-heroicons-plus" @click="newList" />
       </div>
-   </div>
-
-   <!-- The edit screen/overlay -->
-   <div
-      v-if="showEditScreen"
-      class="h-full fixed w-full top-0 right-0 left-0 bottom-0 z-10 bg-white dark:bg-black p-4 border border-white dark:border-black rounded-lg overflow-auto"
-   >
-      <p class="text-xl">{{ list[currentList].name }}</p>
-      <UDivider />
-      <p><em>Start typing and hit enter to add a new item.</em></p>
-      <p>
-         <em
-            >Drag <UIcon name="i-heroicons-chevron-up-down" /> to re-order an
-            item.<br />Click <UIcon name="i-heroicons-pencil-solid" /> to edit
-            an item and <UIcon name="i-heroicons-x-mark" /> to delete it.
-         </em>
-      </p>
-
-      <!-- 
-            Currently when sorting, the item being dragged is invisible.
-            That's just because we're inside an overlay.
-            When we move the edit and shopping to new pages, we'll be fine.
-          -->
-      <SlickList
-         @update:list="sortTheList($event)"
-         axis="y"
-         v-model:list="list[currentList].items"
-         useDragHandle
-      >
-         <template #item="{ item, index }">
-            <div
-               v-if="showItems"
-               class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2"
-            >
-               <DragHandle
-                  class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-               >
-                  <UButton
-                     icon="i-heroicons-chevron-up-down"
-                     name="Reorder item"
-                     variant="ghost"
-                  />
-               </DragHandle>
-               <UButton
-                  class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-                  icon="i-heroicons-pencil-solid"
-                  name="Edit item"
-                  variant="ghost"
-                  @click="editItem(index)"
-               />
-               <UInput
-                  v-model="item.name"
-                  type="text"
-                  @change="setLists(), filterSelectedItems()"
-                  class="inline-block col-span-5 mx-2"
-                  :class="{ linethrough: item.selected }"
-                  :id="item.id"
-               >
-               </UInput>
-               <UButton
-                  class="border-l border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-                  icon="i-heroicons-x-mark"
-                  color="red"
-                  name="Delete item"
-                  variant="ghost"
-                  @click="deleteItem(index)"
-               />
-            </div>
-         </template>
-      </SlickList>
-      <UButton
-         label="Add item"
-         @click="newItem(-1)"
-         class="w-full text-xl justify-center my-4"
-      />
-
-      <UButton
-         label="Close List"
-         color="red"
-         @click="showEditScreen = false"
-         class="w-full text-xl justify-center my-4"
-      />
-   </div>
+   </div>   
 
    <!-- The shopping screen/overlay -->
    <div
@@ -779,7 +685,7 @@ onMounted(async () => {
                   autoresize
                   :maxrows="3"
                   :padded="false"
-                  @change="setLists"
+                  @change="setLists(list)"
                   id="editItemName"
                />
             </UFormGroup>
@@ -816,7 +722,7 @@ onMounted(async () => {
                type="submit"
                label="submit"
                @click="
-                  (showEditItem = false), setLists(), filterSelectedItems()
+                  (showEditItem = false), setLists(list), filterSelectedItems()
                "
                id="submitEditItem"
             />
