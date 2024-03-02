@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { v4 as uuidv4 } from "uuid";
-import { createApp } from 'vue'
-import { plugin as Slicksort } from "vue-slicksort";
-import { SlickList, SlickItem } from 'vue-slicksort';
-
-const app = createApp({});
-
-app.use(Slicksort);
+import { SlickList, SlickItem, DragHandle } from "vue-slicksort";
 
 // auth
 const { status, data, signIn, signOut } = useAuth();
@@ -40,10 +34,6 @@ const showItems = computed(() => {
    let currentListItems = list.value[currentList.value].items;
    return currentListItems.length > 0;
 });
-
-
-// this arrow function outputs the input to console
-const log = (input:any) => console.log(input);
 
 const selectedItemsAccordion = ref([
    {
@@ -105,12 +95,12 @@ const departments = [
    "Checkout",
    "Bulk Food",
    "Pharmacy",
-   "Hardware", 
-   "Tools", 
-   "Toiletries", 
-   "Garden", 
+   "Hardware",
+   "Tools",
+   "Toiletries",
+   "Garden",
    "Home and Kitchen",
-   "Condiments"
+   "Condiments",
 ];
 
 /**
@@ -276,27 +266,14 @@ function setLists() {
 }
 
 /**
- * Fired after an item is dragged, re-order's the list in the current position
+ * Set's the list to the new order.
+ * @param event contains the re-ordered list
  */
-async function reOrderListItems(event: any){
-   let oldIndex = event.oldIndex;
-   let newIndex = event.newIndex;
-   let itemList = list.value[currentList.value].items;
-   if(oldIndex === newIndex) return;
-
-   // check if the new index is out of bounds or not.
-   // We hope this doesn't happen, ever, but if it does
-   // it will prevent overflow errors.
-   if (newIndex >= itemList.length) {
-      var k = newIndex - itemList.length + 1;
-      while (k--) {
-         // TODO - push empty items instead of undefined
-         itemList.push(undefined);
-      }
-   }
-   await nextTick();
-   itemList.splice(newIndex, 0, itemList.splice(oldIndex, 1)[0]);
+function sortTheList(event) {
+   list.value[currentList.value].items = event;
    setLists();
+   // update the shopping list
+   filterSelectedItems();
 }
 
 /**
@@ -370,7 +347,6 @@ function filterSelectedItems() {
       return;
    }
    list.value[currentList.value].items.forEach((item) => {
-      
       // filter out any items that don't have a name, we don't need these.
       if (item.name === "" || item.name === undefined || item.name === null)
          return;
@@ -403,10 +379,10 @@ onMounted(async () => {
             if (event.target.localName === "input") {
                // using the ID from the event target, we can find the index of the item in the list
                let index = list.value[currentList.value].items.findIndex(
-                  (item) => item.id === event.target.id                  
+                  (item) => item.id === event.target.id
                );
                // if the index is not the last item in the list, we don't want to add a new item
-               if (index + 1 === list.value[currentList.value].items.length){
+               if (index + 1 === list.value[currentList.value].items.length) {
                   newItem(-1);
                }
             }
@@ -537,49 +513,58 @@ onMounted(async () => {
          </em>
       </p>
 
-         <SlickList 
-         @sort-end="reOrderListItems($event)"
-         axis="y" v-model:list="list[currentList].items">
-            <SlickItem 
-            v-for="(item, index) in list[currentList].items" :key="list[currentList].items.id" :index="index" @click="setLists()">               
-               <span
-               >{{ item.name }}</span>
-            </SlickItem>
-         </SlickList>
-
-         <div v-for="(item, index) in list[currentList].items" v-if="showItems" :key="list[currentList].items.id"
-         class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2">
-            <UButton
-               class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-               icon="i-heroicons-chevron-up-down"
-               name="Reorder item"
-               variant="ghost"
-            />
-            <UButton
-               class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-               icon="i-heroicons-pencil-solid"
-               name="Edit item"
-               variant="ghost"
-               @click="editItem(index)"
-            />
-            <UInput
-               v-model="item.name"
-               type="text"
-               @change="setLists(),filterSelectedItems()"
-               class="inline-block col-span-5 mx-2"
-               :class="{ linethrough: item.selected }"
-               :id="item.id"
+      <!-- 
+            Currently when sorting, the item being dragged is invisible.
+            That's just because we're inside an overlay.
+            When we move the edit and shopping to new pages, we'll be fine.
+          -->
+      <SlickList
+         @update:list="sortTheList($event)"
+         axis="y"
+         v-model:list="list[currentList].items"
+         useDragHandle
+      >
+         <template #item="{ item, index }">
+            <div
+               v-if="showItems"
+               class="grid grid-cols-8 items-center border border-gray-300 dark:border-gray-800 rounded-lg my-2"
             >
-            </UInput>
-            <UButton
-               class="border-l border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
-               icon="i-heroicons-x-mark"
-               color="red"
-               name="Delete item"
-               variant="ghost"
-               @click="deleteItem(index)"
-            />
+               <DragHandle
+                  class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
+               >
+                  <UButton
+                     icon="i-heroicons-chevron-up-down"
+                     name="Reorder item"
+                     variant="ghost"
+                  />
+               </DragHandle>
+               <UButton
+                  class="border-r border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
+                  icon="i-heroicons-pencil-solid"
+                  name="Edit item"
+                  variant="ghost"
+                  @click="editItem(index)"
+               />
+               <UInput
+                  v-model="item.name"
+                  type="text"
+                  @change="setLists(), filterSelectedItems()"
+                  class="inline-block col-span-5 mx-2"
+                  :class="{ linethrough: item.selected }"
+                  :id="item.id"
+               >
+               </UInput>
+               <UButton
+                  class="border-l border-gray-300 dark:border-gray-800 rounded-none inline-block py-3"
+                  icon="i-heroicons-x-mark"
+                  color="red"
+                  name="Delete item"
+                  variant="ghost"
+                  @click="deleteItem(index)"
+               />
             </div>
+         </template>
+      </SlickList>
       <UButton
          label="Add item"
          @click="newItem(-1)"
@@ -830,7 +815,9 @@ onMounted(async () => {
                class="w-full justify-center my-2"
                type="submit"
                label="submit"
-               @click="(showEditItem = false), setLists(),filterSelectedItems()"
+               @click="
+                  (showEditItem = false), setLists(), filterSelectedItems()
+               "
                id="submitEditItem"
             />
          </template>
