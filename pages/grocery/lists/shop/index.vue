@@ -23,6 +23,14 @@ const list = ref([]);
 const currentItem = ref(0);
 const filteredRows = ref([]);
 
+var userArray;
+// Grab the date
+const currentDate = getCurrentDate('ymd');
+// Budget for grocery trips
+const budget = ref(100);
+// percentage of budget
+const percentageOfBudget = ref(0);
+
 const columns = [
    {
       key: "name",
@@ -222,6 +230,7 @@ function increment() {
  */
 function incrementCountOperations() {
    count.value += incrementBy.value;
+   updatePercentOfBudget();
 }
 
 /**
@@ -229,6 +238,108 @@ function incrementCountOperations() {
  */
 function resetCounter() {
    count.value = 0;
+}
+
+/**
+ * Updates the userArray with the current counter
+ * @param mode add mode: resets counter and pushes to array
+ */
+function updateUserArray(mode) {
+   if(!loggedIn.value){
+      toast.add({ title: "Please log in to save your count." });
+      return;
+   }
+   if (mode === "add") {
+      if (count.value <= 0) return;
+
+      // if array is undefined, create the first element, else push new element
+      if (userArray === undefined || userArray === null) {
+         userArray = [
+            {
+               count: count.value,
+               id: 1,
+               date: currentDate,
+               budget: budget.value,
+               usedBudget: Math.round(percentageOfBudget.value),
+            },
+         ];
+      } else {
+         userArray.push({
+            count: count.value,
+            id: userArray.length + 1,
+            date: currentDate,
+            budget: budget.value,
+            usedBudget: Math.round(percentageOfBudget.value),
+         });
+      }
+
+      resetCounter();
+
+      // set record in DB if logged in
+      if (loggedIn.value) {
+         setRecord();
+      }
+   }
+}
+
+/**
+ * Stores the user's array of data (previous history and current count)
+ * @param key the key used to store this value
+ */
+async function setRecord() {
+   const key = localStorage.getItem("uuid");
+
+   if (key === null || key === undefined) {
+      toast.add({ title: "Could not save count; Try logging in." });
+      return;
+   }
+
+   const setRecordResponse = await $fetch("/api/grocery/setRecord", {
+      method: "post",
+      body: {
+         key: key + "groceryRecords",
+         value: {
+            list: userArray,
+         },
+      },
+   });
+   if (setRecordResponse === null || setRecordResponse === undefined) {
+      toast.add({ title: "Error: invalid response from server" });
+   } else if (setRecordResponse.error) {
+      toast.add({ title: "Error: " + setRecordResponse.message });
+   }
+}
+
+
+/**
+ * Get's the user's saved budget
+ * @param key the key used to retrieve this value
+ */
+ async function getUserBudget() {
+  const key = localStorage.getItem("uuid");
+  if(key === null || key === undefined){
+    toast.add({ title: "Could not get budget; Try logging in." });
+    return;
+  }
+  const records = await $fetch("/api/grocery/getBudget", {
+    method: "post",
+    body: { key: key + "groceryBudget" },
+  });
+  if (records === null || records === undefined) {
+    toast.add({ title: "Error: invalid response from server" });
+  } else if (records.error) {
+    toast.add({ title: "Error: " + records.message });
+  } else {
+    if (records !== null && records !== undefined) {
+      if (records.budget !== null && typeof records.budget === "number") {
+        budget.value = records.budget;
+      }
+    }
+  }
+}
+
+function updatePercentOfBudget() {
+  percentageOfBudget.value = (count.value / budget.value) * 100;
 }
 
 onMounted(async () => {
@@ -246,8 +357,13 @@ if (process.client) {
    let params = new URLSearchParams(window.location.search);
    currentList.value = params.get("listId");
    filterSelectedItems();
+
+   if(loggedIn.value){
+    getUserBudget();
+   }
 }
 </script>
+
 <template>
    <BreadcrumbHTML
       v-if="!focusMode"
@@ -300,7 +416,7 @@ if (process.client) {
                base: 'hidden',
             },
             td: {
-               base: 'w-full py-8 !text-lg',
+               base: 'w-full py-8 !text-lg text-wrap overflow-hidden max-w-1',
             },
             tr: {
                base: 'w-full',
@@ -453,54 +569,67 @@ if (process.client) {
       <UDivider class="my-8" />
    </div>
 
-   <UButton
-      icon="i-heroicons-arrow-left"
-      color="red"
-      label="Leave shopping mode"
-      to="/grocery/lists"
-      class="w-full text-xl justify-center my-4"
-   />
-   <UButton
-      v-if="focusMode"
-      @click="toggleFocus"
-      class="justify-center w-full mx-auto text-xl my-2 p-3"
-      icon="i-heroicons-eye-slash-solid"
-      variant="outline"
-   />
-
-   <div v-if="!showClicker" class="flex relative top-[3.5rem]">
+   <div class="flex w-full justify-around">
       <UButton
-         class="mx-auto rounded-full p-8 left-[7.1rem] relative"
-         size="xl"
+         icon="i-heroicons-arrow-left"
+         color="red"
+         label="Leave shopping mode"
+         to="/grocery/lists"
+         class="justify-center w-2/5 px-4"
+      />
+      <UButton
+         v-if="focusMode"
+         @click="toggleFocus"
+         icon="i-heroicons-eye-slash-solid"
+         variant="outline"
+         class="justify-center w-2/5 p-4"
+      />
+   </div>
+
+   <div
+      v-if="!showClicker"
+      class="fabs"
+      role="group"
+      aria-label="floating action buttons"
+   >
+      <UButton
+         class="rounded-full"
          icon="i-heroicons-chevron-up"
          @click="showClicker = true"
       />
    </div>
 
-   <div class="fixed top-[21.2rem] left-[13.7rem] clickerBackground p-1" v-if="showClicker">
-      <div class="grid grid-cols-1 mx-auto">
-         <UButton
-            @click="increment"
-            class="my-6 rounded-full h-28 w-28 justify-center text-3xl mx-auto"
-            >+{{ incrementBy }}
-         </UButton>
-         <span class="text-center text-2xl">${{ count }}</span>
-         <!-- reset counter -->
-         <UButton
-            @click="resetCounter"
-            icon="i-heroicons-arrow-path-solid"
-            class="rounded-full mt-3 justify-center"
-            ><em>Reset counter</em></UButton
-         >
-         <div class="relative flex top-[2.3rem]">
-            <UButton
-               class="mx-auto rounded-full p-8"
-               size="xl"
-               icon="i-heroicons-chevron-down"
-               @click="showClicker = false"
-            />
-         </div>
-      </div>
+   <div
+      v-if="showClicker"
+      class="clicker-fabs p-2 clickerBackground"
+      role="group"
+      aria-label="floating action buttons"
+   >
+      <UButton
+         @click="increment"
+         class="rounded-full justify-center text-2xl py-6 px-7"
+         size="xl"
+         >+{{ incrementBy }}
+      </UButton>
+      <span class="text-center text-2xl">${{ count }}</span>
+      <!-- reset counter -->
+      <UButton
+         @click="resetCounter"
+         icon="i-heroicons-arrow-path-solid"
+         class="rounded-full mb-2 w-full"
+         color="red"
+         ><em>Reset counter</em></UButton
+      >
+      <UButton
+         @click="updateUserArray('add')"
+         class="rounded-full mb-2 w-full justify-center"
+         ><em>Submit Count</em></UButton
+      >
+      <UButton
+         class="rounded-full w-full justify-center"
+         icon="i-heroicons-chevron-down"
+         @click="showClicker = false"
+      />
    </div>
 
    <!--  audio for clicker -->
@@ -572,7 +701,8 @@ if (process.client) {
          </p>
          <br />
          <p>
-            Click <UIcon name="i-heroicons-chevron-up" /> to show the clicker. This is a simplified version of the clicker tool.
+            Click <UIcon name="i-heroicons-chevron-up" /> to show the clicker.
+            This is a simplified version of the clicker tool.
          </p>
          <br />
          <p>
@@ -589,5 +719,34 @@ if (process.client) {
    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
    backdrop-filter: blur(6.4px);
    -webkit-backdrop-filter: blur(6.4px);
+}
+.fabs {
+   --_viewport-margin: 17.5vmin;
+
+   position: fixed;
+   z-index: var(--layer-1);
+
+   inset-block: auto var(--_viewport-margin);
+   inset-inline: auto var(--_viewport-margin);
+   display: flex;
+   flex-direction: column-reverse;
+   place-items: center;
+   gap: var(--_viewport-margin);
+}
+/* 
+  inset-block: auto var(--_viewport-margin);
+  inset-inline: auto var(--_viewport-margin); 
+  --_viewport-margin: 17.5vmin;
+*/
+.clicker-fabs {
+   position: fixed;
+   z-index: var(--layer-1);
+   inset-block: auto 5rem;
+   inset-inline: auto 1rem;
+
+   display: flex;
+   flex-direction: column;
+   place-items: center;
+   gap: 3.5vmin;
 }
 </style>
