@@ -3,6 +3,7 @@
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 const userAvatar = ref("");
+const route = useRoute()
 let userEmail = "";
 let userName = "";
 
@@ -61,6 +62,35 @@ const navBarLinks = [
       id: "more",
    },
 ];
+
+// a computed property. Set the parent route of the current page to active
+const isParentActive = computed(() => {
+
+   // all our top level parent routes
+   const parentRoutes = ["/grocery","/budgeting"];
+
+   let match = false;
+   let matchedRoute = "";
+
+   // loop through parent routes, compare against current.
+   // if current route starts with a parent route, it's active
+   for (let index = 0; index < parentRoutes.length; index++) {
+
+      const thisRoute = parentRoutes[index];
+
+      // check if the routes match/starts with parent route
+      match = route.matched.some((route) => route.path.startsWith(thisRoute));
+
+      // if match return the route and true
+      if(match) {
+         matchedRoute = thisRoute;
+         return [matchedRoute, match];
+      }
+   }
+   // if nothing matches, return false
+   return ["",false];
+});
+
 
 const links = [
    {
@@ -867,18 +897,18 @@ onMounted(async () => {
    </UContainer>
 
    <!-- Bottom bar navigation -->
-   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center bg-white dark-nav-bg" :ui="{base:'max-w-18 min-w-18'}">
+   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center bg-white dark-nav-bg custom-nav-links" :ui="{base:'max-w-18 min-w-18'}">
       <template #default="{ link }">
-         <span class=""></span>
+         <span></span>
       </template>
       <template #icon="{ link, isActive }">
-         <div class="flex flex-col items-center mx-1">
+         <div class="flex flex-col items-center mx-1" >
             <UIcon
                :name="link.icon"
                class="w-6 h-6"
-               :class="isActive ? 'text-primary-500' : 'text-gray-400'"
-            />
-            {{ link.label }}
+               :class="[isActive ? 'text-primary-500' : 'text-gray-400', (link.to.startsWith(isParentActive[0]) && isParentActive[1]) ? 'text-primary-500' : 'text-gray-400']"
+            />            
+            <span>{{ link.label }}</span>
          </div>
       </template>
    </UHorizontalNavigation>
@@ -889,5 +919,8 @@ onMounted(async () => {
 }
 .dark .dark-nav-bg {
    background-color: #121212;
+}
+a::after {
+   height: 5px!important;
 }
 </style>

@@ -256,8 +256,6 @@ function deleteItem(index: number) {
 function increment() {
   // Really ugly implementation.
   // Should play one of the three sounds...
-  // Issue isn't apparent on desktop, sound finished fast,
-  // on phone, sound takes forever.
   const audio = document.getElementById("clicker");
   const audio2 = document.getElementById("clicker2");
   const audio3 = document.getElementById("clicker3");

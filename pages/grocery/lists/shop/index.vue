@@ -8,6 +8,15 @@ const toast = useToast();
 
 // show/hide things
 const showExplanation = ref(false);
+const showClicker = ref(false);
+
+// How much to increase the counter by
+const incrementBy = ref(1);
+// The clicker's val
+const count = ref(0);
+
+// toggle focus mode
+const focusMode = ref(false);
 
 const currentList = ref(0);
 const list = ref([]);
@@ -170,6 +179,58 @@ function filterSelectedItems() {
    filteredRows.value = filteredItems;
 }
 
+/**
+ * Toggles focus mode
+ */
+function toggleFocus() {
+   focusMode.value = !focusMode.value;
+}
+
+/**
+ * increments the $ counter and chimes
+ * audio must finish before we increment the counter again
+ */
+function increment() {
+   // Really ugly implementation.
+   // Should play one of the three sounds...
+   const audio = document.getElementById("clicker");
+   const audio2 = document.getElementById("clicker2");
+   const audio3 = document.getElementById("clicker3");
+   if (audio === null || audio2 === null || audio3 === null) return;
+   if (!audio.paused && !audio2.paused && !audio3.paused) return;
+
+   if (audio.paused) {
+      audio.play();
+      incrementCountOperations();
+      return;
+   }
+   if (audio2.paused) {
+      audio2.play();
+      incrementCountOperations();
+      return;
+   }
+
+   if (audio3.paused) {
+      audio3.play();
+      incrementCountOperations();
+      return;
+   }
+}
+
+/**
+ * The repetative actions performed when incrementing the count
+ */
+function incrementCountOperations() {
+   count.value += incrementBy.value;
+}
+
+/**
+ * Resets the counter to 0 and hides the alert and sets tax estimate to 0
+ */
+function resetCounter() {
+   count.value = 0;
+}
+
 onMounted(async () => {
    await nextTick();
    /**
@@ -189,183 +250,208 @@ if (process.client) {
 </script>
 <template>
    <BreadcrumbHTML
+      v-if="!focusMode"
       class="bg-primary-100/50 dark:bg-gray-800/50 rounded-full p-1 max-w-full"
    >
       <UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links" />
    </BreadcrumbHTML>
-   <UButton
-      @click="showExplanation = !showExplanation"
-      class="justify-center w-full mx-auto text-xl my-2"
-      icon="i-heroicons-information-circle-solid"
-      variant="outline"
-   >
-      How to use
-      <img
-         alt="An icon of a budgie, which is a kind of bird."
-         class="inline-block text-primary"
-         src="/edited_budgie.svg"
-         height="25"
-         width="25"
-      />
-   </UButton>
-
-   <p class="text-2xl my-4">{{ list[currentList].name }}</p>
-   <!-- Table of items on list -->
-   <UTable
-      :rows="filteredRows"
-      :columns="columns"
-      @select="select"
-      :empty-state="{
-         icon: 'i-heroicons-shopping-cart-solid',
-         label: 'No items added to shopping list.',
-      }"
-      :ui="{
-         th: {
-            base: 'hidden',
-         },
-         td: {
-            base: 'border-0 w-full',
-         },
-         tr: {
-            base: 'w-full',
-         },
-         tbody: 'divide-y-0',
-      }"
-   >
-      <template #name-data="row">
-         <span
-            v-if="row.row.quantity > 0"
-            :class="{ linethrough: row.row.selected }"
-         >
-            {{ row.row.quantity }}x
-         </span>
-         <span v-else>&nbsp;&nbsp;</span>
-         <span
-            :class="{ linethrough: row.row.selected }"
-            class="text-black dark:text-white"
-            >{{ row.row.name }}</span
-         >
-      </template>
-      <template #price-data="row">
-         <span
-            v-if="row.row.price > 0"
-            :class="{ linethrough: row.row.selected }"
-         >
-            $<span v-if="row.row.quantity > 0">{{
-               row.row.price * row.row.quantity
-            }}</span>
-            <span v-else>{{ row.row.price }}</span>
-         </span>
-         <span v-else>&nbsp;</span>
-      </template>
-      <template #selected-data="row">
-         <span v-if="row.row.selected">
-            <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-               <circle r="10" cx="10" cy="10" fill="rgb(74, 222, 128)" />
-            </svg>
-         </span>
-         <span v-else class="bg-primary h-full w-full">
-            <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-               <circle r="10" cx="10" cy="10" fill="gray" />
-            </svg>
-         </span>
-      </template>
-      <template #department-data="row">
-         <span :class="{ linethrough: row.row.selected }">{{
-            row.row.department
-         }}</span>
-      </template>
-   </UTable>
-
-   <UDivider class="my-8" />
-
-   <!-- Accordion, hides the list of selected items -->
-   <UAccordion :items="selectedItemsAccordion" variant="solid">
-      <template #checked-items>
-         <UTable
-            :rows="list[currentList].selectedItems"
-            :columns="columns"
-            @select="select"
-            :empty-state="{
-               icon: 'i-heroicons-shopping-cart-solid',
-               label: 'Checked off items show up here',
-            }"
-            :ui="{
-               th: {
-                  base: 'hidden',
-               },
-               td: {
-                  base: 'border-0 w-full',
-               },
-               tr: {
-                  base: 'w-full',
-               },
-               tbody: 'divide-y-0',
-            }"
-         >
-            <template #name-data="row">
-               <span
-                  v-if="row.row.quantity > 0"
-                  :class="{ linethrough: row.row.selected }"
-               >
-                  {{ row.row.quantity }}x
-               </span>
-               <span v-else>&nbsp;&nbsp;</span>
-               <span
-                  class="text-white"
-                  :class="{ linethrough: row.row.selected }"
-                  >{{ row.row.name }}</span
-               >
-            </template>
-            <template #price-data="row">
-               <span
-                  v-if="row.row.price > 0"
-                  :class="{ linethrough: row.row.selected }"
-               >
-                  $<span v-if="row.row.quantity > 0">{{
-                     row.row.price * row.row.quantity
-                  }}</span>
-                  <span v-else>{{ row.row.price }}</span>
-               </span>
-               <span v-else>&nbsp;</span>
-            </template>
-            <template #selected-data="row">
-               <span v-if="row.row.selected">
-                  <svg
-                     height="20"
-                     width="20"
-                     xmlns="http://www.w3.org/2000/svg"
-                  >
-                     <circle r="10" cx="10" cy="10" fill="rgb(74, 222, 128)" />
-                  </svg>
-               </span>
-               <span v-else class="bg-primary h-full w-full">
-                  <svg
-                     height="20"
-                     width="20"
-                     xmlns="http://www.w3.org/2000/svg"
-                  >
-                     <circle r="10" cx="10" cy="10" fill="gray" />
-                  </svg>
-               </span>
-            </template>
-            <template #department-data="row">
-               <span :class="{ linethrough: row.row.selected }">{{
-                  row.row.department
-               }}</span>
-            </template>
-         </UTable>
+   <div class="grid grid-cols-5 gap-4">
+      <div v-if="!focusMode" class="col-span-3">
          <UButton
-            label="Clear checked items"
-            @click="deleteSelectedItems"
+            @click="showExplanation = !showExplanation"
+            class="justify-center w-full mx-auto text-xl my-2"
+            icon="i-heroicons-information-circle-solid"
             variant="outline"
-            color="red"
-            class="w-full"
-         />
-      </template>
-   </UAccordion>
+         >
+            How to use
+            <img
+               alt="An icon of a budgie, which is a kind of bird."
+               class="inline-block text-primary"
+               src="/edited_budgie.svg"
+               height="25"
+               width="25"
+            />
+         </UButton>
+      </div>
+      <div v-if="!focusMode" class="col-span-2">
+         <UButton
+            @click="toggleFocus"
+            class="justify-center w-full mx-auto text-xl my-2 pr-1"
+            icon="i-heroicons-eye-solid"
+            variant="outline"
+            >&nbsp;</UButton
+         >
+      </div>
+   </div>
 
-   <UDivider class="my-8" />
+   <div v-if="list[currentList] !== undefined">
+      <p class="text-2xl my-4">{{ list[currentList].name }}</p>
+      <!-- Table of items on list -->
+      <UTable
+         :rows="filteredRows"
+         :columns="columns"
+         @select="select"
+         :empty-state="{
+            icon: 'i-heroicons-shopping-cart-solid',
+            label: 'No items added to shopping list.',
+         }"
+         :ui="{
+            th: {
+               base: 'hidden',
+            },
+            td: {
+               base: 'w-full py-8 !text-lg',
+            },
+            tr: {
+               base: 'w-full',
+            },
+            tbody: 'divide-y-0',
+         }"
+      >
+         <template #name-data="row">
+            <span
+               v-if="row.row.quantity > 0"
+               :class="{ linethrough: row.row.selected }"
+            >
+               {{ row.row.quantity }}x
+            </span>
+            <span v-else>&nbsp;&nbsp;</span>
+            <span
+               :class="{ linethrough: row.row.selected }"
+               class="text-black dark:text-white"
+               >{{ row.row.name }}</span
+            >
+         </template>
+         <template #price-data="row">
+            <span
+               v-if="row.row.price > 0"
+               :class="{ linethrough: row.row.selected }"
+            >
+               $<span v-if="row.row.quantity > 0">{{
+                  row.row.price * row.row.quantity
+               }}</span>
+               <span v-else>{{ row.row.price }}</span>
+            </span>
+            <span v-else>&nbsp;</span>
+         </template>
+         <template #selected-data="row">
+            <span v-if="row.row.selected">
+               <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+                  <circle r="10" cx="10" cy="10" fill="rgb(74, 222, 128)" />
+               </svg>
+            </span>
+            <span v-else class="bg-primary h-full w-full">
+               <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+                  <circle r="10" cx="10" cy="10" fill="gray" />
+               </svg>
+            </span>
+         </template>
+         <template #department-data="row">
+            <span :class="{ linethrough: row.row.selected }">{{
+               row.row.department
+            }}</span>
+         </template>
+      </UTable>
+
+      <UDivider v-if="!focusMode" class="my-8" />
+
+      <!-- Accordion, hides the list of selected items -->
+      <UAccordion
+         v-if="!focusMode"
+         :items="selectedItemsAccordion"
+         variant="solid"
+      >
+         <template #checked-items>
+            <UTable
+               :rows="list[currentList].selectedItems"
+               :columns="columns"
+               @select="select"
+               :empty-state="{
+                  icon: 'i-heroicons-shopping-cart-solid',
+                  label: 'Checked off items show up here',
+               }"
+               :ui="{
+                  th: {
+                     base: 'hidden',
+                  },
+                  td: {
+                     base: 'w-full py-8 !text-lg',
+                  },
+                  tr: {
+                     base: 'w-full',
+                  },
+                  tbody: 'divide-y-0',
+               }"
+            >
+               <template #name-data="row">
+                  <span
+                     v-if="row.row.quantity > 0"
+                     :class="{ linethrough: row.row.selected }"
+                  >
+                     {{ row.row.quantity }}x
+                  </span>
+                  <span v-else>&nbsp;&nbsp;</span>
+                  <span
+                     class="text-black dark:text-white"
+                     :class="{ linethrough: row.row.selected }"
+                     >{{ row.row.name }}</span
+                  >
+               </template>
+               <template #price-data="row">
+                  <span
+                     v-if="row.row.price > 0"
+                     :class="{ linethrough: row.row.selected }"
+                  >
+                     $<span v-if="row.row.quantity > 0">{{
+                        row.row.price * row.row.quantity
+                     }}</span>
+                     <span v-else>{{ row.row.price }}</span>
+                  </span>
+                  <span v-else>&nbsp;</span>
+               </template>
+               <template #selected-data="row">
+                  <span v-if="row.row.selected">
+                     <svg
+                        height="20"
+                        width="20"
+                        xmlns="http://www.w3.org/2000/svg"
+                     >
+                        <circle
+                           r="10"
+                           cx="10"
+                           cy="10"
+                           fill="rgb(74, 222, 128)"
+                        />
+                     </svg>
+                  </span>
+                  <span v-else class="bg-primary h-full w-full">
+                     <svg
+                        height="20"
+                        width="20"
+                        xmlns="http://www.w3.org/2000/svg"
+                     >
+                        <circle r="10" cx="10" cy="10" fill="gray" />
+                     </svg>
+                  </span>
+               </template>
+               <template #department-data="row">
+                  <span :class="{ linethrough: row.row.selected }">{{
+                     row.row.department
+                  }}</span>
+               </template>
+            </UTable>
+            <UButton
+               label="Clear checked items"
+               @click="deleteSelectedItems"
+               variant="outline"
+               color="red"
+               class="w-full"
+            />
+         </template>
+      </UAccordion>
+
+      <UDivider class="my-8" />
+   </div>
 
    <UButton
       icon="i-heroicons-arrow-left"
@@ -374,6 +460,77 @@ if (process.client) {
       to="/grocery/lists"
       class="w-full text-xl justify-center my-4"
    />
+   <UButton
+      v-if="focusMode"
+      @click="toggleFocus"
+      class="justify-center w-full mx-auto text-xl my-2 p-3"
+      icon="i-heroicons-eye-slash-solid"
+      variant="outline"
+   />
+
+   <div v-if="!showClicker" class="flex relative top-[3.5rem]">
+      <UButton
+         class="mx-auto rounded-full p-8 left-[7.1rem] relative"
+         size="xl"
+         icon="i-heroicons-chevron-up"
+         @click="showClicker = true"
+      />
+   </div>
+
+   <div class="fixed top-[21.2rem] left-[13.7rem] clickerBackground p-1" v-if="showClicker">
+      <div class="grid grid-cols-1 mx-auto">
+         <UButton
+            @click="increment"
+            class="my-6 rounded-full h-28 w-28 justify-center text-3xl mx-auto"
+            >+{{ incrementBy }}
+         </UButton>
+         <span class="text-center text-2xl">${{ count }}</span>
+         <!-- reset counter -->
+         <UButton
+            @click="resetCounter"
+            icon="i-heroicons-arrow-path-solid"
+            class="rounded-full mt-3 justify-center"
+            ><em>Reset counter</em></UButton
+         >
+         <div class="relative flex top-[2.3rem]">
+            <UButton
+               class="mx-auto rounded-full p-8"
+               size="xl"
+               icon="i-heroicons-chevron-down"
+               @click="showClicker = false"
+            />
+         </div>
+      </div>
+   </div>
+
+   <!--  audio for clicker -->
+   <audio
+      pause
+      id="clicker"
+      src="/click_short.mp3"
+      ref="audioPlayer"
+      @timeupdate="onPlaying"
+   >
+      Your browser does not support the <code>audio</code> element.
+   </audio>
+   <audio
+      pause
+      id="clicker2"
+      src="/click_short.mp3"
+      ref="audioPlayer"
+      @timeupdate="onPlaying"
+   >
+      Your browser does not support the <code>audio</code> element.
+   </audio>
+   <audio
+      pause
+      id="clicker3"
+      src="/click_short.mp3"
+      ref="audioPlayer"
+      @timeupdate="onPlaying"
+   >
+      Your browser does not support the <code>audio</code> element.
+   </audio>
 
    <!-- EXPLANATION -->
    <UModal :ui="{ container: 'items-center' }" v-model="showExplanation">
@@ -396,24 +553,41 @@ if (process.client) {
          </p>
          <br />
          <p>
+            Click <UIcon name="i-heroicons-eye-solid" /> to enter focus mode.
+         </p>
+         <br />
+         <p>
             Tap an item to cross it off. There is a delay before it's removed so
             you can uncheck it, if it was by accident.
          </p>
          <br />
          <p>
-            Checked items will be in the "checked items" list hidden
-            below. Tap items there to re-add them to your list.
+            Checked items will be in the "checked items" list hidden below. Tap
+            items there to re-add them to your list.
          </p>
          <br />
          <p>
-            "Clear checked items" will remove all checked items from the
-            checked items list.
+            "Clear checked items" will remove all checked items from the checked
+            items list.
          </p>
          <br />
          <p>
-            Note: Checked items will remain in your list and can be seen in the Edit list menu.
-            They are deleted when you clear your checked items.
+            Click <UIcon name="i-heroicons-chevron-up" /> to show the clicker. This is a simplified version of the clicker tool.
+         </p>
+         <br />
+         <p>
+            Note: Checked items will remain in your list and can be seen in the
+            Edit list menu. They are deleted when you clear your checked items.
          </p>
       </UCard>
    </UModal>
 </template>
+<style>
+.clickerBackground {
+   background: rgba(255, 255, 255, 0.19);
+   border-radius: 16px;
+   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+   backdrop-filter: blur(6.4px);
+   -webkit-backdrop-filter: blur(6.4px);
+}
+</style>
