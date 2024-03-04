@@ -36,7 +36,6 @@ const columns = [
       key: "name",
       label: "Name",
       sortable: true,
-      class:'',
    },
    {
       key: "department",
