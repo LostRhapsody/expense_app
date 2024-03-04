@@ -36,21 +36,25 @@ const columns = [
       key: "name",
       label: "Name",
       sortable: true,
+      class:'',
    },
    {
       key: "department",
       label: "Dept.",
       sortable: true,
+      class:'hidden',
    },
    {
       key: "price",
       label: "Price",
       sortable: true,
+      class:'hidden',
    },
    {
       key: "selected",
       label: "Selected",
-      sortable: false,
+      sortable: true,
+      class:'hidden',
    },
 ];
 
@@ -167,17 +171,22 @@ async function select(row) {
  */
 function filterSelectedItems() {
    let filteredItems = [];
-   if (list.value === null || list.value === undefined) return;
-   if (
+   // ... is this necessary? lol idk.
+   if(
+      list.value === null || 
+      list.value === undefined || 
       list.value[currentList.value] === undefined ||
-      list.value[currentList.value] === null
-   ) {
+      list.value[currentList.value] === null ||
+      list.value[currentList.value].items === undefined ||
+      list.value[currentList.value].items === null){
       filteredRows.value = filteredItems;
       return;
    }
    list.value[currentList.value].items.forEach((item) => {
+      if(item === undefined || item === null)
+         return;
       // filter out any items that don't have a name, we don't need these.
-      if (item.name === "" || item.name === undefined || item.name === null)
+      if (item.name === undefined || item.name === null || item.name === "")
          return;
       if (!item.selected) {
          filteredItems.push(item);
@@ -349,6 +358,12 @@ onMounted(async () => {
     */
    // window.addEventListener("keydown", (event) => {
    // });
+
+   // find the name column and apply the colspan="4" attribute
+   let nameColumn = document.querySelector(
+      "table > thead > tr > th:nth-child(1)"
+   );
+   nameColumn.setAttribute("colspan", "4");
 });
 
 if (process.client) {
@@ -399,24 +414,26 @@ if (process.client) {
          >
       </div>
    </div>
-
    <div v-if="list[currentList] !== undefined">
       <p class="text-2xl my-4">{{ list[currentList].name }}</p>
       <!-- Table of items on list -->
       <UTable
          :rows="filteredRows"
          :columns="columns"
-         @select="select"
+         @select="select"         
          :empty-state="{
             icon: 'i-heroicons-shopping-cart-solid',
             label: 'No items added to shopping list.',
          }"
          :ui="{
+            table:{
+               base: 'w-full',
+            },
             th: {
-               base: 'hidden',
+               base: '',
             },
             td: {
-               base: 'w-full py-8 !text-lg text-wrap overflow-hidden max-w-1',
+               base: 'w-full py-8 !text-lg text-wrap overflow-hidden',
             },
             tr: {
                base: 'w-full',
@@ -424,6 +441,15 @@ if (process.client) {
             tbody: 'divide-y-0',
          }"
       >
+         <template #name-header>
+            <div class="">
+
+               <UButton v-for="column in columns" :key="column.key" :ui="{base: 'inline-block'}">
+                  {{ column.label }}
+            </UButton>
+               </div>
+         </template>
+         
          <template #name-data="row">
             <span
                v-if="row.row.quantity > 0"
@@ -573,9 +599,10 @@ if (process.client) {
       <UButton
          icon="i-heroicons-arrow-left"
          color="red"
-         label="Leave shopping mode"
+         label="Exit Shop Mode"
          to="/grocery/lists"
-         class="justify-center w-2/5 px-4"
+         class="justify-center px-4"
+         :class="focusMode ? 'w-2/5' : 'w-full'"
       />
       <UButton
          v-if="focusMode"
