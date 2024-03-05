@@ -349,6 +349,24 @@ function updatePercentOfBudget() {
   percentageOfBudget.value = (count.value / budget.value) * 100;
 }
 
+function onSort(column){
+   console.log(column);   
+   // a simple function for sorting the
+   // items in the list by name
+   if (column.key === "name") {
+     list.value[currentList.value].items.sort((a, b) => {
+       if (a.name < b.name) {
+         return -1;
+       }
+       if (a.name > b.name) {
+         return 1;
+       }
+       return 0;
+     });
+   }
+   filterSelectedItems();
+}
+
 onMounted(async () => {
   await nextTick();
   /**
@@ -356,12 +374,6 @@ onMounted(async () => {
    */
   // window.addEventListener("keydown", (event) => {
   // });
-
-  // find the name column and apply the colspan="4" attribute
-  let nameColumn = document.querySelector(
-    "table > thead > tr > th:nth-child(1)"
-  );
-  nameColumn.setAttribute("colspan", "4");
 });
 
 if (process.client) {
@@ -407,7 +419,7 @@ if (process.client) {
     <p class="text-2xl my-4">{{ list[currentList].name }}</p>
 
     <!-- New shopping list display. That table is TRASH -->
-    <div class="w-screen overflow-x-scroll flex pe-14">
+    <div class="w-screen overflow-x-scroll flex pe-14 pb-4">
       <UButton
         class="mx-1 rounded-full"
         size="lg"
@@ -431,7 +443,7 @@ if (process.client) {
           class="mx-1 rounded-full"
           size="lg"
           variant="outline"
-          @click="data.onSort(column)"
+          @click="onSort(column)"
         >
           {{ column.label }}
           <UIcon name="i-heroicons-chevron-down-solid" />
