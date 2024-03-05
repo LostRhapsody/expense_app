@@ -25,7 +25,7 @@ const filteredRows = ref([]);
 
 var userArray;
 // Grab the date
-const currentDate = getCurrentDate('ymd');
+const currentDate = getCurrentDate("ymd");
 // Budget for grocery trips
 const budget = ref(100);
 // percentage of budget
@@ -36,24 +36,25 @@ const columns = [
       key: "name",
       label: "Name",
       sortable: true,
+      class: "w-screen overflow-x-scroll flex pe-14",
    },
    {
       key: "department",
       label: "Dept.",
       sortable: true,
-      class:'hidden',
+      class: "hidden",
    },
    {
       key: "price",
       label: "Price",
       sortable: true,
-      class:'hidden',
+      class: "hidden",
    },
    {
       key: "selected",
       label: "Selected",
       sortable: true,
-      class:'hidden',
+      class: "hidden",
    },
 ];
 
@@ -171,19 +172,19 @@ async function select(row) {
 function filterSelectedItems() {
    let filteredItems = [];
    // ... is this necessary? lol idk.
-   if(
-      list.value === null || 
-      list.value === undefined || 
+   if (
+      list.value === null ||
+      list.value === undefined ||
       list.value[currentList.value] === undefined ||
       list.value[currentList.value] === null ||
       list.value[currentList.value].items === undefined ||
-      list.value[currentList.value].items === null){
+      list.value[currentList.value].items === null
+   ) {
       filteredRows.value = filteredItems;
       return;
    }
    list.value[currentList.value].items.forEach((item) => {
-      if(item === undefined || item === null)
-         return;
+      if (item === undefined || item === null) return;
       // filter out any items that don't have a name, we don't need these.
       if (item.name === undefined || item.name === null || item.name === "")
          return;
@@ -253,7 +254,7 @@ function resetCounter() {
  * @param mode add mode: resets counter and pushes to array
  */
 function updateUserArray(mode) {
-   if(!loggedIn.value){
+   if (!loggedIn.value) {
       toast.add({ title: "Please log in to save your count." });
       return;
    }
@@ -318,36 +319,35 @@ async function setRecord() {
    }
 }
 
-
 /**
  * Get's the user's saved budget
  * @param key the key used to retrieve this value
  */
- async function getUserBudget() {
-  const key = localStorage.getItem("uuid");
-  if(key === null || key === undefined){
-    toast.add({ title: "Could not get budget; Try logging in." });
-    return;
-  }
-  const records = await $fetch("/api/grocery/getBudget", {
-    method: "post",
-    body: { key: key + "groceryBudget" },
-  });
-  if (records === null || records === undefined) {
-    toast.add({ title: "Error: invalid response from server" });
-  } else if (records.error) {
-    toast.add({ title: "Error: " + records.message });
-  } else {
-    if (records !== null && records !== undefined) {
-      if (records.budget !== null && typeof records.budget === "number") {
-        budget.value = records.budget;
+async function getUserBudget() {
+   const key = localStorage.getItem("uuid");
+   if (key === null || key === undefined) {
+      toast.add({ title: "Could not get budget; Try logging in." });
+      return;
+   }
+   const records = await $fetch("/api/grocery/getBudget", {
+      method: "post",
+      body: { key: key + "groceryBudget" },
+   });
+   if (records === null || records === undefined) {
+      toast.add({ title: "Error: invalid response from server" });
+   } else if (records.error) {
+      toast.add({ title: "Error: " + records.message });
+   } else {
+      if (records !== null && records !== undefined) {
+         if (records.budget !== null && typeof records.budget === "number") {
+            budget.value = records.budget;
+         }
       }
-    }
-  }
+   }
 }
 
 function updatePercentOfBudget() {
-  percentageOfBudget.value = (count.value / budget.value) * 100;
+   percentageOfBudget.value = (count.value / budget.value) * 100;
 }
 
 onMounted(async () => {
@@ -372,8 +372,8 @@ if (process.client) {
    currentList.value = params.get("listId");
    filterSelectedItems();
 
-   if(loggedIn.value){
-    getUserBudget();
+   if (loggedIn.value) {
+      getUserBudget();
    }
 }
 </script>
@@ -385,8 +385,8 @@ if (process.client) {
    >
       <UBreadcrumb :ui="{ li: 'text-black text-xs' }" :links="links" />
    </BreadcrumbHTML>
-   <div class="grid grid-cols-5 gap-4">
-      <div v-if="!focusMode" class="col-span-3">
+   <div>
+      <div v-if="!focusMode">
          <UButton
             @click="showExplanation = !showExplanation"
             class="justify-center w-full mx-auto text-xl my-2"
@@ -403,15 +403,6 @@ if (process.client) {
             />
          </UButton>
       </div>
-      <div v-if="!focusMode" class="col-span-2">
-         <UButton
-            @click="toggleFocus"
-            class="justify-center w-full mx-auto text-xl my-2 pr-1"
-            icon="i-heroicons-eye-solid"
-            variant="outline"
-            >&nbsp;</UButton
-         >
-      </div>
    </div>
    <div v-if="list[currentList] !== undefined">
       <p class="text-2xl my-4">{{ list[currentList].name }}</p>
@@ -419,49 +410,75 @@ if (process.client) {
       <UTable
          :rows="filteredRows"
          :columns="columns"
-         @select="select"         
+         class=""
+         @select="select"
          :empty-state="{
             icon: 'i-heroicons-shopping-cart-solid',
             label: 'No items added to shopping list.',
          }"
          :ui="{
-            table:{
-               base: 'w-full',
+            warpper: {
+               base: '',
             },
             th: {
                base: '',
             },
             td: {
-               base: 'w-full py-8 !text-lg text-wrap overflow-hidden',
+               base: 'py-8 !text-lg',
             },
             tr: {
-               base: 'w-full',
+               base: '',
             },
             tbody: 'divide-y-0',
          }"
       >
-         <template #name-header>
-            <div class="">
-
-               <UButton v-for="column in columns" :key="column.key" :ui="{base: 'inline-block'}">
-                  {{ column.label }}
+         <template #name-header="data">
+            <UButton
+               class="mx-1 rounded-full"
+               size="lg"
+               variant="outline"
+               icon="i-heroicons-share-solid"
+            >
+               Share
             </UButton>
-               </div>
+            <UButton
+               class="mx-1 rounded-full"
+               size="lg"
+               variant="outline"
+               icon="i-heroicons-user-plus-solid"
+            >
+               Invite
+            </UButton>
+            <div v-for="column in columns" :key="column.key">
+               <span v-if="column.key === 'selected'">&nbsp;</span>
+               <UButton
+                  v-else
+                  class="mx-1 rounded-full"
+                  size="lg"
+                  variant="outline"
+                  @click="data.onSort(column)"
+               >
+                  {{ column.label }}
+                  <UIcon name="i-heroicons-chevron-down-solid" />
+               </UButton>
+            </div>
          </template>
-         
+
          <template #name-data="row">
-            <span
-               v-if="row.row.quantity > 0"
-               :class="{ linethrough: row.row.selected }"
-            >
-               {{ row.row.quantity }}x
-            </span>
-            <span v-else>&nbsp;&nbsp;</span>
-            <span
-               :class="{ linethrough: row.row.selected }"
-               class="text-black dark:text-white"
-               >{{ row.row.name }}</span
-            >
+            <div class="block max-w-min overflow-x-clip w-[15vw] text-wrap">
+               <span
+                  v-if="row.row.quantity > 0"
+                  :class="{ linethrough: row.row.selected }"
+               >
+                  {{ row.row.quantity }}x
+               </span>
+               <span v-else>&nbsp;&nbsp;</span>
+               <span
+                  :class="{ linethrough: row.row.selected }"
+                  class="text-black dark:text-white overflow-ellipsis"
+                  >{{ row.row.name }}</span
+               >
+            </div>
          </template>
          <template #price-data="row">
             <span
@@ -475,6 +492,11 @@ if (process.client) {
             </span>
             <span v-else>&nbsp;</span>
          </template>
+         <template #department-data="row">
+            <span :class="{ linethrough: row.row.selected }">{{
+               row.row.department
+            }}</span>
+         </template>
          <template #selected-data="row">
             <span v-if="row.row.selected">
                <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
@@ -486,11 +508,6 @@ if (process.client) {
                   <circle r="10" cx="10" cy="10" fill="gray" />
                </svg>
             </span>
-         </template>
-         <template #department-data="row">
-            <span :class="{ linethrough: row.row.selected }">{{
-               row.row.department
-            }}</span>
          </template>
       </UTable>
 
@@ -539,7 +556,7 @@ if (process.client) {
                   >
                </template>
                <template #price-data="row">
-                  <span
+                  <!-- <span
                      v-if="row.row.price > 0"
                      :class="{ linethrough: row.row.selected }"
                   >
@@ -548,7 +565,14 @@ if (process.client) {
                      }}</span>
                      <span v-else>{{ row.row.price }}</span>
                   </span>
-                  <span v-else>&nbsp;</span>
+                  <span v-else>&nbsp;</span> -->
+                  <span>&nbsp;</span>
+               </template>
+               <template #department-data="row">
+                  <!-- <span :class="{ linethrough: row.row.selected }">{{
+                     row.row.department
+                  }}</span> -->
+                  <span>&nbsp;</span>
                </template>
                <template #selected-data="row">
                   <span v-if="row.row.selected">
@@ -575,11 +599,6 @@ if (process.client) {
                      </svg>
                   </span>
                </template>
-               <template #department-data="row">
-                  <span :class="{ linethrough: row.row.selected }">{{
-                     row.row.department
-                  }}</span>
-               </template>
             </UTable>
             <UButton
                label="Clear checked items"
@@ -600,13 +619,13 @@ if (process.client) {
          color="red"
          label="Exit Shop Mode"
          to="/grocery/lists"
-         class="justify-center px-4"
-         :class="focusMode ? 'w-2/5' : 'w-full'"
+         class="justify-center px-4 w-2/5"
       />
       <UButton
-         v-if="focusMode"
          @click="toggleFocus"
-         icon="i-heroicons-eye-slash-solid"
+         :icon="
+            focusMode ? 'i-heroicons-eye-slash-solid' : 'i-heroicons-eye-solid'
+         "
          variant="outline"
          class="justify-center w-2/5 p-4"
       />
