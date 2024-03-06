@@ -537,10 +537,15 @@ if (process.client) {
       <div
          v-for="item in filteredRows"
          :key="item.id"
-         class="grid grid-cols-5 my-8"
+         class="grid grid-cols-12 my-8"
          :class="item.selected ? 'relative' : ''"
          @click="select(item)"
       >
+         <!-- Checkbox -->
+         <div class="col-span-1 text-end row-span-2 my-auto">
+            <UCheckbox v-model="item.selected" :ui="{base:'w-6 h-6'}"/>
+         </div>
+
          <!-- quantity -->
          <div class="col-span-1 text-end row-span-2">
             <span v-if="item.quantity > 0" class="text-xl text-gray-400">
@@ -550,14 +555,14 @@ if (process.client) {
          </div>
 
          <!-- Name -->
-         <div class="col-span-3 overflow-clip">
+         <div class="col-span-8 overflow-clip">
             <span class="text-3xl">{{ item.name }}</span>
          </div>
 
          <!-- price with no quantity -->
          <div
             v-if="item.price > 0 && item.quantity <= 0"
-            class="col-span-1 text-start row-span-2"
+            class="col-span-2 text-start row-span-2"
          >
             <span class="text-xl text-gray-400"> ${{ item.price }} </span>
          </div>
@@ -573,18 +578,18 @@ if (process.client) {
          </div>
 
          <!-- no price -->
-         <div class="row-span-2" v-else>&nbsp;</div>
+         <div class="col-span-2 row-span-2" v-else>&nbsp;</div>
 
          <!-- Row 2 -->
 
          <!-- department -->
-         <div class="col-span-3 text-gray-400 text-sm">
+         <div class="col-span-8 text-gray-400 text-sm">
             {{ item.department }}
          </div>
          <!-- price with quantity, row 2 -->
          <div
             v-if="item.price > 0 && item.quantity > 0"
-            class="col-span-1 text-start row-span-1"
+            class="col-span-2 text-start row-span-1"
          >
             <span class="text-sm text-gray-400"> ${{ item.price }}/ea </span>
          </div>
@@ -592,18 +597,18 @@ if (process.client) {
          <!-- Cross out item -->
          <div v-if="item.selected">
             <!-- when item is selected, make a divider cross through the center of the row -->
-            <div class="absolute inset-3">
+            <div class="absolute inset-3 px-4">
                <UDivider
-                  size="sm"
+                  size="md"
                   :ui="{
                      icon: {
-                        base: 'text-primary-500 dark:text-primary-400',
+                        base: 'text-primary-500 dark:text-primary-400 w-8 h-8',
                      },
                      border: {
                         base: 'border-primary-500 dark:border-primary-400',
                      },
                   }"
-                  icon="i-heroicons-check-solid"
+                  icon="i-heroicons-check-circle-solid"
                />
             </div>
          </div>
@@ -623,10 +628,16 @@ if (process.client) {
             <div
                v-for="item in list[currentList].selectedItems"
                :key="item.id"
-               class="grid grid-cols-5 my-8"
+               class="grid grid-cols-12 my-8"
                :class="item.selected ? 'relative' : ''"
                @click="select(item)"
             >
+
+               <!-- Checkbox -->
+               <div class="col-span-1 text-end row-span-2 my-auto">
+                  <UCheckbox v-model="item.selected" :ui="{base:'w-6 h-6'}"/>
+               </div>
+
                <!-- quantity -->
                <div class="col-span-1 text-end row-span-2">
                   <span v-if="item.quantity > 0" class="text-xl text-gray-400">
@@ -636,14 +647,14 @@ if (process.client) {
                </div>
 
                <!-- Name -->
-               <div class="col-span-3 overflow-clip">
+               <div class="col-span-8 overflow-clip">
                   <span class="text-3xl">{{ item.name }}</span>
                </div>
 
                <!-- price with no quantity -->
                <div
                   v-if="item.price > 0 && item.quantity <= 0"
-                  class="col-span-1 text-start row-span-2"
+                  class="col-span-2 text-start row-span-2"
                >
                   <span class="text-xl text-gray-400"> ${{ item.price }} </span>
                </div>
@@ -651,7 +662,7 @@ if (process.client) {
                <!-- price with quantity -->
                <div
                   v-else-if="item.price > 0 && item.quantity > 0"
-                  class="row-span-1 text-start"
+                  class="col-span-2 row-span-1 text-start"
                >
                   <span class="text-xl text-gray-400">
                      ${{ item.price * item.quantity }}
@@ -659,18 +670,18 @@ if (process.client) {
                </div>
 
                <!-- no price -->
-               <div class="row-span-2" v-else>&nbsp;</div>
+               <div class="col-span-2 row-span-2" v-else>&nbsp;</div>
 
                <!-- Row 2 -->
 
                <!-- department -->
-               <div class="col-span-3 text-gray-400 text-sm">
+               <div class="col-span-8 text-gray-400 text-sm">
                   {{ item.department }}
                </div>
                <!-- price with quantity, row 2 -->
                <div
                   v-if="item.price > 0 && item.quantity > 0"
-                  class="col-span-1 text-start row-span-1"
+                  class="col-span-2 text-start row-span-1"
                >
                   <span class="text-sm text-gray-400">
                      ${{ item.price }}/ea
@@ -680,21 +691,24 @@ if (process.client) {
                <!-- Cross out item -->
                <div v-if="item.selected">
                   <!-- when item is selected, make a divider cross through the center of the row -->
-                  <div class="absolute inset-3">
+                  <div class="absolute inset-3 px-4">
                      <UDivider
-                        size="sm"
+                        size="md"
                         :ui="{
                            icon: {
-                              base: 'text-primary-500 dark:text-primary-400',
+                              base: 'text-primary-500 dark:text-primary-400 w-8 h-8',
                            },
                            border: {
                               base: 'border-primary-500 dark:border-primary-400',
                            },
                         }"
-                        icon="i-heroicons-check-solid"
+                        icon="i-heroicons-check-circle-solid"
                      />
                   </div>
                </div>
+            </div>
+            <div v-if="list[currentList].selectedItems.length === 0">
+               <p class="text-center text-2xl text-gray-400 py-4">No items in list</p>
             </div>
          </template>
       </UAccordion>
@@ -703,7 +717,7 @@ if (process.client) {
          @click="deleteSelectedItems"
          variant="outline"
          color="red"
-         class="w-full my-4"
+         class="w-full mt-10"
       />
       <UDivider class="my-8" />
    </div>
@@ -734,7 +748,7 @@ if (process.client) {
       aria-label="floating action buttons"
    >
       <UButton
-         class="rounded-full"
+         size="xl"
          icon="i-heroicons-chevron-up"
          @click="showClicker = true"
       />
@@ -861,21 +875,5 @@ if (process.client) {
    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
    backdrop-filter: blur(6.4px);
    -webkit-backdrop-filter: blur(6.4px);
-}
-.fabs {
-   --_viewport-margin: 3vmin;
-
-   position: fixed;
-   z-index: var(--layer-1);
-
-   inset-block: auto var(--_viewport-margin);
-   inset-inline: auto var(--_viewport-margin);
-   display: flex;
-   flex-direction: column-reverse;
-   place-items: center;
-   gap: var(--_viewport-margin);
-}
-.fabs-above-nav {
-   bottom: 75px !important;
 }
 </style>

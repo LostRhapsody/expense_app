@@ -104,9 +104,9 @@ onMounted(async () => {
    <div v-if="showList">
       <div
          v-for="(item, index) in list"
-         class="p-2 my-2 w-full text-center items-center flex-col border border-gray-300/25 dark:border-gray-800/25 rounded-lg text-xl flex bg-gray-300/25 dark:bg-gray-800/50"
+         class="px-4 py-3 my-8 w-full text-center items-center flex-col border border-gray-300/25 dark:border-gray-800/25 rounded-lg text-xl flex bg-gray-300/25 dark:bg-gray-800/50"
       >
-         <div class="flex w-full">
+         <div class="flex w-full items-center">
             <UTextarea
                :ui="{ size: { xl: 'text-2xl' } }"
                class="w-full"
@@ -121,27 +121,29 @@ onMounted(async () => {
             />
             <UButton
                icon="i-heroicons-x-mark"
-               variant="ghost"
+               variant="outline"
                color="red"
                @click="deleteList(index)"
+               size="lg"
             />
          </div>
-         <UButton
-            label="Edit list"
-            class="w-full my-2"
-            icon="i-heroicons-pencil-solid"
-            :to="targetList(index,'edit')"
+         <UDivider class="mt-2 mb-4 "/>
+         <div class="grid grid-cols-2 gap-8 pb-2">
+            <UButton
+               label="Edit list"
+               size="lg"
+               class="py-4"
+               icon="i-heroicons-pencil-solid"
+               :to="targetList(index,'edit')"
+               />               
+            <UButton
+               label="Shop list"
+               size="lg"
+               class="py-4"
+               icon="i-heroicons-shopping-cart-solid"
+               :to="targetList(index,'shop')"
             />
-         <UButton
-            label="Shop this list"
-            class="w-full my-2"
-            icon="i-heroicons-shopping-cart-solid"
-            :to="targetList(index,'shop')"
-         >
-            <template #trailing>
-               <UIcon name="i-heroicons-arrow-right" />
-            </template>
-         </UButton>
+         </div>
       </div>
    </div>
    <div v-else>
@@ -149,11 +151,9 @@ onMounted(async () => {
    </div>
 
    <!-- The add list item floating button -->
-   <div class="relative py-8">
-      <div class="absolute addItem">
-         <UButton icon="i-heroicons-plus" @click="newList" size="xl" />
-      </div>
-   </div>   
+   <div class="fabs fabs-above-nav">
+      <UButton icon="i-heroicons-plus" @click="newList" size="xl" />
+   </div>
 
    <!-- EXPLANATION -->
    <UModal :ui="{ container: 'items-center' }" v-model="showExplanation">
@@ -189,11 +189,20 @@ onMounted(async () => {
 </template>
 
 <style>
-.addItem {
-   bottom: -2%;
-   left: 79%;
+.fabs {
+   --_viewport-margin: 3vmin;
+
+   position: fixed;
+   z-index: var(--layer-1);
+
+   inset-block: auto var(--_viewport-margin);
+   inset-inline: auto var(--_viewport-margin);
+   display: flex;
+   flex-direction: column-reverse;
+   place-items: center;
+   gap: var(--_viewport-margin);
 }
-.linethrough {
-   text-decoration: line-through;
+.fabs-above-nav {
+   bottom: 100px !important;
 }
 </style>
