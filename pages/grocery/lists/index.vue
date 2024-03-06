@@ -73,52 +73,7 @@ onMounted(async () => {
    /**
     * keybind listeners
     */
-   window.addEventListener("keydown", (event) => {
-      switch (event.code) {
-         case "Enter":
-            // if we're editing an input field, it's likely going to be one of our
-            // list items. We add a new one when we're hitting enter on the last item
-            // in the list.
-            if (event.target.localName === "input") {
-               // using the ID from the event target, we can find the index of the item in the list
-               let index = list.value[currentList.value].items.findIndex(
-                  (item) => item.id === event.target.id
-               );
-               // if the index is not the last item in the list, we don't want to add a new item
-               if (index + 1 === list.value[currentList.value].items.length) {
-                  newItem(-1);
-               }
-            }
-
-            // if our target is a text area, we want to prevent new lines from being
-            // added so prevent the default action.
-
-            // NOTE for future Evan: this means all "enter" key presses will have to be
-            // controlled manually, more or less.
-
-            if (event.target.localName === "textarea") {
-               event.preventDefault();
-            }
-            // if the target id is "editItemName" we want to focus on the next field
-            if (event.target.id === "editItemName") {
-               document.getElementById("editItemPrice")?.focus();
-            }
-            // if the target id is "editItemPrice" we want to focus on the next field
-            if (event.target.id === "editItemPrice") {
-               document.getElementById("editItemQuantity")?.focus();
-            }
-            // if the target id is "editItemQuantity" we want to focus on the next field
-            if (event.target.id === "editItemQuantity") {
-               document.getElementById("editItemDepartment")?.focus();
-            }
-            // if the target id is "editItemDepartment" we want to focus on the submit button
-            if (event.target.id === "editItemDepartment") {
-               document.getElementById("submitEditItem")?.focus();
-            }
-            break;
-         default:
-            break;
-      }
+   window.addEventListener("keydown", (event) => {      
    });
 });
 </script>

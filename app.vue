@@ -897,7 +897,7 @@ onMounted(async () => {
    </UContainer>
 
    <!-- Bottom bar navigation -->
-   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center bg-white dark-nav-bg custom-nav-links" :ui="{base:'max-w-18 min-w-18'}">
+   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center bg-white dark-nav-bg custom-nav-links bottom-nav" :ui="{base:'max-w-18 min-w-18'}">
       <template #default="{ link }">
          <span></span>
       </template>
@@ -918,7 +918,8 @@ onMounted(async () => {
    background-color: transparent !important;
 }
 .dark .dark-nav-bg {
-   background-color: #121212;
+   background: rgb(18,18,18);
+background: linear-gradient(0deg, rgba(18,18,18,1) 20%, rgba(48,48,48,1) 100%);
 }
 a::after {
    height: 5px!important;
