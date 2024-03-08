@@ -463,7 +463,8 @@ function serializeItemList() {
    const encodedItems = encodeURIComponent(JSON.stringify(items));
    const urlParams = new URLSearchParams();
    urlParams.append("items", encodedItems);
-   const shareableLink = `${window.location.origin}?${urlParams.toString()}`;
+   const shareableLink = `${window.location.origin}/grocery/lists/shop?${urlParams.toString()}`;
+   log(shareableLink);
    navigator.clipboard.writeText(shareableLink);
    toast.add({ title: "Link copied to clipboard" });
 }
@@ -505,6 +506,14 @@ if (process.client) {
    if(currentList.value === null || currentList.value === undefined){
       currentList.value = 0;
       sharedList = true;
+   }
+
+   // if the list[currentList].selectedItems array is null
+   if (
+      list.value[currentList.value].selectedItems === null ||
+      list.value[currentList.value].selectedItems === undefined
+   ) {
+      list.value[currentList.value].selectedItems = [];
    }
 
    filterSelectedItems();
