@@ -33,7 +33,7 @@ const links = getBreadcrumbs([
  * returns the link with query params to edit a list
  * @param index the list we're editing
  */
-function targetList(index,page:string){
+function targetList(index:Number,page:string){
    return "/grocery/lists/" + page + "?listId=" + index;
 }
 

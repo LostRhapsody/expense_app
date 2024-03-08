@@ -22,6 +22,7 @@ const currentList = ref(0);
 const list = ref([]);
 const currentItem = ref(0);
 const filteredRows = ref([]);
+var sharedList = false;
 
 var userArray;
 // Grab the date
@@ -68,12 +69,6 @@ const columns = [
       },
    ],
 ];
-
-const showItems = computed(() => {
-   if (list.value === null || list.value === undefined) return;
-   let currentListItems = list.value[currentList.value].items;
-   return currentListItems.length > 0;
-});
 
 const links = getBreadcrumbs([
    { name: "", icon: "i-heroicons-shopping-bag-solid", url: "/grocery" },
@@ -128,7 +123,7 @@ function deleteSelectedItems() {
    });
    // set all items to the copy
    list.value[currentList.value].items = shallowItemsCopy;
-   setLists(list.value);
+   if(!sharedList) setLists(list.value);
 }
 
 /**
@@ -174,7 +169,7 @@ async function select(row) {
       await delay(2000);
       filterSelectedItems();
    }
-   setLists(list.value);
+   if(!sharedList) setLists(list.value);
 }
 
 /**
@@ -458,6 +453,39 @@ function sortByNumber(direction) {
    }
 }
 
+/**
+ * Serialize's the current list's item array, encodes 
+ * them in url params, and then copies that are a 
+ * shareable link to the user's clipboard
+ */
+function serializeItemList() {
+   const items = list.value[currentList.value].items;
+   const encodedItems = encodeURIComponent(JSON.stringify(items));
+   const urlParams = new URLSearchParams();
+   urlParams.append("items", encodedItems);
+   const shareableLink = `${window.location.origin}?${urlParams.toString()}`;
+   navigator.clipboard.writeText(shareableLink);
+   toast.add({ title: "Link copied to clipboard" });
+}
+
+/**
+ * un-serializes the items from the url params and 
+ * sets the list to the items
+ */
+function unserializeItemList() {
+   let params = new URLSearchParams(window.location.search);
+   let items = params.get("items");
+   if (items === null || items === undefined) return;
+   items = JSON.parse(decodeURIComponent(items));
+   if(items === null || items === undefined) return;
+   list.value[currentList.value] = {
+      name:"Shared List",
+      items: items,
+      selectedItems: [],
+   }
+   filterSelectedItems();
+}
+
 onMounted(async () => {
    await nextTick();
    /**
@@ -472,11 +500,19 @@ if (process.client) {
    // grab the list id from the URL
    let params = new URLSearchParams(window.location.search);
    currentList.value = params.get("listId");
+
+   // if no list id was passed, we're in a shared list, probably.
+   if(currentList.value === null || currentList.value === undefined){
+      currentList.value = 0;
+      sharedList = true;
+   }
+
    filterSelectedItems();
 
    if (loggedIn.value) {
       getUserBudget();
    }
+   unserializeItemList();
 }
 </script>
 
@@ -515,6 +551,7 @@ if (process.client) {
             size="lg"
             variant="outline"
             icon="i-heroicons-share-solid"
+            @click="serializeItemList"
          >
             Share
          </UButton>
