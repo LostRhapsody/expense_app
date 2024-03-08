@@ -497,10 +497,10 @@ onMounted(async () => {
 });
 
 if (process.client) {
-   list.value = getLists();
+
    // grab the list id from the URL
    let params = new URLSearchParams(window.location.search);
-   currentList.value = params.get("listId");
+      currentList.value = params.get("listId");
 
    // if no list id was passed, we're in a shared list, probably.
    if(currentList.value === null || currentList.value === undefined){
@@ -508,20 +508,28 @@ if (process.client) {
       sharedList = true;
    }
 
-   // if the list[currentList].selectedItems array is null
-   if (
-      list.value[currentList.value].selectedItems === null ||
-      list.value[currentList.value].selectedItems === undefined
-   ) {
-      list.value[currentList.value].selectedItems = [];
+   if(sharedList){
+      // only run this if it's a shared list
+      unserializeItemList();
+   } else {
+      // don't bother with this logic if we're in a shared list
+      list.value = getLists();      
+
+      // if the list[currentList].selectedItems array is null
+      if (
+         list.value[currentList.value].selectedItems === null ||
+         list.value[currentList.value].selectedItems === undefined
+      ) {
+         list.value[currentList.value].selectedItems = [];
+      }
+
+      filterSelectedItems();
+
    }
-
-   filterSelectedItems();
-
+   
    if (loggedIn.value) {
       getUserBudget();
    }
-   unserializeItemList();
 }
 </script>
 
@@ -753,8 +761,10 @@ if (process.client) {
                   </div>
                </div>
             </div>
-            <div v-if="list[currentList].selectedItems.length === 0">
-               <p class="text-center text-2xl text-gray-400 py-4">No items in list</p>
+            <div v-if="list[currentList].selectedItems !== undefined">
+               <div v-if="list[currentList].selectedItems.length === 0">
+                  <p class="text-center text-2xl text-gray-400 py-4">No items in list</p>
+               </div>
             </div>
          </template>
       </UAccordion>
