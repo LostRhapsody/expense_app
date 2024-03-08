@@ -32,9 +32,19 @@ const links = getBreadcrumbs([
 /**
  * returns the link with query params to edit a list
  * @param index the list we're editing
+ * @return the link to the list with list id
  */
 function targetList(index:Number,page:string){
    return "/grocery/lists/" + page + "?listId=" + index;
+}
+
+/**
+ * returns the link to the shared list
+ * @param url the url to the list we've shared
+ * @returns the url to the shared list 
+ */
+function getSharedListURL(url: string) {
+   return "/grocery/lists/shop" + url;
 }
 
 /**
@@ -99,6 +109,15 @@ onMounted(async () => {
          width="25"
       />
    </UButton>
+   <!-- Just used for testing since manually pasting a URL
+      in DEV mode just refreshes the whole app... and is annoying
+      <UButton
+      :to="getSharedListURL('?sharedList=%257B%2522name%2522%253A%2522Test%2520List%2522%252C%2522items%2522%253A%255B%257B%2522name%2522%253A%2522Just%2520an%2520Onion%2522%252C%2522price%2522%253A0%252C%2522quantity%2522%253A0%252C%2522department%2522%253A%2522%2522%252C%2522id%2522%253A%2522e159754d-fef5-4ea4-9e8e-ba993cb52a8b%2522%252C%2522selected%2522%253Afalse%257D%255D%252C%2522selectedItems%2522%253A%255B%255D%257D')"
+      class="justify-center w-full mx-auto text-xl my-2"
+      icon="i-heroicons-share-solid"
+      variant="outline"
+      label="Shared list"
+   /> -->
 
    <!-- The list -->
    <div v-if="showList">

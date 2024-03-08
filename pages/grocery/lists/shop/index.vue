@@ -22,7 +22,6 @@ const currentList = ref(0);
 const list = ref([]);
 const currentItem = ref(0);
 const filteredRows = ref([]);
-var sharedList = false;
 
 var userArray;
 // Grab the date
@@ -123,7 +122,7 @@ function deleteSelectedItems() {
    });
    // set all items to the copy
    list.value[currentList.value].items = shallowItemsCopy;
-   if(!sharedList) setLists(list.value);
+   setLists(list.value);
 }
 
 /**
@@ -169,7 +168,7 @@ async function select(row) {
       await delay(2000);
       filterSelectedItems();
    }
-   if(!sharedList) setLists(list.value);
+   setLists(list.value);
 }
 
 /**
@@ -459,10 +458,10 @@ function sortByNumber(direction) {
  * shareable link to the user's clipboard
  */
 function serializeItemList() {
-   const items = list.value[currentList.value].items;
-   const encodedItems = encodeURIComponent(JSON.stringify(items));
+   const shareableList = list.value[currentList.value];
+   const encodedList = encodeURIComponent(JSON.stringify(shareableList));
    const urlParams = new URLSearchParams();
-   urlParams.append("items", encodedItems);
+   urlParams.append("sharedList", encodedList);
    const shareableLink = `${window.location.origin}/grocery/lists/shop?${urlParams.toString()}`;
    log(shareableLink);
    navigator.clipboard.writeText(shareableLink);
@@ -475,15 +474,14 @@ function serializeItemList() {
  */
 function unserializeItemList() {
    let params = new URLSearchParams(window.location.search);
-   let items = params.get("items");
-   if (items === null || items === undefined) return;
-   items = JSON.parse(decodeURIComponent(items));
-   if(items === null || items === undefined) return;
-   list.value[currentList.value] = {
-      name:"Shared List",
-      items: items,
-      selectedItems: [],
-   }
+   let sharedList = params.get("sharedList");
+   if (sharedList === null || sharedList === undefined) return;
+   sharedList = JSON.parse(decodeURIComponent(sharedList));
+   if(sharedList === null || sharedList === undefined) return;
+   sharedList.name = "Shared - " + sharedList.name;
+   list.value.push(sharedList);
+   currentList.value = list.value.length - 1;
+   setLists(list.value);
    filterSelectedItems();
 }
 
@@ -498,34 +496,34 @@ onMounted(async () => {
 
 if (process.client) {
 
+   // grab the list, or set it to empty array
+   list.value = getLists();
+
+   log(list.value.length);
+
    // grab the list id from the URL
    let params = new URLSearchParams(window.location.search);
-      currentList.value = params.get("listId");
+   currentList.value = params.get("listId");
 
    // if no list id was passed, we're in a shared list, probably.
+   // in which case we'll want to append the shared list to the array, or instantiate it
    if(currentList.value === null || currentList.value === undefined){
-      currentList.value = 0;
-      sharedList = true;
+      currentList.value = list.value.length - 1;
+      log(currentList.value);
    }
 
-   if(sharedList){
-      // only run this if it's a shared list
-      unserializeItemList();
-   } else {
-      // don't bother with this logic if we're in a shared list
-      list.value = getLists();      
+   // check for shared list query params
+   unserializeItemList();
 
-      // if the list[currentList].selectedItems array is null
-      if (
-         list.value[currentList.value].selectedItems === null ||
-         list.value[currentList.value].selectedItems === undefined
-      ) {
-         list.value[currentList.value].selectedItems = [];
-      }
-
-      filterSelectedItems();
-
+   // if the list[currentList].selectedItems array is null
+   if (
+      list.value[currentList.value].selectedItems === null ||
+      list.value[currentList.value].selectedItems === undefined
+   ) {
+      list.value[currentList.value].selectedItems = [];
    }
+
+   filterSelectedItems();
    
    if (loggedIn.value) {
       getUserBudget();
