@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import getUserPrefsJSON from './utils/getUserPrefsJSON';
+
 ////// User Variables and Constants //////////////////////
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
@@ -211,6 +213,20 @@ useHead({
 });
 
 /**
+ * Check if UUID is set on client
+ * @returns boolean true if UUID is set in local storage
+ */
+function isUUIDSet() {
+   let currentUUID = localStorage.getItem("uuid");
+   // in case the value is unexpected
+   if(currentUUID === undefined || currentUUID === null) {
+      currentUUID = null;
+   }
+   // if null, false, else true
+   return currentUUID !== null ? true : false;
+}
+
+/**
  * Posts an email to the backend, stores UUID in cache to verify requests
  * @param email user's email for UUID
  */
@@ -220,7 +236,6 @@ async function postUUID(email: string) {
       body: {
          value: email,
       },
-      // this key ensures we store it in the cache
       key: "uuid",
       onResponse({ response }) {
          localStorage.setItem("uuid", response._data);
@@ -245,9 +260,53 @@ async function postUUIDCallback() {
       return;
    }
 
-   // we can now set our theme, since the UUID is set
-   setClientTheme();
+   // we can now set our user preferences, since the UUID is set
+   setUserPrefs();
 }
+
+/**
+ * Sets the user's preferences from the cache or DB
+ * Creates a new record in the db if never set
+ */
+async function setUserPrefs() {
+   const currentUUID = localStorage.getItem("uuid");
+   const userPrefsFromCache = localStorage.getItem("budgie_prefs");
+   let userPrefsJSON = {};
+
+   // if there is anything in the cache, we'll use that.
+   // we're done here if so.
+   if(userPrefsFromCache !== null && userPrefsFromCache !== undefined) {
+      setClientTheme();
+      return;
+   }
+
+   // if currentUUID is not set we can't get prefs, so default to cache only
+   if (currentUUID === null || currentUUID === undefined) {
+      return;
+   }
+
+   // if prefs from cache are empty, we'll try and get from db
+   if(userPrefsFromCache === null || userPrefsFromCache === undefined) {
+      // get from db
+      await useFetch("/api/user/getPrefs", {
+         method: "post",
+         body: {
+            key: currentUUID,
+         },
+         key: "prefs",
+         onResponse({ response }) {
+            // if we got a valid response
+            if(response._data !== null && response._data !== undefined) {
+               // stringify the obj and set it in cache
+               userPrefsJSON = response._data;
+               localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+               setClientTheme();
+            }
+         },
+      });
+   }
+}
+
 
 /**
  * This logic runs AFTER the UUID has been set in the cache
@@ -255,29 +314,49 @@ async function postUUIDCallback() {
  * if theme is in cache, we set the theme on the client
  */
 async function setClientTheme() {
-   const theme = localStorage.getItem("budgie_theme");
-   const currentUUID = localStorage.getItem("uuid");
+   // get the userPrefs from cache
+   const userPrefs = getUserPrefsJSON();
+   let theme = "Default";
 
-   // if not in cache, pull the server from /getTheme
-   if (theme === null && currentUUID !== null) {
-      await getTheme(currentUUID);
-   } else {
-      // if theme is Default, don't set a link tag
-      if (theme !== "Default" && theme !== null) {
-         // remove if it exists so we never have 2 elements with matching ID
-         removeThemeTag();
-
-         // create a new link tag for the theme
-         const themeTag = document.createElement("link");
-         themeTag.href = "/themes/" + theme;
-         themeTag.id = "themeStylesheet";
-         themeTag.rel = "stylesheet";
-         document.head.appendChild(themeTag);
-      } else {
-         // just remove it to reset theme to default
-         removeThemeTag();
-      }
+   // if userPrefs.themeName is set, use it (this will be whatever is in)
+   // the cache, of Default.
+   if(userPrefs.themeName !== null && userPrefs.themeName !== undefined) {
+      theme = userPrefs.themeName;
    }
+
+   // if the userPrefs doesn't contain a userId BUT the userEmail is set, let's
+   // toss this cached object and retrieve it from the db instead.
+   // if no email is set, we're not logged in and can't do anything
+   if((userPrefs.userId === null || userPrefs.userId === undefined) && userEmail !== null && userEmail !== "") {
+      // remove the prefs from the cache
+      localStorage.removeItem("budgie_prefs");
+      // check the uuid in the cache
+      const uuid = localStorage.getItem("uuid");
+      if(uuid !== null) {
+         // if uuid is set, we can retrieve user preferences i.e. theme
+         setUserPrefs();
+         return;
+      } else {
+         // if uuid is not set, have to "restart" the user loop by setting the uuid in the server
+         postUUID(userEmail);
+      }
+      return;
+   }   
+
+   // Always remove the theme tag before setting a new one
+   removeThemeTag();
+
+   // Set the theme, as long as its not Default
+   if (theme !== "Default" && theme !== null) {
+
+      // create a new link tag for the theme
+      const themeTag = document.createElement("link");
+      themeTag.href = "/themes/" + theme;
+      themeTag.id = "themeStylesheet";
+      themeTag.rel = "stylesheet";
+      document.head.appendChild(themeTag);
+
+   } 
 }
 
 /**
@@ -292,69 +371,34 @@ function removeThemeTag() {
 }
 
 /**
- * get's the user's theme preferences from the db
- * @param key key to get record
- */
-async function getTheme(key: string) {
-   // if no UUID is set, just set theme to default
-   if (key === null || key === undefined) {
-      localStorage.setItem("budgie_theme", "Default");
-      getThemeCallback();
-   }
-   await useFetch("/api/user/getTheme", {
-      method: "post",
-      body: {
-         key: key + "Theme",
-      },
-      key: "theme",
-      onResponse({ response }) {
-         localStorage.setItem("budgie_theme", response._data);
-         getThemeCallback();
-      },
-   });
-}
-
-/**
- * callback for getTheme
- * Now that the theme is set in local storage, we can apply it
- */
-
-function getThemeCallback() {
-   const theme = localStorage.getItem("budgie_theme");
-
-   // if not in cache, pull the server from /getTheme
-   if (theme === null) {
-      alert("An error occurred retrieving you're theme preference");
-      return;
-   } else {
-      setClientTheme();
-   }
-}
-
-/**
  * set's the user's theme preference in the db and calls setClientTheme
  * @param theme theme we're setting
  */
 async function setTheme(theme: string) {
    const key = localStorage.getItem("uuid");
 
-   localStorage.setItem("budgie_theme", theme);
+   // get the userPrefs from cache
+   let userPrefs = getUserPrefsJSON();
+   // set the theme in memory
+   userPrefs.themeName = theme;
+   // set the prefs in cache
+   localStorage.setItem("budgie_prefs", JSON.stringify(userPrefs));
+
+   // set the theme on the client
+   setClientTheme();
 
    // if key is null, we're offline/not logged in
    // so just set the theme on the client and dip
    if (key === null) {
-      setClientTheme();
       return;
    }
 
-   await $fetch("/api/user/setTheme", {
+   // set the user prefs in the db
+   await $fetch("/api/user/setPrefs", {
       method: "post",
       body: {
-         key: key + "Theme",
-         value: theme,
-      },
-      onResponse({ response }) {
-         setClientTheme();
+         key: key,
+         prefs: userPrefs,
       },
    });
 }
@@ -394,8 +438,8 @@ function onThemeSelect(option: themeType) {
    }
 
    // if chosen theme is already set, do nothing
-   const currentTheme = localStorage.getItem("budgie_theme");
-   if (currentTheme === option.label || currentTheme === option.path) {
+   const userPrefs = getUserPrefsJSON();
+   if (userPrefs.themeName === option.label || userPrefs.themeName === option.path) {
       isThemeModalOpen.value = false;
       return;
    }
@@ -409,7 +453,7 @@ function onThemeSelect(option: themeType) {
       isThemeModalOpen.value = false;
       return;
    } else if (option.label === "Default") {
-      // if Default, we pass the label instead to tell the page to refresh
+      // if Default, we pass the label instead
       setTheme(option.label);
       isThemeModalOpen.value = false;
       return;
@@ -467,30 +511,25 @@ if (loggedIn.value) {
       }
    }
 
-   // Client ONLY processes (don't run on server)
+   // Client ONLY processes (don't run on server) 
+   // (we're logged in here)
    if (process.client) {
-      // say hi!
-      toast.add({
-         title: "Hey, " + userName + "! Ready to start saving?",
-      });
-
-      let currentUUID = localStorage.getItem("uuid");
-
-      // check if the UUID is in local storage
-      if (currentUUID === null) {
-         // if no, we'll get it from the server from /UUID
-         await postUUID(userEmail);
+      // check the uuid
+      if(isUUIDSet()){
+         // if it is set, we can retrieve user preferences i.e. theme
+         // this triggers setClientTheme
+         setUserPrefs();
       } else {
-         // attempt to set the theme.
-         // this handles getting the theme from cache/db/retrying
-         setClientTheme();
+         // if it is not set, we'll ask the db for one
+         // this triggers setUserPrefs and setClientTheme
+         postUUID(userEmail);
       }
    }
 } else {
    if (process.client) {
-      // bro we still gotta try lol
-      setClientTheme();
-   }
+      // this is if it's stored in cache only, not logged in.
+      setUserPrefs();
+   }  
 }
 
 // These events happen AFTER app is mounted (DOM is loaded)

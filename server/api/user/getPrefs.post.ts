@@ -1,4 +1,3 @@
-import { v5 as uuidv5 } from "uuid";
 import { createSupabaseClient } from "~/utils/supabase";
 
 /**
@@ -7,38 +6,48 @@ import { createSupabaseClient } from "~/utils/supabase";
  */
 export default defineEventHandler(async (event) => {
    const body = await readBody(event);
+   const key = body.key;
    const config = useRuntimeConfig();
    const supabase = createSupabaseClient(config);
-   let uuid = null;
 
-   // generate id
-   uuid = uuidv5(body.value, config.public.AUTH_NAMESPACE);
+   let userPrefs = {};
 
-   // first confirm if we have a user with the given uuid
+   // error handling
+   if(key === null || key === undefined || key.length === 0) {
+      throw new Error("No key provided");
+   }
+
+   // get the user pref record
    let { data, error } = await supabase
-   .from('user')
-   .select('id, email')
-   .eq('id', uuid);   
+   .from('userPreferences')
+   .select('userId, themeName, createdAt')
+   .eq('userId', key);   
    if(error){
       throw new Error("Error getting user : " + error);
    }
 
    // if no user found
    if(data === null || data === undefined || data.length === 0) {      
-      // set the record
+      // the default value we're returning
+      userPrefs = {
+         userId: key,
+         themeName: 'Default',
+         createdAt: new Date().toISOString(),
+      }; 
+      // set a default user prefs record
       const { data, error } = await supabase
-      .from('user')
+      .from('userPreferences')
       .insert([
-         { id: uuid, email: body.value },
+         userPrefs,
       ])
       .select();
       if(error){
          throw new Error("Error setting user : " + error);
-      }
+      }           
    } else {
       // if the user already exists, return the id
-      uuid = data[0].id;
+      userPrefs = data[0];
    }
 
-   return uuid;
+   return userPrefs;
 });

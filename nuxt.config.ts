@@ -7,13 +7,16 @@ export default defineNuxtConfig({
          KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
          KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
          GITHUB_ID: process.env.GITHUB_ID,
-         GITHUB_SECRET: process.env.GITHUB_SECRET,
-         GOOGLE_ID: process.env.GITHUB_ID,
-         GOOGLE_SECRET: process.env.GITHUB_SECRET,
-         AUTH_SECRET: process.env.AUTH_SECRET,
+         GOOGLE_ID: process.env.GITHUB_ID,         
          AUTH_ORIGIN: process.env.AUTH_ORIGIN,
-         AUTH_NAMESPACE: process.env.AUTH_NAMESPACE
+         AUTH_NAMESPACE: process.env.AUTH_NAMESPACE,
+         SUPABASE_URL: process.env.SUPABASE_URL,
+         SUPABASE_KEY: process.env.SUPABASE_KEY,
+         SW_DEV: process.env.SW_DEV,
       },
+      GITHUB_SECRET: process.env.GITHUB_SECRET,
+      GOOGLE_SECRET: process.env.GITHUB_SECRET,
+      AUTH_SECRET: process.env.AUTH_SECRET,
 
    },
    devtools: { enabled: false },
@@ -23,9 +26,12 @@ export default defineNuxtConfig({
       '@vite-pwa/nuxt',
    ],
    pwa: {
+      mode: "production",
+      base: "/",
+      includeAssets: ["favicon.ico", "robots.txt", "screenshot-wide.png", "screenshot-narrow.png"],      
       manifest: {
          name: "Budgie",
-         short_name: "BE",
+         short_name: "Budgie",
          start_url: "/",
          description:"Simple tools to help your budget",
          theme_color:"#4ADE80",
@@ -70,12 +76,11 @@ export default defineNuxtConfig({
             }
          ],
       },
-      workbox:{
-         navigateFallback: '/',
-      },
       devOptions: {
-         enabled: false,
+         enabled: process.env.SW_DEV === 'true',
          type: 'module',
+         navigateFallback: 'index.html',
+         suppressWarnings: true,
       }
    },
    auth: {
