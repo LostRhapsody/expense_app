@@ -15,8 +15,10 @@ Budgie is your go-to budgeting app available on the web, Android, and iOS, desig
 Built on the Nuxt.js metaframework, Budgie employs Vue.js for frontend and Nitro for the server.
 Hosted on Vercel, utilizing Vercel KV for database storage. We plan to migrate to a different platform for scaling purposes in the future, if necessary. In the meantime, we look forward to seeing how we can grow with Vercel at cost.
 Future plans include leveraging Capacitor to support native Android and iOS APIs for app store distribution.
-|![Nuxt.JS Logo](https://www.webnoob.dev/img/og/getting-started-with-nuxt.jpg)|![Nitro Logo](https://github.com/unjs/nitro/raw/main/docs/public/cover.png)|![Vercel Logo](https://repository-images.githubusercontent.com/659798237/9a6acdfe-6f48-47a7-9420-08047878569c)|
-|---|---|---|
+
+## Database Docs
+Database documentation is upkept at the following link using dbdocs.io.
+https://dbdocs.io/evan.robertson77/Budgie
 
 ## Roadmap:
 Budgie is currently in active development, with several tools nearing completion. We anticipate closed beta testing in the coming months and aim to launch a fully-fledged web and mobile app shortly thereafter.
