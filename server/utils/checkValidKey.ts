@@ -4,7 +4,7 @@ export default function checkValidKey(key: string) {
     key === "" ||
     key === null ||
     key === undefined ||
-    key.includes("guest")
+    key.length === 0
   ) {
     result = false;
   } else {

@@ -10,8 +10,10 @@ export default function getUserPrefsJSON() {
    // IMPORTANT! Update this anytime user prefs object/schema is updated
    let userPrefs:{
       themeName:string
+      clickerBudget:number
    } = {
-      themeName: "Default"
+      themeName: "Default",
+      clickerBudget: 100
    };
 
    // parse cache into JSON object

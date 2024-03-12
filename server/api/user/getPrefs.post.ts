@@ -13,14 +13,14 @@ export default defineEventHandler(async (event) => {
    let userPrefs = {};
 
    // error handling
-   if(key === null || key === undefined || key.length === 0) {
+   if (!checkValidKey(key)) {
       throw new Error("No key provided");
    }
 
    // get the user pref record
    let { data, error } = await supabase
    .from('userPreferences')
-   .select('userId, themeName, createdAt')
+   .select('userId, themeName, createdAt, clickerBudget')
    .eq('userId', key);   
    if(error){
       throw new Error("Error getting user : " + error);

@@ -328,30 +328,18 @@ async function setRecord() {
 }
 
 /**
- * Get's the user's saved budget
- * @param key the key used to retrieve this value
+ * Get's the user's saved budget from the cache
  */
-async function getUserBudget() {
-   const key = localStorage.getItem("uuid");
-   if (key === null || key === undefined) {
-      toast.add({ title: "Could not get budget; Try logging in." });
-      return;
+ async function getBudget() {
+   // retrieve from the cache from user prefs
+   const userPrefs = getUserPrefsJSON();
+   // validate the value is a number
+   if (userPrefs.clickerBudget === null 
+   || typeof userPrefs.clickerBudget !== "number") {
+      // if not, set it to 100
+      userPrefs.clickerBudget = 100;
    }
-   const records = await $fetch("/api/grocery/getBudget", {
-      method: "post",
-      body: { key: key + "groceryBudget" },
-   });
-   if (records === null || records === undefined) {
-      toast.add({ title: "Error: invalid response from server" });
-   } else if (records.error) {
-      toast.add({ title: "Error: " + records.message });
-   } else {
-      if (records !== null && records !== undefined) {
-         if (records.budget !== null && typeof records.budget === "number") {
-            budget.value = records.budget;
-         }
-      }
-   }
+   budget.value = userPrefs.clickerBudget;
 }
 
 /**
@@ -526,7 +514,7 @@ if (process.client) {
    filterSelectedItems();
    
    if (loggedIn.value) {
-      getUserBudget();
+      getBudget();
    }
 }
 </script>

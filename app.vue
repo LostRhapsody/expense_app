@@ -280,31 +280,35 @@ async function setUserPrefs() {
       return;
    }
 
-   // if currentUUID is not set we can't get prefs, so default to cache only
+   // if cache is empty...
+
+   // if the UUID is not set, we can't get from db, so set to defaults
    if (currentUUID === null || currentUUID === undefined) {
+      // tries to retrieve from cache, if not, sets to default
+      userPrefsJSON = getUserPrefsJSON();
+      // set the prefs in cache
+      localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+      // no need to set client theme as we just set it to default
       return;
    }
 
-   // if prefs from cache are empty, we'll try and get from db
-   if(userPrefsFromCache === null || userPrefsFromCache === undefined) {
-      // get from db
-      await useFetch("/api/user/getPrefs", {
-         method: "post",
-         body: {
-            key: currentUUID,
-         },
-         key: "prefs",
-         onResponse({ response }) {
-            // if we got a valid response
-            if(response._data !== null && response._data !== undefined) {
-               // stringify the obj and set it in cache
-               userPrefsJSON = response._data;
-               localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-               setClientTheme();
-            }
-         },
-      });
-   }
+   // lastly, if no prefs in cache and we have a UUID, get from DB
+   await useFetch("/api/user/getPrefs", {
+      method: "post",
+      body: {
+         key: currentUUID,
+      },
+      key: "prefs",
+      onResponse({ response }) {
+         // if we got a valid response
+         if(response._data !== null && response._data !== undefined) {
+            // stringify the obj and set it in cache
+            userPrefsJSON = response._data;
+            localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+            setClientTheme();
+         }
+      },
+   });
 }
 
 
