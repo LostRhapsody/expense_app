@@ -1,7 +1,16 @@
 <script setup lang="ts">
+/*=============================================
+Imports
+=============================================*/
+import checkUUID from './utils/checkUUID';
 import getUserPrefsJSON from './utils/getUserPrefsJSON';
 
-////// User Variables and Constants //////////////////////
+/*=============================================
+Variable Init Begins
+=============================================*/
+//
+// User data and for auth
+//
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 const userAvatar = ref("");
@@ -9,19 +18,14 @@ const route = useRoute()
 let userEmail = "";
 let userName = "";
 
-////// Authentication Functions //////////////////////
-async function handleSignIn() {
-   await signIn();
-}
-
-async function handleSignOut() {
-   await signOut();
-}
-
-////// Toast Functions //////////////////////
+//
+// For Notifications
+//
 const toast = useToast();
 
-////// Display Control Variables //////////////////////
+//
+// For Themes
+//
 const colorMode = useColorMode();
 const isDark = computed({
    get() {
@@ -31,13 +35,34 @@ const isDark = computed({
       colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
    },
 });
+
+interface themeType {
+   id: number;
+   label: string;
+   path: string;
+}
+
+const themes: themeType[] = [
+   { id: 1, label: "Default", path: "" },
+   { id: 2, label: "Glassy", path: "glassy_gradient.css" },
+   { id: 3, label: "Warm-Hot", path: "warm_hot.css" },
+];
+const themeSelected = ref();
+
+//
+// For Display
+//
 const isNavOpen = ref(false);
 const isPrefrencesOpen = ref(false);
+// TODO - we don't have a theme modal anymore. Remove this wherever we can.
 const isThemeModalOpen = ref(false);
 const isSettingsModalOpen = ref(false);
 const isConfirmClearUserDataOpen = ref(false);
 const currentSettingMenu = ref("display");
 
+//
+// For Navigation
+//
 const navBarLinks = [
    {
       label: "Home",
@@ -64,34 +89,6 @@ const navBarLinks = [
       id: "more",
    },
 ];
-
-// a computed property. Set the parent route of the current page to active
-const isParentActive = computed(() => {
-
-   // all our top level parent routes
-   const parentRoutes = ["/grocery","/budgeting"];
-
-   let match = false;
-   let matchedRoute = "";
-
-   // loop through parent routes, compare against current.
-   // if current route starts with a parent route, it's active
-   for (let index = 0; index < parentRoutes.length; index++) {
-
-      const thisRoute = parentRoutes[index];
-
-      // check if the routes match/starts with parent route
-      match = route.matched.some((route) => route.path.startsWith(thisRoute));
-
-      // if match return the route and true
-      if(match) {
-         matchedRoute = thisRoute;
-         return [matchedRoute, match];
-      }
-   }
-   // if nothing matches, return false
-   return ["",false];
-});
 
 
 const links = [
@@ -173,19 +170,33 @@ const links = [
    },
 ];
 
-////// Themes //////////////////////
-interface themeType {
-   id: number;
-   label: string;
-   path: string;
-}
+// a computed property. Set the parent route of the current page to active
+const isParentActive = computed(() => {
 
-const themes: themeType[] = [
-   { id: 1, label: "Default", path: "" },
-   { id: 2, label: "Glassy", path: "glassy_gradient.css" },
-   { id: 3, label: "Warm-Hot", path: "warm_hot.css" },
-];
-const themeSelected = ref();
+   // all our top level parent routes
+   const parentRoutes = ["/grocery","/budgeting"];
+
+   let match = false;
+   let matchedRoute = "";
+
+   // loop through parent routes, compare against current.
+   // if current route starts with a parent route, it's active
+   for (let index = 0; index < parentRoutes.length; index++) {
+
+      const thisRoute = parentRoutes[index];
+
+      // check if the routes match/starts with parent route
+      match = route.matched.some((route) => route.path.startsWith(thisRoute));
+
+      // if match return the route and true
+      if(match) {
+         matchedRoute = thisRoute;
+         return [matchedRoute, match];
+      }
+   }
+   // if nothing matches, return false
+   return ["",false];
+});
 
 useHead({
    link: [
@@ -211,6 +222,24 @@ useHead({
       },
    ],
 });
+
+/*=============================================
+Functions Begin
+=============================================*/
+
+/**
+ * Handles sign in for OAuth
+ */
+ async function handleSignIn() {
+   await signIn();
+}
+
+/**
+ * Handles sign out for OAuth
+ */
+async function handleSignOut() {
+   await signOut();
+}
 
 /**
  * Check if UUID is set on client
@@ -259,31 +288,41 @@ async function postUUIDCallback() {
       alert("The client token failed to get set correctly.");
       return;
    }
-
-   // we can now set our user preferences, since the UUID is set
-   setUserPrefs();
 }
 
 /**
- * Sets the user's preferences from the cache or DB
- * Creates a new record in the db if never set
+ * Get's the user prefs from the DB
+ * If not logged in, defaults to cache
  */
-async function setUserPrefs() {
+async function getUserPrefs() {
    const currentUUID = localStorage.getItem("uuid");
    const userPrefsFromCache = localStorage.getItem("budgie_prefs");
+   const isOnline = useOnline();
    let userPrefsJSON = {};
 
-   // if there is anything in the cache, we'll use that.
-   // we're done here if so.
-   if(userPrefsFromCache !== null && userPrefsFromCache !== undefined) {
-      setClientTheme();
-      return;
+   // if UUID is good and we're online, we can get from the db
+   if(checkUUID(currentUUID) && isOnline.value) {
+      await useFetch("/api/user/getPrefs", {
+         method: "post",
+         body: {
+            key: currentUUID,
+         },
+         key: "prefs",
+         onResponse({ response }) {
+            // if we got a valid response
+            if(response._data !== null && response._data !== undefined) {
+               // stringify the obj and set it in cache
+               userPrefsJSON = response._data;
+               localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+               return;
+            }
+         },
+      });
    }
 
-   // if cache is empty...
-
-   // if the UUID is not set, we can't get from db, so set to defaults
-   if (currentUUID === null || currentUUID === undefined) {
+   // if the UUID is not set, or, we're not online, we can't get from db
+   // instead, retrieve from cache. If nothing in cache, we will set to default
+   if (!checkUUID(currentUUID) || !isOnline.value) {
       // tries to retrieve from cache, if not, sets to default
       userPrefsJSON = getUserPrefsJSON();
       // set the prefs in cache
@@ -291,61 +330,25 @@ async function setUserPrefs() {
       // no need to set client theme as we just set it to default
       return;
    }
-
-   // lastly, if no prefs in cache and we have a UUID, get from DB
-   await useFetch("/api/user/getPrefs", {
-      method: "post",
-      body: {
-         key: currentUUID,
-      },
-      key: "prefs",
-      onResponse({ response }) {
-         // if we got a valid response
-         if(response._data !== null && response._data !== undefined) {
-            // stringify the obj and set it in cache
-            userPrefsJSON = response._data;
-            localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-            setClientTheme();
-         }
-      },
-   });
 }
 
 
 /**
- * This logic runs AFTER the UUID has been set in the cache
- * if theme is not in cache, requests it from the db
- * if theme is in cache, we set the theme on the client
+ * Should run after UUID and user prefs are set
+ * Pulls from the cache and sets the them, nothing else
  */
 async function setClientTheme() {
+
    // get the userPrefs from cache
    const userPrefs = getUserPrefsJSON();
    let theme = "Default";
 
-   // if userPrefs.themeName is set, use it (this will be whatever is in)
-   // the cache, of Default.
+   // set theme to whatever is in the cache
+   // if for some reason the cache doesn't have a theme (should not happen),
+   // theme has already been set to default
    if(userPrefs.themeName !== null && userPrefs.themeName !== undefined) {
-      theme = userPrefs.themeName;
+      theme = userPrefs.themeName;      
    }
-
-   // if the userPrefs doesn't contain a userId BUT the userEmail is set, let's
-   // toss this cached object and retrieve it from the db instead.
-   // if no email is set, we're not logged in and can't do anything
-   if((userPrefs.userId === null || userPrefs.userId === undefined) && userEmail !== null && userEmail !== "") {
-      // remove the prefs from the cache
-      localStorage.removeItem("budgie_prefs");
-      // check the uuid in the cache
-      const uuid = localStorage.getItem("uuid");
-      if(uuid !== null) {
-         // if uuid is set, we can retrieve user preferences i.e. theme
-         setUserPrefs();
-         return;
-      } else {
-         // if uuid is not set, have to "restart" the user loop by setting the uuid in the server
-         postUUID(userEmail);
-      }
-      return;
-   }   
 
    // Always remove the theme tag before setting a new one
    removeThemeTag();
@@ -378,33 +381,38 @@ function removeThemeTag() {
  * set's the user's theme preference in the db and calls setClientTheme
  * @param theme theme we're setting
  */
-async function setTheme(theme: string) {
+async function setUserPrefsThemeField(theme: string) {
    const key = localStorage.getItem("uuid");
+   const isOnline  = useOnline();
 
    // get the userPrefs from cache
    let userPrefs = getUserPrefsJSON();
+
    // set the theme in memory
    userPrefs.themeName = theme;
+
    // set the prefs in cache
    localStorage.setItem("budgie_prefs", JSON.stringify(userPrefs));
 
    // set the theme on the client
    setClientTheme();
 
-   // if key is null, we're offline/not logged in
-   // so just set the theme on the client and dip
-   if (key === null) {
+   // if the UUID is bad, or we're not online,
+   // return because we can't set it in the db
+   if(!checkUUID(key) || !isOnline.value){
       return;
    }
 
-   // set the user prefs in the db
-   await $fetch("/api/user/setPrefs", {
-      method: "post",
-      body: {
-         key: key,
-         prefs: userPrefs,
-      },
-   });
+   // if our UUID is good and we're online, update the prefs in the DB
+   if(checkUUID(key) && isOnline.value){
+      await $fetch("/api/user/setPrefs", {
+         method: "post",
+         body: {
+            key: key,
+            prefs: userPrefs,
+         },
+      });
+   }
 }
 
 /**
@@ -453,12 +461,12 @@ function onThemeSelect(option: themeType) {
       option.path !== undefined &&
       option.path !== ""
    ) {
-      setTheme(option.path);
+      setUserPrefsThemeField(option.path);
       isThemeModalOpen.value = false;
       return;
    } else if (option.label === "Default") {
       // if Default, we pass the label instead
-      setTheme(option.label);
+      setUserPrefsThemeField(option.label);
       isThemeModalOpen.value = false;
       return;
    }
@@ -470,7 +478,8 @@ function onThemeSelect(option: themeType) {
 }
 
 /**
- * Clears the user's data
+ * TODO - this no longer works.
+ * Update it to clear data from the new db (supabase) and the cache
  */
 async function clearUserData() {
    isConfirmClearUserDataOpen.value = false;
@@ -492,8 +501,11 @@ async function clearUserData() {
    });
 }
 
-// INIT logged in logic
-if (loggedIn.value) {
+/**
+ * Uses the data object from sign in to 
+ * set the user's email, name, and avatar IN CLIENT MEMORY (nothing else)
+ */
+function setClientUserData(){
    // pull the user's email and avatar
    if (data !== null && data !== undefined) {
       if (data.value !== null && data.value !== undefined) {
@@ -514,29 +526,32 @@ if (loggedIn.value) {
          }
       }
    }
-
-   // Client ONLY processes (don't run on server) 
-   // (we're logged in here)
-   if (process.client) {
-      // check the uuid
-      if(isUUIDSet()){
-         // if it is set, we can retrieve user preferences i.e. theme
-         // this triggers setClientTheme
-         setUserPrefs();
-      } else {
-         // if it is not set, we'll ask the db for one
-         // this triggers setUserPrefs and setClientTheme
-         postUUID(userEmail);
-      }
-   }
-} else {
-   if (process.client) {
-      // this is if it's stored in cache only, not logged in.
-      setUserPrefs();
-   }  
 }
 
-// These events happen AFTER app is mounted (DOM is loaded)
+
+/*=============================================
+Main Logic Begins
+=============================================*/
+if (loggedIn.value && process.client) {
+   // when logged in, we can grab data from the sign in event:
+   setClientUserData();   
+
+   // If UUID has not been set yet, set it
+   if(!isUUIDSet()){         
+      postUUID(userEmail);         
+   }
+} 
+
+// This runs if we are logged in or not
+if (process.client) {
+   getUserPrefs();
+   setClientTheme();
+}  
+
+/*=============================================
+Mounted Logic Begins
+Happens AFTER app is mounted (DOM is loaded)
+=============================================*/
 onMounted(async () => {
    await nextTick();
    /**

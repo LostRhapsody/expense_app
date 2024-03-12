@@ -24,6 +24,7 @@ export default defineNuxtConfig({
       '@nuxt/ui',
       '@sidebase/nuxt-auth',
       '@vite-pwa/nuxt',
+      '@vueuse/nuxt',
    ],
    pwa: {
       mode: "production",

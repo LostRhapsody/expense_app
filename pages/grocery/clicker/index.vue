@@ -77,6 +77,8 @@ async function setBudget() {
    userPrefs.clickerBudget = budget.value;
    // set it back to the cache
    localStorage.setItem("budgie_prefs", JSON.stringify(userPrefs));
+   //if uuid is set, update the user's budget in the DB
+   // TODO  
 }
 
 /**
