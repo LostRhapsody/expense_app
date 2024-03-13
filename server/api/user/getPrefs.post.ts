@@ -1,4 +1,5 @@
 import { createSupabaseClient } from "~/utils/supabase";
+import type { UserRef } from "~/types/types"
 
 /**
  * Checks the db for a user with the given email
@@ -10,11 +11,11 @@ export default defineEventHandler(async (event) => {
    const config = useRuntimeConfig();
    const supabase = createSupabaseClient(config);
 
-   let userPrefs = {};
+   let userPrefs:UserRef;
 
    // error handling
    if (!checkValidKey(key)) {
-      throw new Error("No key provided");
+      throw new Error("Invalid key provided");
    }
 
    // get the user pref record
@@ -23,7 +24,7 @@ export default defineEventHandler(async (event) => {
    .select('userId, themeName, createdAt, clickerBudget')
    .eq('userId', key);   
    if(error){
-      throw new Error("Error getting user : " + error);
+      throw new Error("Error getting user : " + JSON.stringify(error));
    }
 
    // if no user found

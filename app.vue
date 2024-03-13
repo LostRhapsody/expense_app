@@ -12,7 +12,7 @@ import axios from 'axios';
 
 // types
 import type { UserPrefs } from './types/types';
-import { get } from '@vueuse/core';
+
 /*=============================================
 Variable Init Begins
 =============================================*/
@@ -62,8 +62,6 @@ const themeSelected = ref();
 //
 const isNavOpen = ref(false);
 const isPrefrencesOpen = ref(false);
-// TODO - we don't have a theme modal anymore. Remove this wherever we can.
-const isThemeModalOpen = ref(false);
 const isSettingsModalOpen = ref(false);
 const isConfirmClearUserDataOpen = ref(false);
 const currentSettingMenu = ref("display");
@@ -273,7 +271,6 @@ async function postUUID(email: string) {
       body: {
          value: email,
       },
-      key: "uuid",
       onResponse({ response }) {
          localStorage.setItem("uuid", response._data);
          postUUIDCallback();
@@ -305,7 +302,7 @@ async function postUUIDCallback() {
 async function getUserPrefs() {
    const currentUUID = localStorage.getItem("uuid");
    const isOnline = useOnline();
-   
+
    // grab whatever we have in the cache
    // IMPORTANT - don't run through getUserPrefsJSON, we don't want to automatically set defaults
    // otherwise, the cache will always be 'newer' than the db
@@ -313,52 +310,57 @@ async function getUserPrefs() {
    let userPrefsJSON:UserPrefs;
 
    // make it into an object if there is anything in the cache
-   if(userPrefs !== null && userPrefs !== undefined && userPrefs.length < 1) {
+   if(userPrefs !== null && userPrefs !== undefined && userPrefs.length > 0) {
       userPrefsJSON = JSON.parse(userPrefs);
    }
 
    // if UUID is good and we're online, we can get from the db
    if(checkUUID(currentUUID) && isOnline.value) {
-      await useFetch("/api/user/getPrefs", {
-         method: "post",
-         body: {
-            key: currentUUID,
-         },
-         key: "prefs",
-         onResponse({ response }) {
+      await axios.post("/api/user/getPrefs", {         
+         key: currentUUID,
+      }).then((response) => {
 
-            // if we got a valid response
-            if(response._data !== null && response._data !== undefined) {
-
-               // if the cache is empty, set it to the db
-               if(userPrefsJSON === null || userPrefsJSON === undefined) {
-                  userPrefsJSON = response._data;
-                  localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-                  return;
-               }
-
-               // if cache is not empty, verify which data is newer, database or cache
-               if(getNewestTimestamp(userPrefsJSON.createdAt, response._data.createdAt) === "cache") {
-                  // if cache is newer, update the db with the cache
-                  setUserPrefs(userPrefsJSON);
-                  return;
-               } else {
-                  // if db is newer, update the cache with the db value
-                  userPrefsJSON = response._data;
-                  localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-                  return;
-               }
-            } else {
-               // if we did not get a valid response
-
-               // if cache is empty, set it to default
-               if(userPrefsJSON === null || userPrefsJSON === undefined) {
-                  userPrefsJSON = getUserPrefsJSON();
-               }
+         // if we got a valid response
+         if(response.data !== null && response.data !== undefined) {
+            // if the cache is empty, set it to the db
+            if(userPrefsJSON === null || userPrefsJSON === undefined) {
+               userPrefsJSON = response.data;
                localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
                return;
             }
-         },
+
+            let newestTimestamp = getNewestTimestamp(
+               userPrefsJSON.createdAt, 
+               response.data.createdAt
+            );
+
+            switch (newestTimestamp) {
+               case "cache":
+                  // if cache is newer, update the db with the cache
+                  setUserPrefs(userPrefsJSON);
+                  return;
+               case "equal":
+                  // if they are the same timestamp, do nothing
+                  return;
+               case "database":
+                  // if db is newer, update the cache with the db value
+                  userPrefsJSON = response.data;
+                  localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+                  return;           
+               default:
+                  log("error in getNewestTimestamp");
+                  break;
+            }
+         } else {
+            // if we did not get a valid response
+
+            // if cache is empty, set it to default
+            if(userPrefsJSON === null || userPrefsJSON === undefined) {
+               userPrefsJSON = getUserPrefsJSON();
+            }
+            localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+            return;
+         }
       });
    }
 
@@ -385,6 +387,8 @@ async function setUserPrefs(cachePrefs:UserPrefs){
 
    // update timestamp
    cachePrefs.createdAt = new Date().toISOString();
+   // update timestamp in cache too
+   localStorage.setItem("budgie_prefs", JSON.stringify(cachePrefs));
 
    // if our UUID is bad, or we're not online,
    // return because we can't set it in the db
@@ -395,11 +399,8 @@ async function setUserPrefs(cachePrefs:UserPrefs){
    // if our UUID is good and we're online, update the prefs in the DB
    if(checkUUID(key) && isOnline.value){
       await axios.post("/api/user/setPrefs", {
-         method: "post",
-         body: {
-            key: key,
-            prefs: cachePrefs,
-         },
+         key: key,
+         prefs: cachePrefs,
       });
    }
 }
@@ -481,14 +482,6 @@ async function setUserPrefsThemeField(theme: string) {
 }
 
 /**
- * Opens the theme modal
- */
-function openThemeModal() {
-   isThemeModalOpen.value = true;
-   isPrefrencesOpen.value = false;
-}
-
-/**
  * Opens the settings modal, closes the preferences slideout
  */
 function openSettingsModal() {
@@ -517,7 +510,6 @@ function onThemeSelect(option: themeType) {
    // if chosen theme is already set, do nothing
    const userPrefs = getUserPrefsJSON();
    if (userPrefs.themeName === option.label || userPrefs.themeName === option.path) {
-      isThemeModalOpen.value = false;
       return;
    }
 
@@ -527,12 +519,10 @@ function onThemeSelect(option: themeType) {
       option.path !== ""
    ) {
       setUserPrefsThemeField(option.path);
-      isThemeModalOpen.value = false;
       return;
    } else if (option.label === "Default") {
       // if Default, we pass the label instead
       setUserPrefsThemeField(option.label);
-      isThemeModalOpen.value = false;
       return;
    }
 
@@ -776,11 +766,12 @@ onMounted(async () => {
                   icon="i-heroicons-cog-6-tooth-solid"
                   @click="openSettingsModal"
                />
-               <UButton
+               <!-- Re-implement this when all the data mappings are done -->
+               <!-- <UButton
                   label="Clear User Data"
                   color="red"
                   @click="isConfirmClearUserDataOpen = true"
-               />
+               /> -->
             </div>
          </UCard>
       </USlideover>
