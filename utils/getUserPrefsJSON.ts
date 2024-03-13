@@ -1,3 +1,4 @@
+import type { UserPrefs } from "../types/types";
 /**
  * Checks the client cache for user preferences and validates it
  * @returns the user preferences as a JSON object
@@ -8,12 +9,10 @@ export default function getUserPrefsJSON() {
 
    // default userPrefs and theme name
    // IMPORTANT! Update this anytime user prefs object/schema is updated
-   let userPrefs:{
-      themeName:string
-      clickerBudget:number
-   } = {
+   let userPrefs:UserPrefs = {
       themeName: "Default",
-      clickerBudget: 100
+      clickerBudget: 100,
+      createdAt: new Date().toISOString()
    };
 
    // parse cache into JSON object

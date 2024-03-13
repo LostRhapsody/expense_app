@@ -2,9 +2,17 @@
 /*=============================================
 Imports
 =============================================*/
+// functions
+import getNewestTimestamp from './utils/checkTimestamp';
 import checkUUID from './utils/checkUUID';
 import getUserPrefsJSON from './utils/getUserPrefsJSON';
 
+// packages
+import axios from 'axios';
+
+// types
+import type { UserPrefs } from './types/types';
+import { get } from '@vueuse/core';
 /*=============================================
 Variable Init Begins
 =============================================*/
@@ -296,9 +304,18 @@ async function postUUIDCallback() {
  */
 async function getUserPrefs() {
    const currentUUID = localStorage.getItem("uuid");
-   const userPrefsFromCache = localStorage.getItem("budgie_prefs");
    const isOnline = useOnline();
-   let userPrefsJSON = {};
+   
+   // grab whatever we have in the cache
+   // IMPORTANT - don't run through getUserPrefsJSON, we don't want to automatically set defaults
+   // otherwise, the cache will always be 'newer' than the db
+   let userPrefs = localStorage.getItem("budgie_prefs");
+   let userPrefsJSON:UserPrefs;
+
+   // make it into an object if there is anything in the cache
+   if(userPrefs !== null && userPrefs !== undefined && userPrefs.length < 1) {
+      userPrefsJSON = JSON.parse(userPrefs);
+   }
 
    // if UUID is good and we're online, we can get from the db
    if(checkUUID(currentUUID) && isOnline.value) {
@@ -309,10 +326,35 @@ async function getUserPrefs() {
          },
          key: "prefs",
          onResponse({ response }) {
+
             // if we got a valid response
             if(response._data !== null && response._data !== undefined) {
-               // stringify the obj and set it in cache
-               userPrefsJSON = response._data;
+
+               // if the cache is empty, set it to the db
+               if(userPrefsJSON === null || userPrefsJSON === undefined) {
+                  userPrefsJSON = response._data;
+                  localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+                  return;
+               }
+
+               // if cache is not empty, verify which data is newer, database or cache
+               if(getNewestTimestamp(userPrefsJSON.createdAt, response._data.createdAt) === "cache") {
+                  // if cache is newer, update the db with the cache
+                  setUserPrefs(userPrefsJSON);
+                  return;
+               } else {
+                  // if db is newer, update the cache with the db value
+                  userPrefsJSON = response._data;
+                  localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
+                  return;
+               }
+            } else {
+               // if we did not get a valid response
+
+               // if cache is empty, set it to default
+               if(userPrefsJSON === null || userPrefsJSON === undefined) {
+                  userPrefsJSON = getUserPrefsJSON();
+               }
                localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
                return;
             }
@@ -332,6 +374,35 @@ async function getUserPrefs() {
    }
 }
 
+/**
+ * Sets the user prefs in the database
+ * updates the timestamp while we're here
+ * @param cachePrefs the user prefs we're setting
+ */
+async function setUserPrefs(cachePrefs:UserPrefs){
+   const key = localStorage.getItem("uuid");
+   const isOnline  = useOnline();
+
+   // update timestamp
+   cachePrefs.createdAt = new Date().toISOString();
+
+   // if our UUID is bad, or we're not online,
+   // return because we can't set it in the db
+   if(!checkUUID(key) || !isOnline.value){
+      return;
+   }
+
+   // if our UUID is good and we're online, update the prefs in the DB
+   if(checkUUID(key) && isOnline.value){
+      await axios.post("/api/user/setPrefs", {
+         method: "post",
+         body: {
+            key: key,
+            prefs: cachePrefs,
+         },
+      });
+   }
+}
 
 /**
  * Should run after UUID and user prefs are set
@@ -405,13 +476,7 @@ async function setUserPrefsThemeField(theme: string) {
 
    // if our UUID is good and we're online, update the prefs in the DB
    if(checkUUID(key) && isOnline.value){
-      await $fetch("/api/user/setPrefs", {
-         method: "post",
-         body: {
-            key: key,
-            prefs: userPrefs,
-         },
-      });
+      setUserPrefs(userPrefs);
    }
 }
 
@@ -482,23 +547,23 @@ function onThemeSelect(option: themeType) {
  * Update it to clear data from the new db (supabase) and the cache
  */
 async function clearUserData() {
-   isConfirmClearUserDataOpen.value = false;
-   const key = localStorage.getItem("uuid");
+   // isConfirmClearUserDataOpen.value = false;
+   // const key = localStorage.getItem("uuid");
 
-   await useFetch("/api/user/clearUserData", {
-      method: "post",
-      body: {
-         key: key + "clearRecords",
-         value: key,
-      },
-      onResponse({ response }) {
-         isPrefrencesOpen.value = false;
-         toast.add({
-            title: response._data.message,
-            callback: location.reload(),
-         });
-      },
-   });
+   // await useFetch("/api/user/clearUserData", {
+   //    method: "post",
+   //    body: {
+   //       key: key + "clearRecords",
+   //       value: key,
+   //    },
+   //    onResponse({ response }) {
+   //       isPrefrencesOpen.value = false;
+   //       toast.add({
+   //          title: response._data.message,
+   //          callback: location.reload(),
+   //       });
+   //    },
+   // });
 }
 
 /**
@@ -527,7 +592,6 @@ function setClientUserData(){
       }
    }
 }
-
 
 /*=============================================
 Main Logic Begins
