@@ -226,6 +226,10 @@ useHead({
          href: "/maskable-icon-512x512.png",
          color: "#FFFFFF",
       },
+      {
+         rel: "canonical",
+         href: "https://budgetbudgie.app",
+      }
    ],
 });
 
