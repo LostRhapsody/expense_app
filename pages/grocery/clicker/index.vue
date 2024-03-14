@@ -1,4 +1,25 @@
 <script setup lang="ts">
+
+/* TODO
+all the todos lol
+need to finish making updates to anywhere I'm using the old userArray structure
+to the new clickerTallies structure
+*/
+
+
+/*=============================================
+Imports
+=============================================*/
+
+// types
+import type { ClickerTallyType } from '~/types/types';
+
+// packages
+import axios from 'axios';
+
+// config
+const config = useRuntimeConfig();
+
 // show/hide things
 const showAlert = ref(false);
 const showList = ref(false);
@@ -20,16 +41,7 @@ const onPlaying = ref(false);
 // color of counter
 const color = ref("white");
 
-// stores grocery trips in memory
-interface userArrayType {
-   count: number;
-   id: number;
-   date: string;
-   budget: number;
-   usedBudget: number;
-}
-
-var userArray: userArrayType[];
+var clickerTallies: ClickerTallyType[];
 
 // total of all grocery trips
 const total = ref(0);
@@ -97,6 +109,38 @@ async function getBudget() {
 }
 
 /**
+ * Creates a new query record and saves it to the cache/db
+ */
+async function createTally(tally:ClickerTallyType){
+   const key = localStorage.getItem("uuid");
+   const isOnline = useOnline();
+   
+   // update the clicker tallies in the cache
+   // not really...
+   localStorage.setItem("clickerTallies", JSON.stringify(tally));
+
+   // if we're not online or the key is invalid, return
+   if(!checkUUID(key) || !isOnline.value) return;
+
+   // create a new UUID based on the date and the user's key
+   // TODO - this should move to wherever we update the array...
+   // not here.
+   await axios.post("/api/grocery/createClickerTally", {
+      value: tally.dateCreated + key
+   }).then((response) => {
+      log(response);
+      // tally.tallieId = response.data.id;
+   });
+
+   // send the current clicker tally to the db
+   await axios.post("/api/grocery/createClickerTally", {
+      tally: tally
+   }).then((response) => {
+      log(response);
+   });
+}
+
+/**
  * Stores the user's array of data (previous history and current count)
  * @param key the key used to store this value
  */
@@ -108,7 +152,7 @@ async function setRecord() {
       body: {
          key: key + "groceryRecords",
          value: {
-            list: userArray,
+            list: clickerTallies,
          },
       },
    });
@@ -143,7 +187,7 @@ async function getRecords() {
       toast.add({ title: "Error: " + records.message });
    } else if (typeof records.list === "object") {
       if (records.list.length > 0) {
-         userArray = records.list;
+         clickerTallies = records.list;
          showTallies.value = true;
          updateTotal();
       }
@@ -159,14 +203,14 @@ function updateTotal() {
    budgetTotal.value = 0;
 
    // if empty, set everything to zero.
-   if (userArray === undefined || userArray.length == 0) {
+   if (clickerTallies === undefined || clickerTallies.length == 0) {
       totalDisplay.value = formatCurrency(total.value);
       percentageOfTotalBudget.value = 0;
       return;
    }
 
-   userArray.forEach((element) => {
-      total.value += element.count;
+   clickerTallies.forEach((element) => {
+      total.value += element.amount;
       budgetTotal.value += element.budget;
    });
    totalDisplay.value = formatCurrency(total.value);
@@ -180,31 +224,63 @@ function updateTotal() {
 }
 
 /**
- * Updates the userArray with the current counter
+ * Updates the clickerTally array with the current counter
  * @param mode add mode: resets counter and pushes to array
  */
 function updateUserArray(mode: string) {
+   let key = localStorage.getItem("uuid");
+   let tallieId;
+   const isOnline = useOnline();
+   if (key === null || key === undefined) {
+      // if it's guest we won't store this in the DB till it's updated
+      // TODO - a function that, when the UUID is finally set, takes
+      // all the guest records and updates them with the UUID
+      key = "guest";
+   }
+
+   // if you're logged in and online, create a list UUID
+   if(key !== "guest" && isOnline.value){
+      axios.post("/api/grocery/createTallyUUID", {
+         value: currentDate + key
+      }).then((response) => {
+         log(response);
+         // tallieId = response.data.id;
+      });
+   }
+
+   if(tallieId === null || tallieId === undefined){
+      // just gonna fudge it for now.
+      // TODO - if the user is logged in, and the UUID is set, we should go through
+      // and replace all these with real tallieUUIDs.
+      tallieId = currentDate + key;
+   }
+
+   // TODO - find out if the we wait for the response from the above block before running
+   // the block below. It's important.
+
    if (mode === "add") {
       if (count.value <= 0) return;
 
       // if array is undefined, create the first element, else push new element
-      if (userArray === undefined || userArray === null) {
-         userArray = [
+      if (clickerTallies === undefined || clickerTallies === null) {
+         clickerTallies = [
             {
-               count: count.value,
-               id: 1,
-               date: currentDate,
+               userId: key,
+               tallieId: tallieId,
+               amount: count.value,
                budget: budget.value,
-               usedBudget: Math.round(percentageOfBudget.value),
+               budgetUsed: Math.round(percentageOfBudget.value),
+               dateCreated: new Date().toISOString(),
             },
          ];
       } else {
-         userArray.push({
-            count: count.value,
-            id: userArray.length + 1,
-            date: currentDate,
+         clickerTallies.push({
+            userId: key,
+            tallieId: tallieId,
+            amount: count.value,
             budget: budget.value,
-            usedBudget: Math.round(percentageOfBudget.value),
+            budgetUsed: Math.round(percentageOfBudget.value),
+            dateCreated: new Date().toISOString(),
          });
       }
 
@@ -215,7 +291,7 @@ function updateUserArray(mode: string) {
    updateTotal();
 
    // if array is empty, don't show tallies
-   if (userArray !== undefined && userArray.length != 0) {
+   if (clickerTallies !== undefined && clickerTallies.length != 0) {
       showTallies.value = true;
    } else {
       showTallies.value = false;
@@ -223,7 +299,8 @@ function updateUserArray(mode: string) {
 
    // set record in DB if logged in
    if (loggedIn.value) {
-      setRecord();
+      // oh shit no don't do that. That's bad for sure.
+      // setRecord();
    }
 }
 
@@ -232,7 +309,7 @@ function updateUserArray(mode: string) {
  * @param index the index of the item to delete from the array
  */
 function deleteItem(index: number) {
-   userArray.splice(index, 1);
+   clickerTallies.splice(index, 1);
    updateUserArray("delete");
 }
 
@@ -511,9 +588,11 @@ const links = getBreadcrumbs([
             <hr class="my-2" />
             <!-- Past tallies list -->
             <ol>
+               <!-- commented out for now as it will error out while
+                  re-working the tally object structure
                <li
                   v-if="showTallies"
-                  v-for="(item, index) in userArray"
+                  v-for="(item, index) in clickerTallies"
                   :key="item.id"
                   class="text-lg my-4 flex justify-around w-full dark:border-gray-800 border-gray-200 border-solid border-2 py-1 rounded-lg dark:hover:bg-gray-700 hover:bg-gray-100"
                >
@@ -544,7 +623,7 @@ const links = getBreadcrumbs([
                   class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700"
                >
                   No past tallies
-               </li>
+               </li> -->
             </ol>
             <hr class="my-2" />
             <p class="text-xl">TOTAL: {{ totalDisplay }}</p>
