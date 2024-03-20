@@ -1,5 +1,5 @@
 import { createSupabaseClient } from "~/utils/supabase";
-import type { UserRef } from "~/types/types"
+import type { UserPrefs } from "~/types/types"
 
 /**
  * Checks the db for a user with the given email
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
    const config = useRuntimeConfig();
    const supabase = createSupabaseClient(config);
 
-   let userPrefs:UserRef;
+   let userPrefs:UserPrefs;
 
    // error handling
    if (!checkValidKey(key)) {

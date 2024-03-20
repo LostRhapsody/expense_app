@@ -401,7 +401,7 @@ async function setUserPrefs(cachePrefs:UserPrefs){
    }
 
    // if our UUID is good and we're online, update the prefs in the DB
-   if(checkUUID(key) && isOnline.value){
+   if(checkUUID(key) && isOnline.value && loggedIn.value){
       await axios.post("/api/user/setPrefs", {
          key: key,
          prefs: cachePrefs,
@@ -480,7 +480,7 @@ async function setUserPrefsThemeField(theme: string) {
    }
 
    // if our UUID is good and we're online, update the prefs in the DB
-   if(checkUUID(key) && isOnline.value){
+   if(checkUUID(key) && isOnline.value && loggedIn.value){
       setUserPrefs(userPrefs);
    }
 }

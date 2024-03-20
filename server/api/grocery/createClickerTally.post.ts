@@ -3,16 +3,19 @@ import { createSupabaseClient } from "~/utils/supabase";
 export default defineEventHandler(async (event) => {  
   try {
     const body = await readBody(event);
-    const tally = body.data;
+    const tally = body.tally;
     const config = useRuntimeConfig();
     const supabase = createSupabaseClient(config);
 
     // Insert the new record into the clickerTallies table
     const { data, error } = await supabase
       .from("clickerTallies")
-      .insert(tally);
-
+      .insert([
+         tally
+      ])
+      .select();      
     if (error) {
+      console.log(error);
       throw new Error("Failed to create clicker tally record");
     }
 

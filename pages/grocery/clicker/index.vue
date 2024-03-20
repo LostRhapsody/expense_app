@@ -12,10 +12,11 @@ Imports
 =============================================*/
 
 // types
-import type { ClickerTallyType } from '~/types/types';
+import type { ClickerTallyType, UserPrefs } from '~/types/types';
 
 // packages
 import axios from 'axios';
+import getNewestTimestamp from '~/utils/checkTimestamp';
 
 // config
 const config = useRuntimeConfig();
@@ -80,29 +81,125 @@ const sidebar = [
 ];
 
 /**
+ * Used to call setBudget when you can't pass
+ * the budget value directly 
+ */
+function setBudgetOverload(newBudget: number) {
+   let userPrefs = getUserPrefsJSON();
+   userPrefs.clickerBudget = newBudget;
+   setBudget(userPrefs);
+}
+
+/**
  * set's the user's budget to the new value in the cache
  */
-async function setBudget() {
-   // retrieve from the cache from user prefs
-   let userPrefs = getUserPrefsJSON();
-   // update to the new budget
-   userPrefs.clickerBudget = budget.value;
+async function setBudget(userPrefs: UserPrefs) {
+   const key = localStorage.getItem("uuid");
+   const isOnline  = useOnline();
+
+   // update timestamp
+   userPrefs.createdAt = new Date().toISOString();
    // set it back to the cache
    localStorage.setItem("budgie_prefs", JSON.stringify(userPrefs));
+
+   // if our UUID is bad, or we're not online,
+   // return because we can't set it in the db
+   if(!checkUUID(key) || !isOnline.value){
+      return;
+   }
+
    //if uuid is set, update the user's budget in the DB
-   // TODO  
+   if(isOnline.value && checkUUID(key) && loggedIn.value){
+      await axios.post("/api/user/setPrefs", {
+         key: key,
+         prefs: userPrefs
+      }).then((response) => {
+      });
+   }
+
+   showEditBudget.value = false;
 }
 
 /**
   * Get's the user's saved budget from the cache
  */
 async function getBudget() {
-   // retrieve from the cache from user prefs
-   const userPrefs = getUserPrefsJSON();
-   // validate the value is a number
+   const key = localStorage.getItem("uuid");
+   const isOnline  = useOnline();
+
+   let userPrefsString = localStorage.getItem("budgie_prefs");
+   let userPrefs:UserPrefs;
+
+   // make it into an object if there is anything in the cache
+   if(userPrefsString !== null && userPrefsString !== undefined){
+      userPrefs = JSON.parse(userPrefsString);
+   }
+
+   // if online and UUID is good retrieve from DB
+   if(isOnline.value && checkUUID(key) && loggedIn.value){
+      await axios.post("/api/user/getPrefs", {
+         key: key
+      }).then((response) => {
+
+         // if response is valid
+         if(response.data.prefs !== null && response.data.prefs !== undefined){
+
+            // if cache is empty, set it to the db value
+            // there will be nothing to compare, so skip the rest
+            if(userPrefs === null || userPrefs === undefined){
+               userPrefs = response.data.prefs;
+               localStorage.setItem("budgie_prefs", JSON.stringify(userPrefs));
+               budget.value = userPrefs.clickerBudget;
+               return;
+            }
+         
+            // get latest timestamp
+            let newestTimestamp = getNewestTimestamp(
+               userPrefs.createdAt, 
+               response.data.createdAt
+            );
+
+            switch (newestTimestamp) {
+               case "cache":
+                  // if cache is newer, update the db with the cache
+                  setBudget(userPrefs);
+                  budget.value = userPrefs.clickerBudget;
+                  return;
+               case "equal":
+                  // if they are the same timestamp, just set budget
+                  budget.value = userPrefs.clickerBudget;
+                  return;
+               case "database":
+                  // if db is newer, update the cache with the db value
+                  userPrefs = response.data;
+                  budget.value = userPrefs.clickerBudget;
+                  localStorage.setItem("budgie_prefs", JSON.stringify(userPrefs));
+                  return;           
+               default:
+                  log("error in getNewestTimestamp");
+                  break;
+            }
+         } else {
+            // if invalid response
+
+            // if response is invalid just go with whatever is in the cache
+            // or set it to the default value
+            if(userPrefs === null || userPrefs === undefined){
+               // sets to default or whatever is in cache
+               userPrefs = getUserPrefsJSON();
+            }
+         } /* end else if response is invalid */
+      });
+   } /* end if online and UUID is good */
+   
+   // because we set this conditionally above, slim change
+   // it won't be set when we use it below, so grab from the cache
+   // or set defaults
+   userPrefs = getUserPrefsJSON();
+   
+   // if the value is not a number, set it to 100
    if (userPrefs.clickerBudget === null 
    || typeof userPrefs.clickerBudget !== "number") {
-      // if not, set it to 100
       userPrefs.clickerBudget = 100;
    }
    budget.value = userPrefs.clickerBudget;
@@ -113,85 +210,77 @@ async function getBudget() {
  */
 async function createTally(tally:ClickerTallyType){
    const key = localStorage.getItem("uuid");
-   const isOnline = useOnline();
-   
-   // update the clicker tallies in the cache
-   // not really...
-   localStorage.setItem("clickerTallies", JSON.stringify(tally));
+   const isOnline = useOnline();   
 
    // if we're not online or the key is invalid, return
    if(!checkUUID(key) || !isOnline.value) return;
-
-   // create a new UUID based on the date and the user's key
-   // TODO - this should move to wherever we update the array...
-   // not here.
-   await axios.post("/api/grocery/createClickerTally", {
-      value: tally.dateCreated + key
-   }).then((response) => {
-      log(response);
-      // tally.tallieId = response.data.id;
-   });
 
    // send the current clicker tally to the db
    await axios.post("/api/grocery/createClickerTally", {
       tally: tally
    }).then((response) => {
-      log(response);
    });
 }
 
-/**
- * Stores the user's array of data (previous history and current count)
- * @param key the key used to store this value
- */
-async function setRecord() {
-   const key = localStorage.getItem("uuid");
-
-   const setRecordResponse = await $fetch("/api/grocery/setRecord", {
-      method: "post",
-      body: {
-         key: key + "groceryRecords",
-         value: {
-            list: clickerTallies,
-         },
-      },
-   });
-   if (setRecordResponse === null || setRecordResponse === undefined) {
-      toast.add({ title: "Error: invalid response from server" });
-   } else if (setRecordResponse.error) {
-      toast.add({ title: "Error: " + setRecordResponse.message });
-   }
-}
 
 /**
  * Get's the key-value pair containing the
  * array of the user's expenses, updates total
  * @param key the key used to retrive the value
  */
-async function getRecords() {
+async function getTallies() {
    const key = localStorage.getItem("uuid");
+   const isOnline = useOnline();
+   let clickerTalliesString = localStorage.getItem("clickerTallies");
 
-   // not setup for cache first YET.
-   // TODO: cache first
+   // first retrieve from cache
+   if (clickerTalliesString !== null && clickerTalliesString !== undefined) {
+      clickerTallies = JSON.parse(clickerTalliesString);
+   } else {
+      // if nothing in cache, set to empty array
+      clickerTallies = [];
+   }
+
+   // if key is not set, we'll just stick with whatever is in cache.
    if(key === null || key === undefined) return;
 
-   const records = await $fetch("/api/grocery/getRecords/", {
-      method: "post",
-      body: { key: key + "groceryRecords" },
-      key: "groceryRecords",
-   });
+   // if we're online, get the latest from the db
+   if(isOnline.value && checkUUID(key) && loggedIn.value){
+      await axios.post("/api/grocery/getClickerTallies", {
+         key: key
+      }).then((response) => {
+         if(response.data === null || response.data === undefined){
+            log("error getting clicker tallies");
+            return;
+         }
+         // if we have more entries in the cache than the db, 
+         //set the db to the cache
+         if(clickerTallies.length > response.data.length){
+            clickerTallies.forEach((element,index) => {
 
-   if (records === null || records === undefined) {
-      toast.add({ title: "Error: invalid response from server" });
-   } else if (records.error) {
-      toast.add({ title: "Error: " + records.message });
-   } else if (typeof records.list === "object") {
-      if (records.list.length > 0) {
-         clickerTallies = records.list;
-         showTallies.value = true;
-         updateTotal();
-      }
-   }
+               // if not set at all for some reason, skip
+               if(element.tallieId === null || element.tallieId === undefined){
+                  return;
+               }
+
+               // if this record needs to be reset (created offline)
+               // don't send to DB. Won't fit the UUID data type.
+               if(element.tallieId.includes("reset")){
+                  return;
+               }
+
+               // only create the tally record if it's not in the db
+               if(index >= response.data.length){
+                  createTally(element);
+               }
+            });
+            return;
+         }
+         // otherwise, set clicker tallies and cache to response
+         clickerTallies = response.data;
+         localStorage.setItem("clickerTallies", JSON.stringify(clickerTallies));
+      });
+   }   
 }
 
 /**
@@ -227,32 +316,40 @@ function updateTotal() {
  * Updates the clickerTally array with the current counter
  * @param mode add mode: resets counter and pushes to array
  */
-function updateUserArray(mode: string) {
+async function updateUserArray(mode: string) {
    let key = localStorage.getItem("uuid");
-   let tallieId;
+   let tallieId = "1";
+   let index = 0;
    const isOnline = useOnline();
    if (key === null || key === undefined) {
       // if it's guest we won't store this in the DB till it's updated
       // TODO - a function that, when the UUID is finally set, takes
-      // all the guest records and updates them with the UUID
+      // all the guest records IN THE CACHE (should never be in db)
+      // and updates them with the UUID
       key = "guest";
    }
 
    // if you're logged in and online, create a list UUID
-   if(key !== "guest" && isOnline.value){
-      axios.post("/api/grocery/createTallyUUID", {
-         value: currentDate + key
+   if(checkUUID(key) && isOnline.value && loggedIn.value){
+      await axios.post("/api/grocery/createTallyUUID", {
+         value: new Date().toISOString() + key
       }).then((response) => {
-         log(response);
-         // tallieId = response.data.id;
+         if(response.data === null || response.data === undefined){
+            log("error creating tally UUID");
+            return;
+         }
+         tallieId = response.data;
       });
-   }
+   } else {
+      
+      // TODO replace reset tallieId's with real UUIDs.
+      // Otherwise don't bother with the db.
+      if(clickerTallies !== undefined && clickerTallies.length > 0){
+         tallieId = "reset: " + clickerTallies.length.toString();
+      } else {
+         tallieId = "reset: 1";
+      }
 
-   if(tallieId === null || tallieId === undefined){
-      // just gonna fudge it for now.
-      // TODO - if the user is logged in, and the UUID is set, we should go through
-      // and replace all these with real tallieUUIDs.
-      tallieId = currentDate + key;
    }
 
    // TODO - find out if the we wait for the response from the above block before running
@@ -287,6 +384,8 @@ function updateUserArray(mode: string) {
       resetCounter();
    }
 
+   index = clickerTallies.length - 1;
+
    // always update total, have to catch undefined array errors inside
    updateTotal();
 
@@ -299,9 +398,11 @@ function updateUserArray(mode: string) {
 
    // set record in DB if logged in
    if (loggedIn.value) {
-      // oh shit no don't do that. That's bad for sure.
-      // setRecord();
+      createTally(clickerTallies[index]);
    }
+
+   // update the clicker tallies in the cache
+   localStorage.setItem("clickerTallies", JSON.stringify(clickerTallies));
 }
 
 /**
@@ -476,7 +577,7 @@ const isDark = computed({
  */
 if (process.client) {
    // removed check for UUID, we're cache first here.  
-   getRecords();
+   getTallies();
    getBudget();
 }
 
@@ -588,21 +689,19 @@ const links = getBreadcrumbs([
             <hr class="my-2" />
             <!-- Past tallies list -->
             <ol>
-               <!-- commented out for now as it will error out while
-                  re-working the tally object structure
                <li
-                  v-if="showTallies"
+                  v-if="clickerTallies.length > 0"
                   v-for="(item, index) in clickerTallies"
-                  :key="item.id"
+                  :key="item.tallieId"
                   class="text-lg my-4 flex justify-around w-full dark:border-gray-800 border-gray-200 border-solid border-2 py-1 rounded-lg dark:hover:bg-gray-700 hover:bg-gray-100"
                >
                   <div class="flex flex-col w-full">
                      <div class="flex flex-row justify-between mx-8 text-xl">
                         <p>
-                           <strong>${{ item.count }}</strong>
+                           <strong>${{ item.amount }}</strong>
                         </p>
                         <em class="text-neutral-500">{{
-                           item.date ? item.date : "No date"
+                           item.dateCreated ? item.dateCreated.substring(0,10) : "No date"
                         }}</em>
                         <UButton
                            @click="deleteItem(index)"
@@ -611,7 +710,7 @@ const links = getBreadcrumbs([
                         </UButton>
                      </div>
                      <div class="flex flex-row mx-8 my-2">
-                        <UProgress :value="item.usedBudget" />
+                        <UProgress :value="item.budgetUsed" />
                      </div>
                      <em class="text-neutral-500 text-sm text-center">{{
                         item.budget ? "budget: $" + item.budget : "No budget"
@@ -623,7 +722,7 @@ const links = getBreadcrumbs([
                   class="text-lg my-4 flex justify-around w-full border-gray-800 border-solid border-2 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700"
                >
                   No past tallies
-               </li> -->
+               </li> 
             </ol>
             <hr class="my-2" />
             <p class="text-xl">TOTAL: {{ totalDisplay }}</p>
@@ -814,7 +913,7 @@ const links = getBreadcrumbs([
             >
             </UInput>
             <template #footer>
-               <UButton block label="Submit" @click="setBudget()" />
+               <UButton block label="Submit" @click="setBudgetOverload(budget)" />
             </template>
          </UCard>
       </UModal>
