@@ -1,8 +1,8 @@
 import { v5 as uuidv5 } from "uuid";
 
 /**
- * Generates a UUID for a tally record
- * @returns the uuid of the tally
+ * Generates a UUID for a list record
+ * @returns the uuid of the list
  */
 export default defineEventHandler(async (event) => {
    const body = await readBody(event);

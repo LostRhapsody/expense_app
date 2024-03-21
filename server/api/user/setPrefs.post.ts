@@ -1,8 +1,8 @@
+import checkUUID from "~/utils/checkUUID";
 import { createSupabaseClient } from "~/utils/supabase";
 
 /**
  * Updates a user's preferences in the db
- * @returns the uuid of the user
  */
 export default defineEventHandler(async (event) => {
    const body = await readBody(event);
@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
    const supabase = createSupabaseClient(config);
 
    // error handling
-   if(key === null || key === undefined || key.length === 0) {
-      throw new Error("No key provided");
+   if(!checkUUID(key)) {
+      throw new Error("Invalid key provided");
    }
    if(prefs === null || prefs === undefined || prefs.length === 0) {
       throw new Error("No prefs provided");

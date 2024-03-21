@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { v4 as uuidv4 } from "uuid";
+
+/*=============================================
+Imports
+=============================================*/
+
+// types
+import type { ShoppingListType } from "~/types/types";
+
+// packages
+import axios from 'axios';
 
 // auth
 const { status, data, signIn, signOut } = useAuth();
@@ -12,12 +21,16 @@ const showEditScreen = ref(false);
 
 const currentList = ref(0);
 
-const list = ref([]);
+var list:ShoppingListType[];
+
+const displayLists = computed(() => {
+   return list;
+});
 
 // show/hide the list
 const showList = computed(() => {
-   if (list.value === null || list.value === undefined) return;
-   return list.value.length > 0;
+   if (list === null || list === undefined) return;
+   return list.length > 0;
 });
 
 const links = getBreadcrumbs([
@@ -50,32 +63,85 @@ function getSharedListURL(url: string) {
 /**
  * Creates a new list
  */
-function newList() {
-   let emptyList = {
-      name: "New list",
-      items: [],
-   };
-   if (list.value === null || list.value === undefined || list.value.length === 0 || list.value.length === undefined) {
-      list.value = [emptyList];
-   } else {
-      list.value.push(emptyList);
+async function newList() {
+   const key = localStorage.getItem("key");
+   const isOnline = useOnline();
+   let listId;
+
+   // if we're online and have a key and are logged in
+   if(isOnline.value && checkUUID(key) && loggedIn.value){
+      await axios.post("/api/grocery/createListUUID", {
+         value: new Date().toISOString() + key
+      }).then(response => {
+         listId = response.data;
+      }).catch(error => {
+         console.log(error);
+      });
+   } 
+
+   // if we failed to get a decent response or we're offline
+   if(listId === null || listId === undefined){
+      listId = "guest";
    }
-   setLists(list.value);
+
+   let emptyList:ShoppingListType = {
+      name: "New list",
+      listId: listId,
+      userId: "guest",
+      createdAt: new Date().toISOString(),
+   };
+
+   if (list === null || list === undefined || list.length === 0 || list.length === undefined) {
+      list = [emptyList];
+   } else {
+      list.push(emptyList);
+   }
+
+   // set the new list
+   setLists(list[list.length - 1]);
 }
 
 /**
  * Deletes a list
  */
 function deleteList(index: number) {
-   let thisList = list.value;
-   if (thisList === null || thisList === undefined) return;
+   if (list === null || list === undefined) return;
 
-   thisList.splice(index, 1);
-   setLists(list.value);
+   removeListElement(index);
+
+   list.splice(index, 1);
+
+   // normally we call set lists, 
+   // but we're removing an element, so process is diff
+   localStorage.setItem("lists", JSON.stringify(list));   
 }
 
+/**
+ * Removes a list element from the list array in the cache
+ * and finds the same list in the db and removes it there as well
+ */
+async function removeListElement(index: number) {
+   const key = localStorage.getItem("key");
+   const isOnline = useOnline();
+   let listId = list[index].listId;
+
+   // if we're online and have a key and are logged in
+   if(isOnline.value && checkUUID(key) && loggedIn.value){
+      // await axios.post("/api/grocery/removeList", {
+      //    value: listId
+      // }).then(response => {
+      //    console.log(response.data);
+      // }).catch(error => {
+      //    console.log(error);
+      // });
+   }
+
+   
+}
+
+
 if (process.client) {
-   list.value = getLists();
+   list = getLists();
 }
 
 onMounted(async () => {
@@ -136,7 +202,7 @@ onMounted(async () => {
                autoresize
                :maxrows="3"
                :padded="false"
-               @change="setLists(list)"
+               @change="setLists(item)"
             />
             <UButton
                icon="i-heroicons-x-mark"

@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
          userId: key,
          themeName: 'Default',
          createdAt: new Date().toISOString(),
+         clickerBudget: 100
       }; 
       // set a default user prefs record
       const { data, error } = await supabase

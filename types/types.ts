@@ -4,11 +4,13 @@
  * UserPrefs
  * @interface UserPrefs
  * @description User preferences
+ * @property {string} userId - the user's id
  * @property {string} themeName - the name of the theme
  * @property {number} clickerBudget - the user's budget
  * @property {string} createdAt - the date the userPrefs were created
  */
 export interface UserPrefs {
+   userId: string;
    themeName: string;
    clickerBudget: number;
    createdAt: string;
@@ -33,3 +35,19 @@ export interface ClickerTallyType {
   budget: number;
   dateCreated: string;
 }
+
+/**
+ * ShoppingListType
+ * @interface ShoppingListType
+ * @description User shopping lists
+ * @property {string} listId - the list's id
+ * @property {string} userId - the user's id
+ * @property {string} name - the name of the list
+ * @property {string} createdAt - the date the list was created
+ */
+export interface ShoppingListType {
+  listId: string;
+  userId: string;
+  name: string;
+  createdAt: string;
+} 

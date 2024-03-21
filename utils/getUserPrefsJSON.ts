@@ -10,6 +10,7 @@ export default function getUserPrefsJSON() {
    // default userPrefs and theme name
    // IMPORTANT! Update this anytime user prefs object/schema is updated
    let userPrefs:UserPrefs = {
+      userId: "guest",
       themeName: "Default",
       clickerBudget: 100,
       createdAt: new Date().toISOString()

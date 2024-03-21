@@ -1,12 +1,5 @@
 <script setup lang="ts">
 
-/* TODO
-all the todos lol
-need to finish making updates to anywhere I'm using the old userArray structure
-to the new clickerTallies structure
-*/
-
-
 /*=============================================
 Imports
 =============================================*/
@@ -352,9 +345,6 @@ async function updateUserArray(mode: string) {
 
    }
 
-   // TODO - find out if the we wait for the response from the above block before running
-   // the block below. It's important.
-
    if (mode === "add") {
       if (count.value <= 0) return;
 
@@ -410,6 +400,7 @@ async function updateUserArray(mode: string) {
  * @param index the index of the item to delete from the array
  */
 function deleteItem(index: number) {
+   // TODO - This needs to remove the item from the DB as well!
    clickerTallies.splice(index, 1);
    updateUserArray("delete");
 }
