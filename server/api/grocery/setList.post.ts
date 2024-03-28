@@ -18,6 +18,9 @@ export default defineEventHandler(async (event) => {
    if(list === null || list === undefined || list.length === 0) {
       throw new Error("No list provided");
    }
+   if(list.name === "Deleted") {
+      throw new Error("The name 'Deleted' is reserved and cannot be used as a list name.");
+   }
 
    // find a list with a matching ID, if not found, insert a new list
    let { data, error } = await supabase
@@ -41,7 +44,7 @@ export default defineEventHandler(async (event) => {
       }           
    } else {
       // if the list already exists, compare the name fields
-      // and update the list if the names are different
+      // and update the list if the names are different (names are the only thing that can change)      
       if (data[0].name !== list.name) {
          let { data, error } = await supabase
          .from('shoppingList')

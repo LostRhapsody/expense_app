@@ -105,14 +105,27 @@ async function newList() {
  * Deletes a list
  */
 function deleteList(index: number) {
+   const isOnline = useOnline();
+
    if (list === null || list === undefined) return;
 
    removeListElement(index);
 
-   list.splice(index, 1);
+   // if we're offline, we just hide the list.
+   // when we're back online we'll remove it properly
+   if(isOnline.value){
+      list.splice(index, 1);
+   } else {
+      list[index].name = "Deleted";
+   }
 
-   // normally we call set lists, 
-   // but we're removing an element, so process is diff
+   // go through the lists and clean up the deleted ones
+   // that were deleted offline.
+   if(isOnline.value){   
+      cleanUpOfflineLists();
+   }
+
+   // set the new list in the cache
    localStorage.setItem("lists", JSON.stringify(list));   
 }
 
@@ -127,21 +140,69 @@ async function removeListElement(index: number) {
 
    // if we're online and have a key and are logged in
    if(isOnline.value && checkUUID(key) && loggedIn.value){
-      // await axios.post("/api/grocery/removeList", {
-      //    value: listId
-      // }).then(response => {
-      //    console.log(response.data);
-      // }).catch(error => {
-      //    console.log(error);
-      // });
-   }
-
-   
+      await axios.post("/api/grocery/removeList", {
+         listId: listId
+      }).then(response => {
+         console.log(response.data);
+      }).catch(error => {
+         console.log(error);
+      });
+   } 
 }
 
+function cleanUpOfflineLists(){
+   list.forEach((item,index2) => {
+      if(item.name === "Deleted"){
+         list.splice(index2, 1);
+         removeListElement(index2);
+      }
+   });
+}
+
+/**
+ * Retrieves the lists from the cache and db
+ */
+async function getLists(){
+   const key = localStorage.getItem("key");
+   const isOnline = useOnline();
+   
+   let listsString = localStorage.getItem("lists");
+   let responseLists:ShoppingListType[] = [];
+
+   // make it into an object if there is anything in the cache
+   if(listsString !== null && listsString !== undefined){
+      list = JSON.parse(listsString);
+      // cleanup deleted lists
+      cleanUpOfflineLists();
+   }
+
+   // if we're online and have a key and are logged in
+   if(isOnline.value && checkUUID(key) && loggedIn.value){
+      await axios.post("/api/grocery/getLists", {
+         value: key
+      }).then(response => {
+         // if response is valid
+         if(response.data !== null && response.data !== undefined){
+            responseLists = response.data;
+            // if cache is empty, or length of cache is less than db
+            if(list === null || list === undefined || 
+            list.length < responseLists.length){
+               list = responseLists;
+               localStorage.setItem("lists", JSON.stringify(list));
+               return;
+            }             
+         }
+      }).catch(error => {
+         console.log(error);
+      });
+   } else {
+      // this will either be cache or empty array, we just need to set it
+      localStorage.setItem("lists", JSON.stringify(list));      
+   }
+}
 
 if (process.client) {
-   list = getLists();
+   getLists();
 }
 
 onMounted(async () => {
@@ -191,7 +252,7 @@ onMounted(async () => {
          v-for="(item, index) in list"
          class="px-4 py-3 my-8 w-full text-center items-center flex-col border border-gray-300/25 dark:border-gray-800/25 rounded-lg text-xl flex bg-gray-300/25 dark:bg-gray-800/50"
       >
-         <div class="flex w-full items-center">
+         <div v-if="item.name !== 'Deleted'" class="flex w-full items-center">
             <UTextarea
                :ui="{ size: { xl: 'text-2xl' } }"
                class="w-full"
