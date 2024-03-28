@@ -9,17 +9,24 @@ export default async function setLists(list:ShoppingListType) {
    const loggedIn = computed(() => status.value === "authenticated");
    const isOnline = useOnline();
    const key = localStorage.getItem("uuid");
+
    const listsString = localStorage.getItem("lists");
-   let lists:ShoppingListType[];
+   let lists:ShoppingListType[] = [];
+
    if(listsString !== null && listsString !== undefined){
       lists = JSON.parse(listsString);
    }
 
-   if(lists !== null && lists !== undefined){
+   // check if the list item being passed already exists with a matching listId
+   const index = lists.findIndex((item) => item.listId === list.listId);
+   if(index !== -1){
+      lists[index] = list;
+   } else {
       // add the new list the the list array
       lists.push(list);
-      localStorage.setItem("lists", JSON.stringify(lists));
-   }
+         }
+   
+localStorage.setItem("lists", JSON.stringify(lists));
    
    if(checkUUID(key) && isOnline.value && loggedIn.value){
       await axios.post("/api/grocery/setList", {

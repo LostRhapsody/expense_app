@@ -21,16 +21,19 @@ const showEditScreen = ref(false);
 
 const currentList = ref(0);
 
-var list:ShoppingListType[];
+//var list:ShoppingListType[];
+
+// a list ref using the ShoppingListType
+const list = ref<ShoppingListType[]>([]);
 
 const displayLists = computed(() => {
-   return list;
+   return list.value;
 });
 
 // show/hide the list
 const showList = computed(() => {
-   if (list === null || list === undefined) return;
-   return list.length > 0;
+   if (list.value === null || list.value === undefined) return;
+   return list.value.length > 0;
 });
 
 const links = getBreadcrumbs([
@@ -81,7 +84,7 @@ async function newList() {
 
    // if we failed to get a decent response or we're offline
    if(listId === null || listId === undefined){
-      listId = "guest";
+      listId = "guest" + list.value.length;
    }
 
    let emptyList:ShoppingListType = {
@@ -91,14 +94,14 @@ async function newList() {
       createdAt: new Date().toISOString(),
    };
 
-   if (list === null || list === undefined || list.length === 0 || list.length === undefined) {
-      list = [emptyList];
+   if (list.value === null || list.value === undefined || list.value.length === 0 || list.value.length === undefined) {
+      list.value = [emptyList];
    } else {
-      list.push(emptyList);
+      list.value.push(emptyList);
    }
 
    // set the new list
-   setLists(list[list.length - 1]);
+   setLists(list.value[list.value.length - 1]);
 }
 
 /**
@@ -107,16 +110,16 @@ async function newList() {
 function deleteList(index: number) {
    const isOnline = useOnline();
 
-   if (list === null || list === undefined) return;
+   if (list.value === null || list.value === undefined) return;
 
    removeListElement(index);
 
-   // if we're offline, we just hide the list.
+   // if we're offline, we just hide the list.value.
    // when we're back online we'll remove it properly
    if(isOnline.value){
-      list.splice(index, 1);
+      list.value.splice(index, 1);
    } else {
-      list[index].name = "Deleted";
+      list.value[index].name = "Deleted";
    }
 
    // go through the lists and clean up the deleted ones
@@ -126,7 +129,7 @@ function deleteList(index: number) {
    }
 
    // set the new list in the cache
-   localStorage.setItem("lists", JSON.stringify(list));   
+   localStorage.setItem("lists", JSON.stringify(list.value));   
 }
 
 /**
@@ -136,7 +139,7 @@ function deleteList(index: number) {
 async function removeListElement(index: number) {
    const key = localStorage.getItem("key");
    const isOnline = useOnline();
-   let listId = list[index].listId;
+   let listId = list.value[index].listId;
 
    // if we're online and have a key and are logged in
    if(isOnline.value && checkUUID(key) && loggedIn.value){
@@ -151,9 +154,9 @@ async function removeListElement(index: number) {
 }
 
 function cleanUpOfflineLists(){
-   list.forEach((item,index2) => {
+   list.value.forEach((item,index2) => {
       if(item.name === "Deleted"){
-         list.splice(index2, 1);
+         list.value.splice(index2, 1);
          removeListElement(index2);
       }
    });
@@ -168,10 +171,13 @@ async function getLists(){
    
    let listsString = localStorage.getItem("lists");
    let responseLists:ShoppingListType[] = [];
+if(list.value === null || list.value === undefined){
+      list.value = [];
+   }
 
    // make it into an object if there is anything in the cache
    if(listsString !== null && listsString !== undefined){
-      list = JSON.parse(listsString);
+      list.value = JSON.parse(listsString);
       // cleanup deleted lists
       cleanUpOfflineLists();
    }
@@ -185,10 +191,10 @@ async function getLists(){
          if(response.data !== null && response.data !== undefined){
             responseLists = response.data;
             // if cache is empty, or length of cache is less than db
-            if(list === null || list === undefined || 
-            list.length < responseLists.length){
-               list = responseLists;
-               localStorage.setItem("lists", JSON.stringify(list));
+            if(list.value === null || list.value === undefined || 
+            list.value.length < responseLists.length){
+               list.value = responseLists;
+               localStorage.setItem("lists", JSON.stringify(list.value));
                return;
             }             
          }
@@ -197,7 +203,7 @@ async function getLists(){
       });
    } else {
       // this will either be cache or empty array, we just need to set it
-      localStorage.setItem("lists", JSON.stringify(list));      
+      localStorage.setItem("lists", JSON.stringify(list.value));      
    }
 }
 
