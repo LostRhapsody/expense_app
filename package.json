@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^2.13.0",
+    "@pinia/nuxt": "^0.5.1",
     "@supabase/supabase-js": "^2.39.7",
     "@vercel/kv": "^1.0.1",
     "@vite-pwa/assets-generator": "^0.2.4",

@@ -3,15 +3,19 @@
 Imports
 =============================================*/
 // functions
-import getNewestTimestamp from './utils/checkTimestamp';
-import checkUUID from './utils/checkUUID';
-import getUserPrefsJSON from './utils/getUserPrefsJSON';
+import getNewestTimestamp from "./utils/checkTimestamp";
+import checkUUID from "./utils/checkUUID";
+import getUserPrefsJSON from "./utils/getUserPrefsJSON";
 
 // packages
-import axios from 'axios';
+import axios from "axios";
 
 // types
-import type { UserPrefs } from './types/types';
+import type { UserPrefs } from "./types/types";
+
+// stores
+import { useUserStore } from "@/stores/userStore";
+const userStore = useUserStore();
 
 /*=============================================
 Variable Init Begins
@@ -22,7 +26,7 @@ Variable Init Begins
 const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 const userAvatar = ref("");
-const route = useRoute()
+const route = useRoute();
 let userEmail = "";
 let userName = "";
 
@@ -95,7 +99,6 @@ const navBarLinks = [
       id: "more",
    },
 ];
-
 
 const links = [
    {
@@ -178,9 +181,8 @@ const links = [
 
 // a computed property. Set the parent route of the current page to active
 const isParentActive = computed(() => {
-
    // all our top level parent routes
-   const parentRoutes = ["/grocery","/budgeting"];
+   const parentRoutes = ["/grocery", "/budgeting"];
 
    let match = false;
    let matchedRoute = "";
@@ -188,20 +190,19 @@ const isParentActive = computed(() => {
    // loop through parent routes, compare against current.
    // if current route starts with a parent route, it's active
    for (let index = 0; index < parentRoutes.length; index++) {
-
       const thisRoute = parentRoutes[index];
 
       // check if the routes match/starts with parent route
       match = route.matched.some((route) => route.path.startsWith(thisRoute));
 
       // if match return the route and true
-      if(match) {
+      if (match) {
          matchedRoute = thisRoute;
          return [matchedRoute, match];
       }
    }
    // if nothing matches, return false
-   return ["",false];
+   return ["", false];
 });
 
 useHead({
@@ -229,7 +230,7 @@ useHead({
       {
          rel: "canonical",
          href: "https://budgetbudgie.app",
-      }
+      },
    ],
 });
 
@@ -240,7 +241,7 @@ Functions Begin
 /**
  * Handles sign in for OAuth
  */
- async function handleSignIn() {
+async function handleSignIn() {
    await signIn();
 }
 
@@ -256,13 +257,7 @@ async function handleSignOut() {
  * @returns boolean true if UUID is set in local storage
  */
 function isUUIDSet() {
-   let currentUUID = localStorage.getItem("uuid");
-   // in case the value is unexpected
-   if(currentUUID === undefined || currentUUID === null) {
-      currentUUID = null;
-   }
-   // if null, false, else true
-   return currentUUID !== null ? true : false;
+   return checkUUID(userStore.userId) ? true : false;
 }
 
 /**
@@ -276,7 +271,7 @@ async function postUUID(email: string) {
          value: email,
       },
       onResponse({ response }) {
-         localStorage.setItem("uuid", response._data);
+         userStore.userId = response._data;
          postUUIDCallback();
       },
    });
@@ -287,7 +282,7 @@ async function postUUID(email: string) {
  * local storage runs here
  */
 async function postUUIDCallback() {
-   const currentUUID = localStorage.getItem("uuid");
+   const currentUUID = userStore.userId;
 
    if (
       currentUUID === null ||
@@ -304,6 +299,54 @@ async function postUUIDCallback() {
  * If not logged in, defaults to cache
  */
 async function getUserPrefs() {
+   const currentUUID = userStore.userId;
+
+   if(!checkUUID(currentUUID)) {
+      console.error("UUID is not set, cannot get user prefs");
+      return;
+   }
+
+   /**
+    * Retrieve user prefs from the database
+    */
+   await axios
+      .post("/api/user/getPrefs", {
+         key: currentUUID,
+      })
+      .then((response) => {
+         // if we got a valid response
+         if (response.data !== null && response.data !== undefined) {
+            // attempt to set the user prefs in the store
+            try {
+               userStore.userId = response.data.userId;
+               userStore.createdAt = response.data.createdAt;
+               userStore.themeName = response.data.themeName;
+               userStore.clickerBudget = response.data.clickerBudget;
+            } catch (error) {
+               console.error("Error setting user prefs from db: ", error);
+            }
+         } else {
+            // if we did not get a valid response
+            // set the user prefs to default
+            try {
+               userStore.themeName = "Default";
+               userStore.clickerBudget = 100;
+            } catch (error) {
+               console.error("Error setting user prefs to default: ", error);
+            }
+         }
+      });
+   console.log(userStore.userId);
+   console.log(userStore.createdAt);
+   console.log(userStore.themeName);
+   console.log(userStore.clickerBudget);
+
+   /*
+   
+   The following code is "Database first fallback to cache"
+   We're moving to "DB only, state in a pinia store"
+   so this is not required.
+
    const currentUUID = localStorage.getItem("uuid");
    const isOnline = useOnline();
 
@@ -378,6 +421,7 @@ async function getUserPrefs() {
       // no need to set client theme as we just set it to default
       return;
    }
+   */
 }
 
 /**
@@ -385,9 +429,9 @@ async function getUserPrefs() {
  * updates the timestamp while we're here
  * @param cachePrefs the user prefs we're setting
  */
-async function setUserPrefs(cachePrefs:UserPrefs){
+async function setUserPrefs(cachePrefs: UserPrefs) {
    const key = localStorage.getItem("uuid");
-   const isOnline  = useOnline();
+   const isOnline = useOnline();
 
    // update timestamp
    cachePrefs.createdAt = new Date().toISOString();
@@ -396,12 +440,12 @@ async function setUserPrefs(cachePrefs:UserPrefs){
 
    // if our UUID is bad, or we're not online,
    // return because we can't set it in the db
-   if(!checkUUID(key) || !isOnline.value){
+   if (!checkUUID(key) || !isOnline.value) {
       return;
    }
 
    // if our UUID is good and we're online, update the prefs in the DB
-   if(checkUUID(key) && isOnline.value && loggedIn.value){
+   if (checkUUID(key) && isOnline.value && loggedIn.value) {
       await axios.post("/api/user/setPrefs", {
          key: key,
          prefs: cachePrefs,
@@ -414,7 +458,6 @@ async function setUserPrefs(cachePrefs:UserPrefs){
  * Pulls from the cache and sets the them, nothing else
  */
 async function setClientTheme() {
-
    // get the userPrefs from cache
    const userPrefs = getUserPrefsJSON();
    let theme = "Default";
@@ -422,8 +465,8 @@ async function setClientTheme() {
    // set theme to whatever is in the cache
    // if for some reason the cache doesn't have a theme (should not happen),
    // theme has already been set to default
-   if(userPrefs.themeName !== null && userPrefs.themeName !== undefined) {
-      theme = userPrefs.themeName;      
+   if (userPrefs.themeName !== null && userPrefs.themeName !== undefined) {
+      theme = userPrefs.themeName;
    }
 
    // Always remove the theme tag before setting a new one
@@ -431,15 +474,13 @@ async function setClientTheme() {
 
    // Set the theme, as long as its not Default
    if (theme !== "Default" && theme !== null) {
-
       // create a new link tag for the theme
       const themeTag = document.createElement("link");
       themeTag.href = "/themes/" + theme;
       themeTag.id = "themeStylesheet";
       themeTag.rel = "stylesheet";
       document.head.appendChild(themeTag);
-
-   } 
+   }
 }
 
 /**
@@ -459,7 +500,7 @@ function removeThemeTag() {
  */
 async function setUserPrefsThemeField(theme: string) {
    const key = localStorage.getItem("uuid");
-   const isOnline  = useOnline();
+   const isOnline = useOnline();
 
    // get the userPrefs from cache
    let userPrefs = getUserPrefsJSON();
@@ -475,12 +516,12 @@ async function setUserPrefsThemeField(theme: string) {
 
    // if the UUID is bad, or we're not online,
    // return because we can't set it in the db
-   if(!checkUUID(key) || !isOnline.value){
+   if (!checkUUID(key) || !isOnline.value) {
       return;
    }
 
    // if our UUID is good and we're online, update the prefs in the DB
-   if(checkUUID(key) && isOnline.value && loggedIn.value){
+   if (checkUUID(key) && isOnline.value && loggedIn.value) {
       setUserPrefs(userPrefs);
    }
 }
@@ -513,7 +554,10 @@ function onThemeSelect(option: themeType) {
 
    // if chosen theme is already set, do nothing
    const userPrefs = getUserPrefsJSON();
-   if (userPrefs.themeName === option.label || userPrefs.themeName === option.path) {
+   if (
+      userPrefs.themeName === option.label ||
+      userPrefs.themeName === option.path
+   ) {
       return;
    }
 
@@ -543,7 +587,6 @@ function onThemeSelect(option: themeType) {
 async function clearUserData() {
    // isConfirmClearUserDataOpen.value = false;
    // const key = localStorage.getItem("uuid");
-
    // await useFetch("/api/user/clearUserData", {
    //    method: "post",
    //    body: {
@@ -561,19 +604,23 @@ async function clearUserData() {
 }
 
 /**
- * Uses the data object from sign in to 
+ * Uses the data object from sign in to
  * set the user's email, name, and avatar IN CLIENT MEMORY (nothing else)
  */
-function setClientUserData(){
+function setClientUserData() {
    // pull the user's email and avatar
    if (data !== null && data !== undefined) {
       if (data.value !== null && data.value !== undefined) {
          if (typeof data.value.user === "object") {
             if (typeof data.value.user.image === "string") {
                userAvatar.value = data.value.user?.image;
+            } else {
+               console.log("Data from sign in is null or undefined; could not retrieve user avatar");
             }
             if (typeof data.value.user.email === "string") {
                userEmail = data.value.user?.email;
+            } else {
+               console.log("Data from sign in is null or undefined; could not retrieve user email");
             }
             if (typeof data.value.user.name === "string") {
                // user name just grabs the first name.
@@ -581,30 +628,43 @@ function setClientUserData(){
                   0,
                   data.value.user?.name.indexOf(" ")
                );
+            } else {
+               console.log("Data from sign in is null or undefined; could not retrieve user name");
             }
          }
+         else {
+            console.log("Data from sign in is null or undefined; could not retrieve user details");
+         }
       }
+      else {
+         console.log("Data from sign in is null or undefined");
+      }
+   } else {
+      console.log("Data from sign in is null or undefined");
    }
 }
 
 /*=============================================
 Main Logic Begins
 =============================================*/
-if (loggedIn.value && process.client) {
+//loggedIn.value &&
+if ( process.client) {
+   console.log("pinia store:");
+   console.log(userStore.userId);
    // when logged in, we can grab data from the sign in event:
-   setClientUserData();   
+   setClientUserData();
 
    // If UUID has not been set yet, set it
-   if(!isUUIDSet()){         
-      postUUID(userEmail);         
+   if (!isUUIDSet()) {
+      postUUID("evan.robertson77@gmail.com");
    }
-} 
+}
 
 // This runs if we are logged in or not
 if (process.client) {
    getUserPrefs();
    setClientTheme();
-}  
+}
 
 /*=============================================
 Mounted Logic Begins
@@ -720,49 +780,51 @@ onMounted(async () => {
             </template>
             <div class="grid grid-cols-1 gap-4">
                <div class="flex flex-row justify-between">
-               <UButton
-                  v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
-                  @click="handleSignOut"
-                  variant="ghost"
-               >
-                  <UAvatar class="ring-2 ring-primary" :src="userAvatar" />Sign
-                  Out
-               </UButton>
-
-               <!-- button that displays normal user icon when logged in, will log you out -->
-               <UButton
-                  variant="ghost"
-                  v-else-if="loggedIn"
-                  @click="handleSignOut"
-               >
-                  <UAvatar
-                     class="ring-2 ring-primary"
-                     icon="i-heroicons-user-circle-solid"
-                  />Sign Out
-               </UButton>
-
-               <!-- button that displays normal user icon when logged out, will log you in -->
-               <UButton variant="ghost" v-else @click="handleSignIn">
-                  <UAvatar
-                     class="ring-2 ring-gray-500"
-                     icon="i-heroicons-user-circle-solid"
-                  />Sign In
-               </UButton>
-
-               <ClientOnly>
                   <UButton
-                     id="darkModeButton"
-                     :icon="
-                        isDark
-                           ? 'i-heroicons-moon-20-solid'
-                           : 'i-heroicons-sun-20-solid'
-                     "
-                     color="gray"
+                     v-if="loggedIn && userAvatar !== null && userAvatar !== ''"
+                     @click="handleSignOut"
                      variant="ghost"
-                     aria-label="Theme"
-                     @click="isDark = !isDark"
-                  />
-               </ClientOnly>
+                  >
+                     <UAvatar
+                        class="ring-2 ring-primary"
+                        :src="userAvatar"
+                     />Sign Out
+                  </UButton>
+
+                  <!-- button that displays normal user icon when logged in, will log you out -->
+                  <UButton
+                     variant="ghost"
+                     v-else-if="loggedIn"
+                     @click="handleSignOut"
+                  >
+                     <UAvatar
+                        class="ring-2 ring-primary"
+                        icon="i-heroicons-user-circle-solid"
+                     />Sign Out
+                  </UButton>
+
+                  <!-- button that displays normal user icon when logged out, will log you in -->
+                  <UButton variant="ghost" v-else @click="handleSignIn">
+                     <UAvatar
+                        class="ring-2 ring-gray-500"
+                        icon="i-heroicons-user-circle-solid"
+                     />Sign In
+                  </UButton>
+
+                  <ClientOnly>
+                     <UButton
+                        id="darkModeButton"
+                        :icon="
+                           isDark
+                              ? 'i-heroicons-moon-20-solid'
+                              : 'i-heroicons-sun-20-solid'
+                        "
+                        color="gray"
+                        variant="ghost"
+                        aria-label="Theme"
+                        @click="isDark = !isDark"
+                     />
+                  </ClientOnly>
                </div>
 
                <UButton
@@ -888,7 +950,7 @@ onMounted(async () => {
 
       <!-- Current page -->
       <NuxtPage />
-      
+
       <!-- Commented out till I find out where to put this -->
       <!-- <div class="fixed bottom-0">
          <div class="flex flex-row justify-between min-w-0 items-center">
@@ -1014,17 +1076,26 @@ onMounted(async () => {
    </UContainer>
 
    <!-- Bottom bar navigation -->
-   <UHorizontalNavigation :links="navBarLinks" class="min-w-0 fixed bottom-0 !justify-center bg-white dark-nav-bg custom-nav-links bottom-nav" :ui="{base:'max-w-18 min-w-18'}">
+   <UHorizontalNavigation
+      :links="navBarLinks"
+      class="min-w-0 fixed bottom-0 !justify-center bg-white dark-nav-bg custom-nav-links bottom-nav"
+      :ui="{ base: 'max-w-18 min-w-18' }"
+   >
       <template #default="{ link }">
          <span></span>
       </template>
       <template #icon="{ link, isActive }">
-         <div class="flex flex-col items-center mx-1" >
+         <div class="flex flex-col items-center mx-1">
             <UIcon
                :name="link.icon"
                class="w-6 h-6"
-               :class="[isActive ? 'text-primary-500' : 'text-gray-400', (link.to.startsWith(isParentActive[0]) && isParentActive[1]) ? 'text-primary-500' : 'text-gray-400']"
-            />            
+               :class="[
+                  isActive ? 'text-primary-500' : 'text-gray-400',
+                  link.to.startsWith(isParentActive[0]) && isParentActive[1]
+                     ? 'text-primary-500'
+                     : 'text-gray-400',
+               ]"
+            />
             <span>{{ link.label }}</span>
          </div>
       </template>
@@ -1035,10 +1106,14 @@ onMounted(async () => {
    background-color: transparent !important;
 }
 .dark .dark-nav-bg {
-   background: rgb(18,18,18);
-background: linear-gradient(0deg, rgba(18,18,18,1) 20%, rgba(48,48,48,1) 100%);
+   background: rgb(18, 18, 18);
+   background: linear-gradient(
+      0deg,
+      rgba(18, 18, 18, 1) 20%,
+      rgba(48, 48, 48, 1) 100%
+   );
 }
 a::after {
-   height: 5px!important;
+   height: 5px !important;
 }
 </style>
