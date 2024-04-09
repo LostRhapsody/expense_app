@@ -3,9 +3,7 @@
 Imports
 =============================================*/
 // functions
-import getNewestTimestamp from "./utils/checkTimestamp";
 import checkUUID from "./utils/checkUUID";
-import getUserPrefsJSON from "./utils/getUserPrefsJSON";
 
 // packages
 import axios from "axios";
@@ -28,12 +26,6 @@ const loggedIn = computed(() => status.value === "authenticated");
 const userAvatar = ref("");
 const route = useRoute();
 let userEmail = "";
-let userName = "";
-
-//
-// For Notifications
-//
-const toast = useToast();
 
 //
 // For Themes
@@ -59,6 +51,7 @@ const themes: themeType[] = [
    { id: 2, label: "Glassy", path: "glassy_gradient.css" },
    { id: 3, label: "Warm-Hot", path: "warm_hot.css" },
 ];
+
 const themeSelected = ref();
 
 //
@@ -257,7 +250,7 @@ async function handleSignOut() {
  * @returns boolean true if UUID is set in local storage
  */
 function isUUIDSet() {
-   return checkUUID(userStore.userId) ? true : false;
+   return checkUUID(userStore.userId);
 }
 
 /**
@@ -272,26 +265,13 @@ async function postUUID(email: string) {
       },
       onResponse({ response }) {
          userStore.userId = response._data;
-         postUUIDCallback();
+         if (!checkUUID(userStore.userId)) {
+            alert("The client token failed to get set correctly.");
+            return;
+         }
+         getUserPrefs();
       },
    });
-}
-
-/**
- * Callback function for postUUID, any logic that requires a UUID to be in
- * local storage runs here
- */
-async function postUUIDCallback() {
-   const currentUUID = userStore.userId;
-
-   if (
-      currentUUID === null ||
-      currentUUID === undefined ||
-      currentUUID === "guest"
-   ) {
-      alert("The client token failed to get set correctly.");
-      return;
-   }
 }
 
 /**
@@ -299,9 +279,8 @@ async function postUUIDCallback() {
  * If not logged in, defaults to cache
  */
 async function getUserPrefs() {
-   const currentUUID = userStore.userId;
 
-   if(!checkUUID(currentUUID)) {
+   if (!checkUUID(userStore.userId)) {
       console.error("UUID is not set, cannot get user prefs");
       return;
    }
@@ -311,14 +290,13 @@ async function getUserPrefs() {
     */
    await axios
       .post("/api/user/getPrefs", {
-         key: currentUUID,
+         key: userStore.userId,
       })
       .then((response) => {
          // if we got a valid response
          if (response.data !== null && response.data !== undefined) {
             // attempt to set the user prefs in the store
             try {
-               userStore.userId = response.data.userId;
                userStore.createdAt = response.data.createdAt;
                userStore.themeName = response.data.themeName;
                userStore.clickerBudget = response.data.clickerBudget;
@@ -336,92 +314,6 @@ async function getUserPrefs() {
             }
          }
       });
-   console.log(userStore.userId);
-   console.log(userStore.createdAt);
-   console.log(userStore.themeName);
-   console.log(userStore.clickerBudget);
-
-   /*
-   
-   The following code is "Database first fallback to cache"
-   We're moving to "DB only, state in a pinia store"
-   so this is not required.
-
-   const currentUUID = localStorage.getItem("uuid");
-   const isOnline = useOnline();
-
-   // grab whatever we have in the cache
-   // IMPORTANT - don't run through getUserPrefsJSON, we don't want to automatically set defaults
-   // otherwise, the cache will always be 'newer' than the db
-   let userPrefs = localStorage.getItem("budgie_prefs");
-   let userPrefsJSON:UserPrefs;
-
-   // make it into an object if there is anything in the cache
-   if(userPrefs !== null && userPrefs !== undefined && userPrefs.length > 0) {
-      userPrefsJSON = JSON.parse(userPrefs);
-   }
-
-   // if UUID is good and we're online, we can get from the db
-   if(checkUUID(currentUUID) && isOnline.value) {
-      await axios.post("/api/user/getPrefs", {         
-         key: currentUUID,
-      }).then((response) => {
-
-         // if we got a valid response
-         if(response.data !== null && response.data !== undefined) {
-            // if the cache is empty, set it to the db
-            if(userPrefsJSON === null || userPrefsJSON === undefined) {
-               userPrefsJSON = response.data;
-               localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-               return;
-            }
-
-            let newestTimestamp = getNewestTimestamp(
-               userPrefsJSON.createdAt, 
-               response.data.createdAt
-            );
-
-            switch (newestTimestamp) {
-               case "cache":
-                  // if cache is newer, update the db with the cache
-                  setUserPrefs(userPrefsJSON);
-                  return;
-               case "equal":
-                  // if they are the same timestamp, do nothing
-                  return;
-               case "database":
-                  // if db is newer, update the cache with the db value
-                  userPrefsJSON = response.data;
-                  localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-                  return;           
-               default:
-                  log("error in getNewestTimestamp");
-                  break;
-            }
-         } else {
-            // if we did not get a valid response
-
-            // if cache is empty, set it to default
-            if(userPrefsJSON === null || userPrefsJSON === undefined) {
-               userPrefsJSON = getUserPrefsJSON();
-            }
-            localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-            return;
-         }
-      });
-   }
-
-   // if the UUID is not set, or, we're not online, we can't get from db
-   // instead, retrieve from cache. If nothing in cache, we will set to default
-   if (!checkUUID(currentUUID) || !isOnline.value) {
-      // tries to retrieve from cache, if not, sets to default
-      userPrefsJSON = getUserPrefsJSON();
-      // set the prefs in cache
-      localStorage.setItem("budgie_prefs", JSON.stringify(userPrefsJSON));
-      // no need to set client theme as we just set it to default
-      return;
-   }
-   */
 }
 
 /**
@@ -429,25 +321,26 @@ async function getUserPrefs() {
  * updates the timestamp while we're here
  * @param cachePrefs the user prefs we're setting
  */
-async function setUserPrefs(cachePrefs: UserPrefs) {
-   const key = localStorage.getItem("uuid");
-   const isOnline = useOnline();
+async function setUserPrefs() {
+
+   let cachePrefs:UserPrefs = {
+      userId: userStore.userId,
+      themeName: userStore.themeName,
+      clickerBudget: userStore.clickerBudget,
+      createdAt: userStore.createdAt,
+   };
 
    // update timestamp
-   cachePrefs.createdAt = new Date().toISOString();
-   // update timestamp in cache too
-   localStorage.setItem("budgie_prefs", JSON.stringify(cachePrefs));
+   userStore.createdAt = new Date().toISOString();
 
-   // if our UUID is bad, or we're not online,
-   // return because we can't set it in the db
-   if (!checkUUID(key) || !isOnline.value) {
+   // return if no UUID
+   if (!checkUUID(userStore.userId)) {
       return;
    }
 
-   // if our UUID is good and we're online, update the prefs in the DB
-   if (checkUUID(key) && isOnline.value && loggedIn.value) {
+   if (loggedIn.value) {
       await axios.post("/api/user/setPrefs", {
-         key: key,
+         key: userStore.userId,
          prefs: cachePrefs,
       });
    }
@@ -458,15 +351,14 @@ async function setUserPrefs(cachePrefs: UserPrefs) {
  * Pulls from the cache and sets the them, nothing else
  */
 async function setClientTheme() {
-   // get the userPrefs from cache
-   const userPrefs = getUserPrefsJSON();
+   
    let theme = "Default";
 
    // set theme to whatever is in the cache
    // if for some reason the cache doesn't have a theme (should not happen),
    // theme has already been set to default
-   if (userPrefs.themeName !== null && userPrefs.themeName !== undefined) {
-      theme = userPrefs.themeName;
+   if (userStore.themeName !== null && userStore.themeName !== undefined) {
+      theme = userStore.themeName;
    }
 
    // Always remove the theme tag before setting a new one
@@ -499,30 +391,21 @@ function removeThemeTag() {
  * @param theme theme we're setting
  */
 async function setUserPrefsThemeField(theme: string) {
-   const key = localStorage.getItem("uuid");
-   const isOnline = useOnline();
-
-   // get the userPrefs from cache
-   let userPrefs = getUserPrefsJSON();
 
    // set the theme in memory
-   userPrefs.themeName = theme;
-
-   // set the prefs in cache
-   localStorage.setItem("budgie_prefs", JSON.stringify(userPrefs));
+   userStore.themeName = theme;
 
    // set the theme on the client
    setClientTheme();
 
-   // if the UUID is bad, or we're not online,
-   // return because we can't set it in the db
-   if (!checkUUID(key) || !isOnline.value) {
+   // return if no UUID
+   if (!checkUUID(userStore.userId)) {
       return;
    }
 
    // if our UUID is good and we're online, update the prefs in the DB
-   if (checkUUID(key) && isOnline.value && loggedIn.value) {
-      setUserPrefs(userPrefs);
+   if (loggedIn.value) {
+      setUserPrefs();
    }
 }
 
@@ -552,11 +435,9 @@ function onThemeSelect(option: themeType) {
       return;
    }
 
-   // if chosen theme is already set, do nothing
-   const userPrefs = getUserPrefsJSON();
    if (
-      userPrefs.themeName === option.label ||
-      userPrefs.themeName === option.path
+      userStore.themeName === option.label ||
+      userStore.themeName === option.path
    ) {
       return;
    }
@@ -615,12 +496,16 @@ function setClientUserData() {
             if (typeof data.value.user.image === "string") {
                userAvatar.value = data.value.user?.image;
             } else {
-               console.log("Data from sign in is null or undefined; could not retrieve user avatar");
+               console.log(
+                  "Data from sign in is null or undefined; could not retrieve user avatar"
+               );
             }
             if (typeof data.value.user.email === "string") {
                userEmail = data.value.user?.email;
             } else {
-               console.log("Data from sign in is null or undefined; could not retrieve user email");
+               console.log(
+                  "Data from sign in is null or undefined; could not retrieve user email"
+               );
             }
             if (typeof data.value.user.name === "string") {
                // user name just grabs the first name.
@@ -629,14 +514,16 @@ function setClientUserData() {
                   data.value.user?.name.indexOf(" ")
                );
             } else {
-               console.log("Data from sign in is null or undefined; could not retrieve user name");
+               console.log(
+                  "Data from sign in is null or undefined; could not retrieve user name"
+               );
             }
+         } else {
+            console.log(
+               "Data from sign in is null or undefined; could not retrieve user details"
+            );
          }
-         else {
-            console.log("Data from sign in is null or undefined; could not retrieve user details");
-         }
-      }
-      else {
+      } else {
          console.log("Data from sign in is null or undefined");
       }
    } else {
@@ -647,24 +534,30 @@ function setClientUserData() {
 /*=============================================
 Main Logic Begins
 =============================================*/
-//loggedIn.value &&
-if ( process.client) {
-   console.log("pinia store:");
-   console.log(userStore.userId);
-   // when logged in, we can grab data from the sign in event:
-   setClientUserData();
+function init() {
 
-   // If UUID has not been set yet, set it
-   if (!isUUIDSet()) {
-      postUUID("evan.robertson77@gmail.com");
+   //loggedIn.value &&
+   if (process.client) {
+      // when logged in, we can grab data from the sign in event:
+      setClientUserData();
+
+      // If UUID has not been set yet, set it
+      if (!isUUIDSet()) {
+
+         // only POST the UUID if we have an email
+         //if(userEmail !== "") postUUID(userEmail);
+         postUUID("evan.robertson77@gmail.com");
+
+      } else {
+         getUserPrefs();
+         setClientTheme();
+      }
+   } else {      
+      setClientTheme();
    }
 }
 
-// This runs if we are logged in or not
-if (process.client) {
-   getUserPrefs();
-   setClientTheme();
-}
+init();
 
 /*=============================================
 Mounted Logic Begins
@@ -987,10 +880,10 @@ onMounted(async () => {
       <!-- Settings modal! -->
       <UModal :ui="{ container: 'items-center' }" v-model="isSettingsModalOpen">
          <div
-            class="grid grid-cols-8 dark:bg-gray-800 bg-gray-300 px-2 h-[90vh] gap-2"
+            class="grid dark:bg-gray-800 bg-gray-300 px-2 h-[90vh] gap-2"
          >
             <div
-               class="col-span-3 border-r dark:border-gray-700 border-gray-400 flex-col flex"
+               class="dark:border-gray-700 border-gray-400 flex-col flex"
             >
                <UButton
                   icon="i-heroicons-arrow-left"
@@ -998,48 +891,36 @@ onMounted(async () => {
                   variant="ghost"
                   class="pl-0"
                />
-               <p class="text-xl">Settings</p>
-               <UButton
-                  label="Display"
-                  class="pl-0 my-2"
-                  :ui="{ color: { gray: 'text-gray-400' } }"
-                  color="gray"
-                  variant="ghost"
-                  @click="toggleSettingsDisplay('display')"
-               />
-               <UButton
-                  label="Tools"
-                  class="pl-0 my-2"
-                  :ui="{ color: { gray: 'text-gray-400' } }"
-                  color="gray"
-                  variant="ghost"
-                  @click="toggleSettingsDisplay('tools')"
-               />
-               <UButton
-                  label="Data"
-                  class="pl-0 my-2"
-                  :ui="{ color: { gray: 'text-gray-400' } }"
-                  color="gray"
-                  variant="ghost"
-                  @click="toggleSettingsDisplay('data')"
-               />
-            </div>
-            <div class="col-span-5" v-if="currentSettingMenu === 'display'">
-               <p class="text-xl my-8">Display</p>
+               <p class="text-2xl">Settings</p>
+               <hr class="my-4 border-gray-600" />
+               <p class="text-xl"><strong>Tools</strong></p>
+               <p class="text-sm dark:text-gray-400">
+                  Manage settings for tools in Budgie
+               </p>               
+               <div class="rounded border-gray-700 border p-2 my-2">
+                  <p class="text-lg">Budget</p>
+                  <UInput
+                  type="number"
+                  v-model="userStore.clickerBudget" 
+                  />
+               </div>
+               <hr class="my-4 border-gray-600" />
+               <p class="text-xl"><strong>Display</strong></p>
                <p class="text-sm dark:text-gray-400">
                   Manage your display settings
-               </p>
-               <hr class="my-4 border-gray-600" />
-               <p class="text-lg"><strong>Theme</strong></p>
-               <UCommandPalette
-                  v-model="themeSelected"
-                  nullable
-                  :autoselect="false"
-                  :groups="[{ key: 'themes', commands: themes }]"
-                  @update:model-value="onThemeSelect"
-                  ref="themePalett"
-                  placeholder="Search themes"
-               />
+               </p>               
+               <div class="rounded border-gray-700 border p-2 my-2">
+                  <p class="text-lg">Theme</p>
+                  <UCommandPalette
+                     v-model="themeSelected"
+                     nullable
+                     :autoselect="false"
+                     :groups="[{ key: 'themes', commands: themes }]"
+                     @update:model-value="onThemeSelect"
+                     ref="themePalett"
+                     placeholder="Search themes"
+                  />
+               </div>
             </div>
          </div>
       </UModal>
