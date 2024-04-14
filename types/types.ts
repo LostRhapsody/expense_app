@@ -10,11 +10,27 @@
  * @property {string} createdAt - the date the userPrefs were created
  */
 export interface UserPrefs {
-   userId: string;
-   themeName: string;
-   clickerBudget: number;
-   createdAt: string;
- }
+  userId: string;
+  themeName: string;
+  clickerBudget: number;
+  createdAt: string;
+}
+
+/**
+ * FavoritesType
+ * @interface FavoritesType
+ * @description User's favorite pages
+ * @property {string} label - the label of the favorite
+ * @property {boolean} toggled - if the favorite is toggled
+ * @property {string} icon - the icon of the favorite
+ * @property {string} url - the url of the favorite
+ */
+export interface FavoritesType {
+  label: string;
+  toggled: boolean;
+  icon: string;
+  url: string;
+}
 
 /**
  * ClickerTallyTypes
@@ -50,4 +66,4 @@ export interface ShoppingListType {
   userId: string;
   name: string;
   createdAt: string;
-} 
+}
