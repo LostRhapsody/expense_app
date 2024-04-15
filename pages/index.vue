@@ -1,13 +1,14 @@
 <script setup lang="ts">
 
-// types
-import type {FavoritesType} from "@/types/types";
-
 // stores
 import { useUserStore } from "@/stores/userStore";
 const userStore = useUserStore();
+
 import { useFavoritesStore } from "@/stores/favoritesStore";
 const favoritesStore = useFavoritesStore();
+
+// packages
+import axios from "axios";
 
 const showAddFaveModal = ref(false);
 const { status, data, signIn, signOut } = useAuth();
@@ -77,24 +78,19 @@ async function getFavorites() {
       fave.toggled = favoritesStore.getFavorites[index].toggled;
     });
     return;
-    log("Favorites already set");
   }
 
-  await useFetch("/api/user/getFavorites", {
-    method: "post",
-    body: {
-      key: userStore.userId + "Favorites",
-    },
-    key: "Favorites",
-    onResponse({ response }) {
-      log(response._data);
-      if (response._data !== "No favorites") {
-        favoritesStore.setFavorites(response._data[0]);
+  await axios
+  .post("/api/user/getFavorites", {
+    key: userStore.userId + "Favorites"
+  })
+  .then((response) => {
+      if (response.data !== "No favorites") {
+        favoritesStore.setFavorites(response.data[0]);
         favoriteLinks.value[0].forEach((fave, index) => {
-          fave.toggled = response._data[0][index].toggled;
+          fave.toggled = response.data[0][index].toggled;
         });
       }
-    },
   });
 }
 
@@ -107,12 +103,10 @@ async function setFavorites() {
     return;
   }
 
-  await useFetch("/api/user/setFavorites", {
-    method: "post",
-    body: {
-      key: userStore.userId + "Favorites",
-      value: favoriteLinks.value,
-    }
+  await axios
+  .post("/api/user/setFavorites", {
+    key: userStore.userId + "Favorites",
+    value: favoriteLinks.value,
   });
 
   // this is tricky... the DB should contain an array with an array inside of it
@@ -137,8 +131,8 @@ const links = [
     to: "/budgeting",
   },
 ];
-//loggedIn.value &&
-if (process.client) {
+
+if (loggedIn.value && process.client) {
   getFavorites();
 }
 </script>

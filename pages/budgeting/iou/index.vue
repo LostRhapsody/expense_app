@@ -1,4 +1,15 @@
 <script setup lang="ts">
+
+// types
+import type { IOUType } from "@/types/types";
+
+// stores
+import { useUserStore } from "@/stores/userStore";
+const userStore = useUserStore();
+
+import { useIOUStore } from "@/stores/IOUStore";
+const IOUStore = useIOUStore();
+
 // For notifications
 const toast = useToast();
 
@@ -12,7 +23,7 @@ const { status, data, signIn, signOut } = useAuth();
 const loggedIn = computed(() => status.value === "authenticated");
 
 // list of IOU records
-const iouArray = ref([]);
+const iouArray = ref([] as IOUType[]);
 
 let currentIOU = {};
 const currentIndex = ref(0);
@@ -40,14 +51,17 @@ const links = getBreadcrumbs([
  * @param key the key used to retrieve this value
  */
 async function setIouArray() {
-  const key = localStorage.getItem("uuid");
-  if(key === null) {
+  if (!checkUUID(userStore.userId)) {
+    console.error("UUID is not set, cannot set IOUs");
     return;
   }
+  
+  IOUStore.setIOUs(iouArray.value);
+
   const setIouResponse = await $fetch("/api/budgeting/setIou", {
     method: "post",
     body: {
-      key: key + "IOU",
+      key: userStore.userId + "IOU",
       value: {
         iouReponseArray: iouArray.value,
       },
@@ -66,13 +80,20 @@ async function setIouArray() {
  * @param key the key used to retrieve this value
  */
 async function getIouArray() {
-  const key = localStorage.getItem("uuid");
-  if(key === null) {
+  if (!checkUUID(userStore.userId)) {
+    console.error("UUID is not set, cannot get IOUs");
     return;
   }
+
+  // if IOUStore is already populated, leave
+  if(IOUStore.getIOUs.length > 0){
+    iouArray.value = IOUStore.getIOUs;
+    return;
+  }
+
   const getIouResponse = await $fetch("/api/budgeting/getIou", {
     method: "post",
-    body: { key: key + "IOU" },
+    body: { key: userStore.userId + "IOU" },
   });
 
   if (
@@ -85,7 +106,8 @@ async function getIouArray() {
     toast.add({ title: "Error: " + getIouResponse.message });
   } else {
     iouArray.value = getIouResponse.iouReponseArray;
-    }
+    IOUStore.setIOUs(iouArray.value);
+  }
 }
 
 /**
@@ -107,6 +129,9 @@ function deleteIOU() {
   // hide pay/edit modals
   showPayIOU.value = false;
   showEditIOU.value = false;
+
+  // set the store to whatever is in memory
+  IOUStore.setIOUs(iouArray.value);
 
   // if array is zero, there's nothing to delete
   if (iouArray.value.length === 0) return;
@@ -140,6 +165,7 @@ function createIou() {
         date:getCurrentDate('ymd'),
       },
     ];
+    IOUStore.setIOUs(iouArray.value);
     // show the list now that something exists
     // showIouList.value = true
   // if array exists, push new empty object
@@ -150,7 +176,7 @@ function createIou() {
         amount:0,
         date:getCurrentDate('ymd'),
     });
-    
+    IOUStore.setIOUs(iouArray.value);    
   }
 
   // this always works, as we just created an array above, so it will always

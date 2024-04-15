@@ -521,16 +521,15 @@ function init() {
   if(process.server){
     postUUID("evan.robertson77@gmail.com");
   }
-  //loggedIn.value &&
-  if (process.client) {
+
+  if (loggedIn.value && process.client) {
     // when logged in, we can grab data from the sign in event:
     setClientUserData();
 
     // If UUID has not been set yet, set it
     if (!isUUIDSet()) {
       // only POST the UUID if we have an email
-      //if(userEmail !== "") postUUID(userEmail);
-      postUUID("evan.robertson77@gmail.com");
+      if(userEmail !== "") postUUID(userEmail);
     } else {
       getUserPrefs();
       setClientTheme();

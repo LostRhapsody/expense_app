@@ -9,7 +9,7 @@ export default function getCurrentDate(format: string) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = String(date.getFullYear()).padStart(2, "0");
 
-  let returnDate;
+  let returnDate:string = "";
   switch (format) {
     case "dmy":
       returnDate = `${day}-${month}-${year}`;

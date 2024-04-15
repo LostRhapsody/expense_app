@@ -33,6 +33,22 @@ export interface FavoritesType {
 }
 
 /**
+ * IOUType
+ * @interface IOUType
+ * @description User IOUs
+ * @property {string} name - the IOU's name
+ * @property {boolean} borrowed - if the IOU is borrowed
+ * @property {number} amount - the amount of the IOU
+ * @property {string} date - the date of the IOU
+ */
+export interface IOUType {
+  name: string;
+  borrowed: boolean;
+  amount: number;
+  date: string;
+}
+
+/**
  * ClickerTallyTypes
  * @interface ClickerTallyType
  * @description User clicker tallies
