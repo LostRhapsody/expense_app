@@ -378,6 +378,8 @@ async function setClientTheme() {
  * Removes the link tag containing the theme stylesheet
  */
 function removeThemeTag() {
+  // chance we hit this on the server... awkward
+  if(process.server) return;
   // just remove it lol
   let themeTag = document.getElementById("themeStylesheet");
   if (themeTag !== null && themeTag !== undefined) {
